@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  ig-autoposter:
+    build: .
+    container_name: ig-autoposter
+    restart: unless-stopped
+    ports:
+      - "3099:3000"
+    volumes:
+      - /mnt/user/appdata/ig-autoposter/incoming:/data/incoming
+      - /mnt/user/appdata/ig-autoposter/posted:/data/posted
+      - /mnt/user/appdata/ig-autoposter/data:/app/data

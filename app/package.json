@@ -1,0 +1,19 @@
+{
+  "name": "ig-autoposter",
+  "version": "1.0.0",
+  "description": "Self-hosted Instagram auto-poster with AI captions — runs on UNRAID",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "fluent-ffmpeg": "^2.1.3",
+    "sharp": "^0.33.2"
+  }
+}

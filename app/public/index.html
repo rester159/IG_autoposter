@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IG Auto-Poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Tokens ─────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080a;--s1:#111114;--s2:#19191e;--s3:#222228;
+  --bdr:#2a2a32;--bdr2:#38383f;
+  --t1:#ededf0;--t2:#a1a1aa;--t3:#63636e;
+  --rose:#f43f5e;--amber:#f59e0b;--emerald:#10b981;--sky:#38bdf8;
+  --rose-dim:rgba(244,63,94,.12);--emerald-dim:rgba(16,185,129,.12);
+  --r:10px;--r2:14px;
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --serif:'Instrument Serif',Georgia,serif;
+}
+html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased}
+input,select,textarea,button{font-family:inherit;color:inherit}
+a{color:var(--rose);text-decoration:none}
+
+/* ─── Layout ─────────────────────────────────────────── */
+.shell{max-width:1060px;margin:0 auto;padding:28px 24px 80px}
+header{display:flex;align-items:baseline;gap:18px;margin-bottom:36px;flex-wrap:wrap}
+header h1{font-family:var(--serif);font-size:32px;font-weight:400;letter-spacing:-.3px;
+  background:linear-gradient(135deg,var(--rose),var(--amber));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+header .pill{font-family:var(--mono);font-size:11px;padding:4px 12px;border-radius:99px;display:flex;align-items:center;gap:6px}
+header .pill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+header .pill.on{background:var(--emerald-dim);color:var(--emerald)}
+header .pill.on .dot{background:var(--emerald);box-shadow:0 0 6px var(--emerald)}
+header .pill.off{background:var(--rose-dim);color:var(--rose)}
+header .pill.off .dot{background:var(--rose)}
+
+/* ─── Tabs ───────────────────────────────────────────── */
+.tabs{display:flex;gap:2px;background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r2);padding:3px;margin-bottom:30px}
+.tabs button{flex:1;padding:9px 0;border:none;background:none;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;transition:.15s}
+.tabs button:hover{color:var(--t2)}
+.tabs button.on{background:var(--s2);color:var(--t1);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+/* ─── Cards ──────────────────────────────────────────── */
+.card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r2);padding:22px 24px;margin-bottom:18px}
+.card h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:14px}
+
+/* ─── Stats ──────────────────────────────────────────── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px}
+.stat{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r2);padding:18px 20px}
+.stat b{font-family:var(--mono);font-size:26px;font-weight:500;display:block}
+.stat small{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;display:block}
+
+/* ─── Queue Grid ─────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.grid .img{position:relative;aspect-ratio:1;border-radius:var(--r);overflow:hidden;border:1px solid var(--bdr);cursor:default;transition:.2s}
+.grid .img:hover{border-color:var(--rose);transform:scale(1.03)}
+.grid .img img{width:100%;height:100%;object-fit:cover;display:block}
+.grid .img .ord{position:absolute;top:5px;left:5px;font-family:var(--mono);font-size:10px;background:rgba(0,0,0,.7);padding:2px 7px;border-radius:99px}
+.grid .img .x{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(239,68,68,.85);color:#fff;border:none;font-size:13px;cursor:pointer;display:none;place-items:center;line-height:1}
+.grid .img:hover .x{display:grid}
+.grid .img .nm{position:absolute;bottom:0;left:0;right:0;padding:14px 7px 5px;font-size:9px;background:linear-gradient(transparent,rgba(0,0,0,.75));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── Upload ─────────────────────────────────────────── */
+.drop{border:2px dashed var(--bdr);border-radius:var(--r2);padding:38px 20px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px}
+.drop:hover,.drop.over{border-color:var(--rose);background:rgba(244,63,94,.04)}
+.drop .icon{font-size:30px;margin-bottom:6px}
+.drop p{font-size:13px;color:var(--t2)}
+
+/* ─── History ────────────────────────────────────────── */
+.hrow{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--bdr)}
+.hrow:last-child{border:none}
+.hrow .icon{width:44px;height:44px;border-radius:var(--r);background:var(--s2);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.hrow .body{flex:1;min-width:0}
+.hrow .body .cap{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hrow .body .meta{font-size:11px;color:var(--t3);font-family:var(--mono);margin-top:3px}
+.badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:99px;flex-shrink:0;height:fit-content}
+.badge.ok{background:var(--emerald-dim);color:var(--emerald)}
+.badge.err{background:var(--rose-dim);color:var(--rose)}
+
+/* ─── Form ───────────────────────────────────────────── */
+.fg{margin-bottom:18px}
+.fg label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 13px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);font-size:13px;outline:none;transition:.15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--rose)}
+.fg textarea{resize:vertical;min-height:72px;font-family:var(--font)}
+.fg .hint{font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* ─── Buttons ────────────────────────────────────────── */
+.btn{padding:9px 20px;border-radius:var(--r);border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-p{background:linear-gradient(135deg,var(--rose),#e11d48);color:#fff}
+.btn-p:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+.btn-s{background:var(--s2);border:1px solid var(--bdr);color:var(--t1)}
+.btn-s:hover{border-color:var(--t3)}
+.btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+
+/* ─── Toggle ─────────────────────────────────────────── */
+.tog-row{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.tog{position:relative;width:44px;height:24px;background:var(--s3);border-radius:12px;cursor:pointer;transition:.2s;border:1px solid var(--bdr)}
+.tog.on{background:var(--emerald);border-color:var(--emerald)}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.tog.on::after{transform:translateX(20px)}
+
+/* ─── Toast ──────────────────────────────────────────── */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:12px 18px;font-size:13px;animation:tin .25s ease;max-width:360px}
+.toast.ok{border-left:3px solid var(--emerald)}
+.toast.err{border-left:3px solid var(--rose)}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ─── Preview ────────────────────────────────────────── */
+.preview{background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;margin-top:14px}
+
+/* ─── Misc ───────────────────────────────────────────── */
+.empty{text-align:center;padding:40px 16px;color:var(--t3)}
+.empty .ei{font-size:36px;margin-bottom:10px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--bdr);border-top-color:var(--rose);border-radius:50%;animation:sp .5s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* ─── Timeline ──────────────────────────────────────── */
+.tl-item{display:flex;gap:14px;padding:14px 16px;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:8px;background:var(--s1);cursor:grab;transition:.15s}
+.tl-item:active{cursor:grabbing}
+.tl-item.dragging{opacity:.4;border-color:var(--rose)}
+.tl-item.drag-over{border-color:var(--sky);background:rgba(56,189,248,.06)}
+.tl-item .tl-time{font-family:var(--mono);font-size:11px;color:var(--t3);min-width:70px;flex-shrink:0;padding-top:2px}
+.tl-item .tl-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0;height:fit-content}
+.tl-item .tl-badge.photo{background:var(--emerald-dim);color:var(--emerald)}
+.tl-item .tl-badge.video{background:rgba(56,189,248,.12);color:var(--sky)}
+.tl-item .tl-thumb{width:44px;height:44px;border-radius:6px;overflow:hidden;flex-shrink:0}
+.tl-item .tl-thumb img{width:100%;height:100%;object-fit:cover}
+.tl-item .tl-body{flex:1;min-width:0}
+.tl-item .tl-body .tl-cap{font-size:13px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.tl-item .tl-body .tl-meta{font-size:11px;color:var(--t3);font-family:var(--mono);margin-top:2px}
+.tl-item .tl-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.tl-item .tl-actions button{font-size:11px;padding:4px 10px}
+.tl-status{font-size:10px;padding:2px 8px;border-radius:99px}
+.tl-status.queued{background:rgba(245,158,11,.12);color:var(--amber)}
+.tl-status.ready{background:var(--emerald-dim);color:var(--emerald)}
+.tl-status.posting{background:rgba(56,189,248,.12);color:var(--sky)}
+.tl-status.posted{background:var(--emerald-dim);color:var(--emerald)}
+.tl-status.failed{background:var(--rose-dim);color:var(--rose)}
+
+/* ─── Vertical Settings Tabs ─────────────────────────── */
+.vtabs{display:flex;gap:0;border:1px solid var(--bdr);border-radius:var(--r2);overflow:hidden;min-height:400px}
+.vtabs-nav{width:180px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;padding:6px}
+.vtabs-nav button{text-align:left;padding:10px 14px;border:none;background:none;border-radius:var(--r);font-size:13px;font-weight:500;color:var(--t3);cursor:pointer;transition:.15s}
+.vtabs-nav button:hover{color:var(--t2);background:var(--s2)}
+.vtabs-nav button.on{background:var(--s2);color:var(--t1);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.vtabs-body{flex:1;padding:22px 24px;overflow-y:auto}
+.vtabs-body .vtab{display:none}
+.vtabs-body .vtab.on{display:block}
+
+/* ─── Analytics ─────────────────────────────────────────── */
+.an-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.an-card{background:var(--s1);border:1px solid var(--bdr);border-radius:var(--r2);padding:16px 18px}
+.an-card b{font-family:var(--mono);font-size:24px;font-weight:500;display:block}
+.an-card small{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;display:block}
+.an-table{width:100%;border-collapse:collapse;font-size:13px}
+.an-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:8px 10px;border-bottom:1px solid var(--bdr)}
+.an-table td{padding:8px 10px;border-bottom:1px solid var(--bdr)}
+.an-table tr:last-child td{border:none}
+.an-table tr:hover td{background:var(--s2)}
+.an-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.an-tabs button{padding:6px 14px;border:1px solid var(--bdr);background:none;border-radius:99px;font-size:12px;color:var(--t3);cursor:pointer;transition:.15s}
+.an-tabs button:hover{color:var(--t2);border-color:var(--t3)}
+.an-tabs button.on{background:var(--s2);color:var(--t1);border-color:var(--t1)}
+
+.hidden{display:none!important}
+@media(max-width:600px){.row2{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}.tl-item .tl-time{display:none}.vtabs{flex-direction:column}.vtabs-nav{width:100%;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--bdr)}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- header -->
+  <header>
+    <h1>IG Auto-Poster</h1>
+    <div class="pill off" id="hPill"><span class="dot"></span><span id="hLabel">offline</span></div>
+  </header>
+
+  <!-- tabs -->
+  <div class="tabs" id="tabs">
+    <button class="on" data-t="dash">Dashboard</button>
+    <button data-t="queue">Posts</button>
+    <button data-t="video">Video</button>
+    <button data-t="hist">History</button>
+    <button data-t="team">Team</button>
+    <button data-t="analytics">Analytics</button>
+    <button data-t="cfg">Settings</button>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <section id="p-dash">
+    <div class="stats">
+      <div class="stat"><b id="sQ">–</b><small>queued</small></div>
+      <div class="stat"><b id="sReady">–</b><small>ready</small></div>
+      <div class="stat"><b id="sP">–</b><small>posted</small></div>
+      <div class="stat"><b id="sS">–</b><small>schedule</small></div>
+      <div class="stat"><b id="sL">–</b><small>last post</small></div>
+    </div>
+    <div class="card" id="warnCard" style="display:none">
+      <h3 style="color:var(--amber)">Setup required</h3>
+      <p style="font-size:13px;color:var(--t2);line-height:1.6">
+        Add your API keys in <a href="#" onclick="go('cfg');return false">Settings</a> before posting.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Quick Actions</h3>
+      <div class="btns">
+        <button class="btn btn-p" id="postBtn" onclick="postNow()">Post Next Now</button>
+        <button class="btn btn-s" onclick="preview()">Preview Caption</button>
+        <button class="btn btn-s" onclick="go('queue')">Upload Photos</button>
+        <button class="btn btn-s" onclick="go('video')">🎬 Video Pipeline</button>
+      </div>
+      <div id="prevBox" class="preview hidden"></div>
+    </div>
+    <div class="card">
+      <h3>Upcoming Timeline</h3>
+      <div id="tlFeed"></div>
+      <div id="tlEmpty" class="empty hidden"><div class="ei">📅</div><p>No upcoming posts. Upload photos or generate videos to get started.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ QUEUE ═══ -->
+  <section id="p-queue" class="hidden">
+    <div class="drop" id="dropZone">
+      <div class="icon">📸</div>
+      <p>Drop images here or click to upload</p>
+      <input type="file" id="fileIn" multiple accept="image/*" style="display:none">
+    </div>
+    <div class="card">
+      <h3>Content Queue <span id="qLabel" style="color:var(--t3);font-weight:400"></span></h3>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="loadQ('all')" id="qFAll">All</button>
+        <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="loadQ('queued')" id="qFQueued">Queued</button>
+        <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="loadQ('ready')" id="qFReady">Ready</button>
+        <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="loadQ('posted')" id="qFPosted">Posted</button>
+      </div>
+      <div id="qList"></div>
+      <div id="qEmpty" class="empty hidden"><div class="ei">📭</div><p>No posts in queue. Upload photos or generate videos!</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ VIDEO ═══ -->
+  <section id="p-video" class="hidden">
+    <div class="stats">
+      <div class="stat"><b id="vQ">–</b><small>videos queued</small></div>
+      <div class="stat"><b id="vS">–</b><small>schedule</small></div>
+      <div class="stat"><b id="vL">–</b><small>last run</small></div>
+      <div class="stat"><b id="vGen">–</b><small>status</small></div>
+    </div>
+
+    <!-- scheduler -->
+    <div class="card">
+      <h3>Video Scheduler</h3>
+      <div class="tog-row">
+        <div class="tog" id="togVidDash" onclick="togVidDashEn()"></div>
+        <span id="togVidDashLbl" style="font-size:13px">Disabled</span>
+      </div>
+      <div class="fg">
+        <label>Post Frequency</label>
+        <select id="vFreq" onchange="vFreqChanged()">
+          <option value="*/30 * * * *">Every 30 minutes</option>
+          <option value="0 */1 * * *">Every hour</option>
+          <option value="0 */2 * * *">Every 2 hours</option>
+          <option value="0 */3 * * *">Every 3 hours</option>
+          <option value="0 */6 * * *">Every 6 hours</option>
+          <option value="0 */12 * * *">Every 12 hours</option>
+          <option value="v_once">Once a day</option>
+          <option value="v_twice">Twice a day</option>
+          <option value="v_thrice">Three times a day</option>
+          <option value="v_weekly">Once a week</option>
+          <option value="v_custom">Custom (advanced)</option>
+        </select>
+      </div>
+      <div id="vSchedOnce" class="fg hidden">
+        <label>Post at</label><select id="vTime1"></select>
+      </div>
+      <div id="vSchedTwice" class="hidden">
+        <div class="row2">
+          <div class="fg"><label>First post at</label><select id="vTime2a"></select></div>
+          <div class="fg"><label>Second post at</label><select id="vTime2b"></select></div>
+        </div>
+      </div>
+      <div id="vSchedThrice" class="hidden">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="fg"><label>First</label><select id="vTime3a"></select></div>
+          <div class="fg"><label>Second</label><select id="vTime3b"></select></div>
+          <div class="fg"><label>Third</label><select id="vTime3c"></select></div>
+        </div>
+      </div>
+      <div id="vSchedWeekly" class="hidden">
+        <div class="row2">
+          <div class="fg"><label>Day</label>
+            <select id="vWeekday">
+              <option value="1">Monday</option><option value="2">Tuesday</option>
+              <option value="3">Wednesday</option><option value="4">Thursday</option>
+              <option value="5">Friday</option><option value="6">Saturday</option>
+              <option value="0">Sunday</option>
+            </select>
+          </div>
+          <div class="fg"><label>Time</label><select id="vTimeW"></select></div>
+        </div>
+      </div>
+      <div id="vSchedCustom" class="fg hidden">
+        <label>Cron Expression</label>
+        <input id="vCron" placeholder="0 12 * * *">
+        <div class="hint">minute hour day-of-month month day-of-week</div>
+      </div>
+      <button class="btn btn-s" onclick="saveVideoSched()" style="margin-top:8px">Save Schedule</button>
+    </div>
+
+    <!-- generate section -->
+    <div class="card">
+      <h3>Generate Video</h3>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Claude writes a script → Veo 3.1 generates a 9:16 video with audio → queued for posting as a Reel.</p>
+
+      <div class="row2">
+        <div class="fg">
+          <label>Influencer</label>
+          <select id="vInf"><option value="">Loading…</option></select>
+        </div>
+        <div class="fg">
+          <label>Video Style / Mood</label>
+          <select id="vStyle">
+            <option value="">Default (energetic review)</option>
+            <option value="hype">Hype / Excited</option>
+            <option value="chill">Chill / Relaxed</option>
+            <option value="funny">Funny / Comedic</option>
+            <option value="dramatic">Dramatic / Cinematic</option>
+            <option value="nostalgic">Nostalgic / Retro vibes</option>
+            <option value="asmr">ASMR / Whisper</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>Script / Topic</label>
+        <textarea id="vTopic" rows="2" placeholder="e.g. Reacting to seeing Pac-Man for the first time, rage-quitting a level, speedrun attempt…"></textarea>
+        <div class="hint">Tell Claude what the influencer should talk about or do in the video</div>
+      </div>
+
+      <div class="fg">
+        <label>Background Setting</label>
+        <input id="vBg" placeholder="retro arcade with neon lights">
+      </div>
+
+      <div class="fg">
+        <label>Influencer Outfit</label>
+        <input id="vOutfit" placeholder="e.g. Pac-Man yellow hoodie with ghost patches, or leave blank for game-inspired auto">
+        <div class="hint">Game-related (cosplay/themed) or influencer-specific. Leave blank to auto-generate based on the game.</div>
+      </div>
+
+      <div class="fg">
+        <label>Game Image</label>
+        <select id="vGameImg"><option value="">Random from library</option></select>
+        <div class="hint">Pick a game image or leave random</div>
+      </div>
+
+      <div class="fg">
+        <label>Custom Prompt Override <span style="color:var(--t3);font-weight:400">(optional — bypasses Claude script)</span></label>
+        <textarea id="vCustomPrompt" rows="3" placeholder="Write your own Veo 3.1 prompt directly. If filled, this replaces Claude's generated script."></textarea>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-s" id="vPreviewBtn" onclick="previewScript()">📝 Preview Script</button>
+        <button class="btn btn-p" id="vGenBtn" onclick="generateVideo()">🎬 Generate Video</button>
+        <button class="btn btn-s" id="vPostBtn" onclick="postVideo()">📤 Post Next Reel</button>
+      </div>
+
+      <!-- script preview / edit area -->
+      <div id="vScriptBox" class="hidden" style="margin-top:14px">
+        <label style="display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px">Generated Script (edit before generating)</label>
+        <textarea id="vScriptEdit" rows="6" style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--bdr);border-radius:var(--r);font-size:13px;font-family:var(--font);color:var(--t1);resize:vertical;line-height:1.6"></textarea>
+        <div class="btns" style="margin-top:8px">
+          <button class="btn btn-p" onclick="generateFromScript()">🎬 Generate From This Script</button>
+          <button class="btn btn-s" onclick="$('vScriptBox').classList.add('hidden')">Cancel</button>
+        </div>
+      </div>
+
+      <div id="vGenStatus" class="preview hidden"></div>
+    </div>
+
+    <!-- game images -->
+    <div class="card">
+      <h3>Game Images</h3>
+      <p style="font-size:12px;color:var(--t3);margin-bottom:12px">Upload game screenshots/box art. Pick one when generating or let it choose randomly.</p>
+      <div class="drop" id="gameDropZone" style="padding:20px">
+        <div class="icon" style="font-size:20px">🎮</div>
+        <p style="font-size:12px">Drop game images here or click to upload</p>
+        <input type="file" id="gameFileIn" multiple accept="image/*" style="display:none">
+      </div>
+      <div id="gameGrid" class="grid" style="margin-top:12px"></div>
+      <div id="gameEmpty" class="empty hidden" style="padding:20px"><p>No game images yet.</p></div>
+    </div>
+
+    <!-- video queue -->
+    <div class="card">
+      <h3>Video Queue</h3>
+      <div id="vqList"></div>
+      <div id="vqEmpty" class="empty hidden"><div class="ei">🎬</div><p>No videos queued. Generate one above!</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ HISTORY ═══ -->
+  <section id="p-hist" class="hidden">
+    <div class="card">
+      <h3>Post History</h3>
+      <div id="hList"></div>
+      <div id="hEmpty" class="empty hidden"><div class="ei">📋</div><p>Nothing posted yet.</p></div>
+    </div>
+  </section>
+
+  <!-- ═══ TEAM ═══ -->
+  <section id="p-team" class="hidden">
+    <div class="card">
+      <h3>Influencers</h3>
+      <div id="teamList"></div>
+      <div id="teamEmpty" class="empty hidden"><div class="ei">👥</div><p>No influencers yet. Add your first one below.</p></div>
+      <div class="btns" style="margin-top:18px"><button class="btn btn-p" onclick="showAddInf()">+ Add Influencer</button></div>
+    </div>
+    <div id="infForm" class="card hidden">
+      <h3 id="infFormTitle">Add Influencer</h3>
+      <input type="hidden" id="infEditId" value="">
+      <div class="fg"><label>Name</label><input id="infName" placeholder="e.g. Luna"></div>
+      <div class="fg"><label>Personality</label><textarea id="infPersonality" rows="2" placeholder="e.g. Energetic, sarcastic, loves retro games"></textarea></div>
+      <div class="fg"><label>Expressions &amp; Quirks</label><textarea id="infQuirks" rows="2" placeholder="e.g. Raises one eyebrow, does finger guns, says Lets gooo"></textarea></div>
+      <div class="fg"><label>Visual Description</label><textarea id="infExpressions" rows="2" placeholder="e.g. Young woman, glasses, wavy dark hair with bangs, casual style"></textarea></div>
+      <div class="fg"><label>Default Outfit</label><textarea id="infOutfit" rows="2" placeholder="e.g. Colorful streetwear with gaming pins, or cosplay-ready — leave blank to auto-generate per game"></textarea></div>
+      <div class="fg"><label>Intro Phrase</label><input id="infIntroPhrase" placeholder="e.g. Hey gamers, it's Luna!"></div>
+      <div class="fg"><label>Game Tastes</label><textarea id="infGameTastes" rows="2" placeholder="e.g. Loves JRPGs and platformers, hates battle royale, nostalgia for SNES era"></textarea></div>
+      <div class="fg"><label>Fashion Style</label><textarea id="infFashionStyle" rows="2" placeholder="e.g. Y2K aesthetic, pastel colors, oversized hoodies"></textarea></div>
+      <div class="fg"><label>Boyfriend / Character Lore</label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake — she teases him about his aim"></textarea></div>
+      <div class="fg">
+        <label>Profile Picture</label>
+        <div class="row2">
+          <input id="infPicture" placeholder="filename (uploaded via photos)" readonly style="flex:1">
+          <button class="btn btn-s" type="button" onclick="pickInfPicture()">Choose from Photos</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Room / Background Reference</label>
+        <div class="row2">
+          <input id="infRoom" placeholder="filename (uploaded via photos)" readonly style="flex:1">
+          <button class="btn btn-s" type="button" onclick="pickInfRoom()">Choose from Photos</button>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="btn btn-p" onclick="saveInf()">Save</button>
+        <button class="btn btn-s" onclick="cancelInf()">Cancel</button>
+      </div>
+    </div>
+    <div id="infDetail" class="card hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="margin:0" id="infDetailName">-</h3>
+        <div><button class="btn btn-s" onclick="editInf()" style="margin-right:8px">Edit</button><button class="btn btn-s" onclick="deleteInf()" style="color:var(--rose)">Delete</button></div>
+      </div>
+      <div style="font-size:13px;color:var(--t2);margin-bottom:12px">
+        <div><b style="color:var(--t1)">Personality:</b> <span id="infDetailPersonality">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Quirks:</b> <span id="infDetailQuirks">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Visual:</b> <span id="infDetailExpressions">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Outfit:</b> <span id="infDetailOutfit">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Intro Phrase:</b> <span id="infDetailIntroPhrase">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Game Tastes:</b> <span id="infDetailGameTastes">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Fashion Style:</b> <span id="infDetailFashionStyle">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Boyfriend / Lore:</b> <span id="infDetailBoyfriend">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Picture:</b> <span id="infDetailPicture">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Room:</b> <span id="infDetailRoom">-</span></div>
+      </div>
+      <h3>Reference Photos</h3>
+      <div id="infPhotos" class="grid" style="margin-bottom:12px"></div>
+      <div class="drop" id="infDropZone" style="padding:20px">
+        <div class="icon" style="font-size:20px">📷</div>
+        <p style="font-size:12px">Drop reference photos or click to upload</p>
+        <input type="file" id="infFileIn" multiple accept="image/*" style="display:none">
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ ANALYTICS ═══ -->
+  <section id="p-analytics" class="hidden">
+    <div id="anSummary" class="an-cards"></div>
+    <div class="card">
+      <div class="an-tabs" id="anTabs">
+        <button class="on" onclick="loadAnView('game')">By Game</button>
+        <button onclick="loadAnView('genre')">By Genre</button>
+        <button onclick="loadAnView('console')">By Console</button>
+        <button onclick="loadAnView('influencer')">By Influencer</button>
+        <button onclick="loadAnView('platform')">By Platform</button>
+        <button onclick="loadAnView('format')">By Format</button>
+      </div>
+      <div id="anTable"></div>
+    </div>
+  </section>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <section id="p-cfg" class="hidden">
+    <div class="vtabs">
+      <div class="vtabs-nav" id="cfgNav">
+        <button class="on" onclick="cfgTab('api')">API Keys</button>
+        <button onclick="cfgTab('prompts')">Post Types</button>
+        <button onclick="cfgTab('genres')">Genres</button>
+        <button onclick="cfgTab('sched')">Scheduler</button>
+        <button onclick="cfgTab('paths')">File Paths</button>
+      </div>
+      <div class="vtabs-body">
+        <!-- API Keys tab -->
+        <div class="vtab on" id="cfg-api">
+          <h3 style="margin-bottom:16px">Instagram API</h3>
+          <div class="fg"><label>Access Token</label><input id="cIgTok" type="password" placeholder="long-lived token"></div>
+          <div class="fg"><label>Business Account ID</label><input id="cIgId" placeholder="17841400…"></div>
+          <div class="fg"><label>Public URL</label><input id="cUrl" placeholder="https://your-unraid.duckdns.org:3099">
+            <div class="hint">IG servers must reach this URL to fetch your images</div>
+          </div>
+          <button class="btn btn-s" onclick="verifyIg()" style="margin-bottom:20px">Verify Connection</button>
+          <h3 style="margin-bottom:16px">Gemini / Video AI</h3>
+          <div class="fg"><label>Gemini API Key (Veo 3.1)</label><input id="cGemKey" type="password" placeholder="AIzaSy…"></div>
+        </div>
+        <!-- Post Types & Prompts tab -->
+        <div class="vtab" id="cfg-prompts">
+          <h3 style="margin-bottom:16px">AI Captions</h3>
+          <div class="fg"><label>Caption Prompt</label><textarea id="cPrompt" rows="3"></textarea></div>
+          <div class="row2">
+            <div class="fg"><label>Hashtag Count</label><input id="cHCnt" type="number" min="5" max="30" value="30"></div>
+            <div class="fg"><label>Hashtag Style</label>
+              <select id="cHStyle"><option value="viral">Viral</option><option value="niche">Niche</option><option value="mixed" selected>Mixed</option></select>
+            </div>
+          </div>
+          <h3 style="margin-top:20px;margin-bottom:16px">Video Defaults</h3>
+          <div class="fg"><label>Default Background</label><input id="cVidBg" placeholder="retro arcade with neon lights"></div>
+          <div class="row2">
+            <div class="fg"><label>Video Duration (sec)</label><input id="cVidDur" type="number" min="4" max="16" value="8"></div>
+            <div class="fg"><label>Default Influencer</label><select id="cVidInf"><option value="">Random</option></select></div>
+          </div>
+        </div>
+        <!-- Genre Taxonomy tab -->
+        <div class="vtab" id="cfg-genres">
+          <h3 style="margin-bottom:16px">Genre Taxonomy</h3>
+          <p style="font-size:12px;color:var(--t3);margin-bottom:10px">Manage the fixed genre list used for game classification.</p>
+          <div id="genreList" style="margin-bottom:12px"></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="genreNewName" placeholder="New genre name" style="flex:1">
+            <button class="btn btn-s" onclick="addGenre()">+ Add</button>
+          </div>
+        </div>
+        <!-- Scheduler tab -->
+        <div class="vtab" id="cfg-sched">
+          <h3 style="margin-bottom:16px">Photo Scheduler</h3>
+          <div class="tog-row">
+            <div class="tog" id="togOn" onclick="togEn()"></div>
+            <span id="togLbl" style="font-size:13px">Disabled</span>
+          </div>
+          <div class="fg">
+            <label>Post Frequency</label>
+            <select id="cFreq" onchange="freqChanged()">
+              <option value="*/30 * * * *">Every 30 minutes</option>
+              <option value="0 */1 * * *">Every hour</option>
+              <option value="0 */2 * * *">Every 2 hours</option>
+              <option value="0 */3 * * *">Every 3 hours</option>
+              <option value="0 */6 * * *" selected>Every 6 hours</option>
+              <option value="0 */12 * * *">Every 12 hours</option>
+              <option value="once">Once a day</option>
+              <option value="twice">Twice a day</option>
+              <option value="thrice">Three times a day</option>
+              <option value="weekly">Once a week</option>
+              <option value="custom">Custom (advanced)</option>
+            </select>
+          </div>
+          <div id="schedOnce" class="fg hidden">
+            <label>Post at</label><select id="cTime1"></select>
+          </div>
+          <div id="schedTwice" class="hidden">
+            <div class="row2">
+              <div class="fg"><label>First post at</label><select id="cTime2a"></select></div>
+              <div class="fg"><label>Second post at</label><select id="cTime2b"></select></div>
+            </div>
+          </div>
+          <div id="schedThrice" class="hidden">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+              <div class="fg"><label>First</label><select id="cTime3a"></select></div>
+              <div class="fg"><label>Second</label><select id="cTime3b"></select></div>
+              <div class="fg"><label>Third</label><select id="cTime3c"></select></div>
+            </div>
+          </div>
+          <div id="schedWeekly" class="hidden">
+            <div class="row2">
+              <div class="fg"><label>Day</label>
+                <select id="cWeekday">
+                  <option value="1">Monday</option><option value="2">Tuesday</option>
+                  <option value="3">Wednesday</option><option value="4">Thursday</option>
+                  <option value="5">Friday</option><option value="6">Saturday</option>
+                  <option value="0">Sunday</option>
+                </select>
+              </div>
+              <div class="fg"><label>Time</label><select id="cTimeW"></select></div>
+            </div>
+          </div>
+          <div id="schedCustom" class="fg hidden">
+            <label>Cron Expression</label>
+            <input id="cCron" placeholder="0 */6 * * *">
+            <div class="hint">minute hour day-of-month month day-of-week</div>
+          </div>
+          <div class="hint" style="margin-top:12px">Video schedule is managed in the Video tab</div>
+        </div>
+        <!-- File Paths tab -->
+        <div class="vtab" id="cfg-paths">
+          <h3 style="margin-bottom:16px">File Paths</h3>
+          <div class="row2">
+            <div class="fg"><label>Incoming Folder</label><input id="cIn" placeholder="/data/incoming"></div>
+            <div class="fg"><label>Posted Folder</label><input id="cOut" placeholder="/data/posted"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btns" style="margin-top:14px"><button class="btn btn-p" onclick="saveCfg()">Save Settings</button></div>
+  </section>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ─── helpers ──────────────────────────────────────────── */
+const $ = s => document.getElementById(s);
+const api = async (p, o = {}) => {
+  const r = await fetch('/api' + p, { headers: { 'Content-Type': 'application/json' }, ...o });
+  return r.json();
+};
+function toast(m, t = 'ok') {
+  const d = document.createElement('div'); d.className = 'toast ' + t; d.textContent = m;
+  $('toasts').append(d); setTimeout(() => d.remove(), 4000);
+}
+function ago(d) {
+  if (!d) return 'never';
+  const m = Math.floor((Date.now() - new Date(d)) / 60000);
+  if (m < 1) return 'just now'; if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60); if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+function cronNice(c) {
+  const m = { '0 */6 * * *': '6 h', '0 */3 * * *': '3 h', '0 */12 * * *': '12 h',
+    '0 9 * * *': 'daily', '0 */1 * * *': '1 h', '*/30 * * * *': '30 m' };
+  return m[c] || c || '–';
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+/* ─── tabs ─────────────────────────────────────────────── */
+let tab = 'dash';
+$('tabs').addEventListener('click', e => { if (e.target.dataset.t) go(e.target.dataset.t); });
+function go(t) {
+  tab = t;
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  ['dash','queue','video','hist','team','analytics','cfg'].forEach(s => $('p-' + s).classList.toggle('hidden', s !== t));
+  ({ dash: loadDash, queue: loadQ, video: loadVideo, hist: loadH, team: loadTeam, analytics: loadAnalytics, cfg: loadCfg })[t]();
+}
+
+/* ─── dashboard ────────────────────────────────────────── */
+async function loadDash() {
+  try {
+    const [st, queue, vst] = await Promise.all([
+      api('/status'),
+      api('/unified-queue'),
+      api('/video/status'),
+    ]);
+    // Stats
+    const queued = queue.filter(p => p.status === 'queued').length;
+    const ready = queue.filter(p => p.status === 'ready').length;
+    const posted = queue.filter(p => p.status === 'posted').length;
+    $('sQ').textContent = queued;
+    $('sReady').textContent = ready;
+    $('sP').textContent = posted;
+    $('sS').textContent = cronNice(st.scheduler.cron);
+    $('sL').textContent = ago(st.scheduler.lastRun);
+    const p = $('hPill'), l = $('hLabel');
+    if (st.scheduler.enabled) { p.className = 'pill on'; l.textContent = st.scheduler.posting ? 'posting…' : 'active'; }
+    else { p.className = 'pill off'; l.textContent = 'disabled'; }
+    $('warnCard').style.display = st.configured ? 'none' : '';
+    $('postBtn').disabled = !st.configured;
+
+    // Timeline — show upcoming (queued + ready) sorted by scheduled_at
+    const upcoming = queue
+      .filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
+      .sort((a, b) => (a.scheduled_at || '').localeCompare(b.scheduled_at || ''));
+    renderTimeline(upcoming.slice(0, 20), 'tlFeed', 'tlEmpty');
+  } catch (e) { console.error(e); }
+}
+
+function renderTimeline(items, containerId, emptyId) {
+  if (!items.length) {
+    $(containerId).innerHTML = '';
+    $(emptyId).classList.remove('hidden');
+    return;
+  }
+  $(emptyId).classList.add('hidden');
+  $(containerId).innerHTML = items.map(function(p) {
+    var schedStr = p.scheduled_at ? fmtSchedule(p.scheduled_at) : 'unscheduled';
+    var typeIcon = p.type === 'video' ? '🎬' : '📸';
+    var typeBadge = '<span class="tl-badge ' + p.type + '">' + p.type + '</span>';
+    var statusBadge = '<span class="tl-status ' + p.status + '">' + p.status + '</span>';
+    var cap = p.caption || p.full_caption || p.file_name || '–';
+    if (cap.length > 80) cap = cap.substring(0, 80) + '…';
+    var thumb = '';
+    if (p.thumb) {
+      thumb = '<div class="tl-thumb"><img src="' + p.thumb + '" alt=""></div>';
+    } else if (p.type === 'photo' && p.file_name) {
+      thumb = '<div class="tl-thumb"><img src="/media/incoming/' + encodeURIComponent(p.file_name) + '" alt="" onerror="this.parentElement.innerHTML=\'📸\'"></div>';
+    } else {
+      thumb = '<div class="tl-thumb" style="background:var(--s2);display:grid;place-items:center;font-size:20px">' + typeIcon + '</div>';
+    }
+    return '<div class="tl-item" data-post-id="' + p.id + '">' +
+      '<div class="tl-time">' + esc(schedStr) + '</div>' +
+      typeBadge + statusBadge + thumb +
+      '<div class="tl-body">' +
+        '<div class="tl-cap">' + esc(cap) + '</div>' +
+        '<div class="tl-meta">' +
+          (p.influencer_id ? '👤 ' + esc(p.influencer_id) + ' · ' : '') +
+          (p.score ? '⭐ ' + p.score + '/10 · ' : '') +
+          '#' + p.id +
+        '</div>' +
+      '</div>' +
+      '<div class="tl-actions">' +
+        '<button class="btn btn-s" onclick="editPostSchedule(' + p.id + ')" title="Schedule">🕐</button>' +
+        '<button class="btn btn-s" onclick="editPostCaption(' + p.id + ')" title="Edit caption">✏️</button>' +
+        '<button class="btn btn-s" onclick="postOneNow(' + p.id + ')" title="Post now">📤</button>' +
+        '<button class="btn btn-s" onclick="removePost(' + p.id + ')" title="Remove" style="color:var(--rose)">✕</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function fmtSchedule(iso) {
+  if (!iso) return '–';
+  var d = new Date(iso);
+  var now = new Date();
+  var diff = d - now;
+  // If in the past
+  if (diff < 0) return 'overdue';
+  // Today
+  var h = d.getHours(), m = d.getMinutes();
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  var hr = h % 12 || 12;
+  var time = hr + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+  if (d.toDateString() === now.toDateString()) return 'Today ' + time;
+  // Tomorrow
+  var tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+  if (d.toDateString() === tomorrow.toDateString()) return 'Tomorrow ' + time;
+  // Otherwise: date
+  var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+  return mon + ' ' + d.getDate() + ' ' + time;
+}
+
+async function postNow() {
+  const b = $('postBtn'); b.disabled = true; b.innerHTML = '<span class="spin"></span>Posting…';
+  try {
+    const r = await api('/post-now', { method: 'POST' });
+    toast(r.ok ? 'Posted!' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+  } catch { toast('Network error', 'err'); }
+  b.disabled = false; b.textContent = 'Post Now'; loadDash();
+}
+
+async function preview() {
+  const box = $('prevBox'); box.classList.remove('hidden');
+  box.innerHTML = '<span class="spin"></span> Generating caption…';
+  try {
+    const r = await api('/preview', { method: 'POST' });
+    box.textContent = r.error ? 'Error: ' + r.error : '📸 ' + r.file + '\n\n' + r.full;
+  } catch { box.textContent = 'Failed'; }
+}
+
+/* ─── queue (unified) ──────────────────────────────────── */
+let queueFilter = 'all';
+
+async function loadQ(filter) {
+  if (filter) queueFilter = filter;
+  // Highlight active filter button
+  ['qFAll','qFQueued','qFReady','qFPosted'].forEach(function(id) {
+    var btn = $(id);
+    if (!btn) return;
+    var f = id.replace('qF','').toLowerCase();
+    btn.style.background = (f === queueFilter) ? 'var(--s3)' : '';
+  });
+  try {
+    var url = '/unified-queue';
+    if (queueFilter !== 'all') url += '?status=' + queueFilter;
+    var items = await api(url);
+    $('qLabel').textContent = '— ' + items.length + ' item' + (items.length !== 1 ? 's' : '');
+    if (!items.length) {
+      $('qList').innerHTML = '';
+      $('qEmpty').classList.remove('hidden');
+      return;
+    }
+    $('qEmpty').classList.add('hidden');
+    $('qList').innerHTML = items.map(function(p, i) {
+      var schedStr = p.scheduled_at ? fmtSchedule(p.scheduled_at) : 'unscheduled';
+      var typeIcon = p.type === 'video' ? '🎬' : '📸';
+      var typeBadge = '<span class="tl-badge ' + p.type + '">' + p.type + '</span>';
+      var statusBadge = '<span class="tl-status ' + p.status + '">' + p.status + '</span>';
+      var cap = p.caption || p.full_caption || p.file_name || '–';
+      if (cap.length > 80) cap = cap.substring(0, 80) + '…';
+      var thumb = '';
+      if (p.thumb) {
+        thumb = '<div class="tl-thumb"><img src="' + p.thumb + '" alt=""></div>';
+      } else if (p.type === 'photo' && p.file_name) {
+        thumb = '<div class="tl-thumb"><img src="/media/incoming/' + encodeURIComponent(p.file_name) + '" alt="" onerror="this.parentElement.innerHTML=\'📸\'"></div>';
+      } else {
+        thumb = '<div class="tl-thumb" style="background:var(--s2);display:grid;place-items:center;font-size:20px">' + typeIcon + '</div>';
+      }
+      return '<div class="tl-item" draggable="true" data-post-id="' + p.id + '" data-idx="' + i + '">' +
+        '<div class="tl-time">' + esc(schedStr) + '</div>' +
+        typeBadge + statusBadge + thumb +
+        '<div class="tl-body">' +
+          '<div class="tl-cap">' + esc(cap) + '</div>' +
+          '<div class="tl-meta">' +
+            (p.influencer_id ? '👤 ' + esc(p.influencer_id) + ' · ' : '') +
+            (p.score ? '⭐ ' + p.score + '/10 · ' : '') +
+            '#' + p.id +
+          '</div>' +
+        '</div>' +
+        '<div class="tl-actions">' +
+          '<button class="btn btn-s" onclick="editPostSchedule(' + p.id + ')" title="Schedule">🕐</button>' +
+          '<button class="btn btn-s" onclick="editPostCaption(' + p.id + ')" title="Edit caption">✏️</button>' +
+          (p.status !== 'posted' ? '<button class="btn btn-s" onclick="postOneNow(' + p.id + ')" title="Post now">📤</button>' : '') +
+          '<button class="btn btn-s" onclick="removePost(' + p.id + ')" title="Remove" style="color:var(--rose)">✕</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    // Attach drag-and-drop
+    initDragDrop($('qList'));
+  } catch (e) { console.error(e); }
+}
+
+// upload
+const dz = $('dropZone'), fi = $('fileIn');
+dz.onclick = () => fi.click();
+dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); };
+dz.ondragleave = () => dz.classList.remove('over');
+dz.ondrop = e => { e.preventDefault(); dz.classList.remove('over'); upload(e.dataTransfer.files); };
+fi.onchange = () => { upload(fi.files); fi.value = ''; };
+
+async function upload(files) {
+  if (!files.length) return;
+  const fd = new FormData();
+  for (const f of files) fd.append('images', f);
+  dz.innerHTML = '<span class="spin"></span><p>Uploading…</p>';
+  try {
+    const r = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
+    var msg = r.ok ? 'Uploaded ' + r.count + ' file(s)' : (r.error || 'Fail');
+    if (r.ok && r.posts && r.posts.length) {
+      msg += ' — scheduled in queue';
+    }
+    toast(msg, r.ok ? 'ok' : 'err');
+  } catch { toast('Upload failed', 'err'); }
+  dz.innerHTML = '<div class="icon">📸</div><p>Drop images here or click to upload</p>';
+  loadQ();
+}
+
+/* ─── queue actions ────────────────────────────────────── */
+async function editPostSchedule(postId) {
+  var current = prompt('Enter new schedule (YYYY-MM-DD HH:MM) or leave blank to clear:');
+  if (current === null) return;
+  var scheduled_at = '';
+  if (current.trim()) {
+    var d = new Date(current.trim());
+    if (isNaN(d.getTime())) { toast('Invalid date format', 'err'); return; }
+    scheduled_at = d.toISOString();
+  }
+  try {
+    var r = await api('/unified-queue/' + postId + '/schedule', {
+      method: 'PUT', body: JSON.stringify({ scheduled_at: scheduled_at }),
+    });
+    toast(r.ok ? 'Schedule updated' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+    if (tab === 'dash') loadDash(); else loadQ();
+  } catch (e) { toast('Error', 'err'); }
+}
+
+async function editPostCaption(postId) {
+  try {
+    var post = await api('/unified-queue/' + postId);
+    if (!post || post.error) { toast('Not found', 'err'); return; }
+    var cap = prompt('Caption:', post.caption || '');
+    if (cap === null) return;
+    var hash = prompt('Hashtags:', post.hashtags || '');
+    if (hash === null) return;
+    var r = await api('/unified-queue/' + postId + '/caption', {
+      method: 'PUT', body: JSON.stringify({ caption: cap, hashtags: hash }),
+    });
+    toast(r.ok ? 'Caption updated' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+    if (tab === 'dash') loadDash(); else loadQ();
+  } catch (e) { toast('Error', 'err'); }
+}
+
+async function postOneNow(postId) {
+  if (!confirm('Post this item now?')) return;
+  try {
+    var r = await api('/unified-queue/' + postId + '/post-now', { method: 'POST' });
+    toast(r.ok ? 'Posted!' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+    if (tab === 'dash') loadDash(); else loadQ();
+  } catch (e) { toast('Error', 'err'); }
+}
+
+async function removePost(postId) {
+  if (!confirm('Remove this post from the queue?')) return;
+  try {
+    var r = await api('/unified-queue/' + postId, { method: 'DELETE' });
+    toast(r.ok !== false ? 'Removed' : (r.error || 'Failed'), r.ok !== false ? 'ok' : 'err');
+    if (tab === 'dash') loadDash(); else loadQ();
+  } catch (e) { toast('Error', 'err'); }
+}
+
+/* ─── drag and drop ───────────────────────────────────── */
+let dragSrcEl = null;
+
+function initDragDrop(container) {
+  var items = container.querySelectorAll('.tl-item[draggable]');
+  items.forEach(function(item) {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragover', handleDragOver);
+    item.addEventListener('dragenter', handleDragEnter);
+    item.addEventListener('dragleave', handleDragLeave);
+    item.addEventListener('drop', handleDrop);
+    item.addEventListener('dragend', handleDragEnd);
+    // Touch support
+    item.addEventListener('touchstart', handleTouchStart, { passive: false });
+    item.addEventListener('touchmove', handleTouchMove, { passive: false });
+    item.addEventListener('touchend', handleTouchEnd);
+  });
+}
+
+function handleDragStart(e) {
+  dragSrcEl = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.postId);
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+  e.preventDefault();
+  this.classList.add('drag-over');
+}
+
+function handleDragLeave() {
+  this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  if (dragSrcEl !== this) {
+    var container = this.parentElement;
+    var allItems = Array.from(container.querySelectorAll('.tl-item'));
+    var srcIdx = allItems.indexOf(dragSrcEl);
+    var destIdx = allItems.indexOf(this);
+    if (srcIdx < destIdx) {
+      container.insertBefore(dragSrcEl, this.nextSibling);
+    } else {
+      container.insertBefore(dragSrcEl, this);
+    }
+    // Save new order
+    saveQueueOrder(container);
+  }
+}
+
+function handleDragEnd() {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.tl-item').forEach(function(el) {
+    el.classList.remove('drag-over');
+  });
+}
+
+async function saveQueueOrder(container) {
+  var items = Array.from(container.querySelectorAll('.tl-item'));
+  var order = items.map(function(el, i) {
+    return { id: parseInt(el.dataset.postId), sort_order: i };
+  });
+  try {
+    await api('/unified-queue/reorder', {
+      method: 'PUT', body: JSON.stringify({ items: order }),
+    });
+    toast('Order saved');
+  } catch (e) { toast('Reorder failed', 'err'); }
+}
+
+// ── Touch drag support ──
+let touchDragEl = null;
+let touchClone = null;
+let touchStartY = 0;
+let touchDragging = false;
+
+function handleTouchStart(e) {
+  if (e.target.tagName === 'BUTTON') return; // Don't drag on buttons
+  touchDragEl = this;
+  touchStartY = e.touches[0].clientY;
+  touchDragging = false;
+}
+
+function handleTouchMove(e) {
+  if (!touchDragEl) return;
+  var dy = Math.abs(e.touches[0].clientY - touchStartY);
+  if (dy < 10 && !touchDragging) return; // threshold
+  e.preventDefault();
+  touchDragging = true;
+  touchDragEl.classList.add('dragging');
+
+  // Find element under touch
+  var touch = e.touches[0];
+  touchDragEl.style.pointerEvents = 'none';
+  var target = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchDragEl.style.pointerEvents = '';
+
+  // Remove all drag-over highlights
+  document.querySelectorAll('.tl-item.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+
+  if (target) {
+    var item = target.closest('.tl-item');
+    if (item && item !== touchDragEl) {
+      item.classList.add('drag-over');
+    }
+  }
+}
+
+function handleTouchEnd(e) {
+  if (!touchDragEl || !touchDragging) { touchDragEl = null; return; }
+  touchDragEl.classList.remove('dragging');
+
+  // Find drop target
+  var overEl = document.querySelector('.tl-item.drag-over');
+  if (overEl && overEl !== touchDragEl) {
+    var container = overEl.parentElement;
+    var allItems = Array.from(container.querySelectorAll('.tl-item'));
+    var srcIdx = allItems.indexOf(touchDragEl);
+    var destIdx = allItems.indexOf(overEl);
+    if (srcIdx < destIdx) {
+      container.insertBefore(touchDragEl, overEl.nextSibling);
+    } else {
+      container.insertBefore(touchDragEl, overEl);
+    }
+    saveQueueOrder(container);
+  }
+
+  document.querySelectorAll('.tl-item.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+  touchDragEl = null;
+  touchDragging = false;
+}
+
+/* ─── video ────────────────────────────────────────────── */
+
+// populate video time selects
+function populateVideoTimeSelects() {
+  const times = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const hr = h % 12 || 12;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      const label = hr + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+      times.push({ value: h + ':' + m, label, h, m });
+    }
+  }
+  ['vTime1','vTime2a','vTime2b','vTime3a','vTime3b','vTime3c','vTimeW'].forEach(id => {
+    const sel = $(id); if (!sel) return;
+    sel.innerHTML = times.map(t => '<option value="' + t.h + ':' + t.m + '">' + t.label + '</option>').join('');
+  });
+  setTimeVal('vTime1', '12:0');
+  setTimeVal('vTime2a', '10:0');
+  setTimeVal('vTime2b', '18:0');
+  setTimeVal('vTime3a', '9:0');
+  setTimeVal('vTime3b', '14:0');
+  setTimeVal('vTime3c', '20:0');
+  setTimeVal('vTimeW', '12:0');
+}
+populateVideoTimeSelects();
+
+function vFreqChanged() {
+  const v = $('vFreq').value;
+  ['vSchedOnce','vSchedTwice','vSchedThrice','vSchedWeekly','vSchedCustom'].forEach(id => $(id).classList.add('hidden'));
+  if (v === 'v_once') $('vSchedOnce').classList.remove('hidden');
+  else if (v === 'v_twice') $('vSchedTwice').classList.remove('hidden');
+  else if (v === 'v_thrice') $('vSchedThrice').classList.remove('hidden');
+  else if (v === 'v_weekly') $('vSchedWeekly').classList.remove('hidden');
+  else if (v === 'v_custom') $('vSchedCustom').classList.remove('hidden');
+}
+
+function buildVideoCron() {
+  const v = $('vFreq').value;
+  if (v === 'v_once') { const [h, m] = $('vTime1').value.split(':'); return m + ' ' + h + ' * * *'; }
+  if (v === 'v_twice') { const [h1, m1] = $('vTime2a').value.split(':'); const [h2] = $('vTime2b').value.split(':'); return m1 + ' ' + h1 + ',' + h2 + ' * * *'; }
+  if (v === 'v_thrice') { const [h1, m1] = $('vTime3a').value.split(':'); const [h2] = $('vTime3b').value.split(':'); const [h3] = $('vTime3c').value.split(':'); return m1 + ' ' + h1 + ',' + h2 + ',' + h3 + ' * * *'; }
+  if (v === 'v_weekly') { const [h, m] = $('vTimeW').value.split(':'); return m + ' ' + h + ' * * ' + $('vWeekday').value; }
+  if (v === 'v_custom') return $('vCron').value;
+  return v;
+}
+
+function vidCronToFreq(cron) {
+  const presets = { '*/30 * * * *':1, '0 */1 * * *':1, '0 */2 * * *':1, '0 */3 * * *':1, '0 */6 * * *':1, '0 */12 * * *':1 };
+  if (presets[cron]) return { freq: cron };
+  const parts = cron.split(' ');
+  if (parts.length !== 5) return { freq: 'v_custom', cron };
+  const [mn, hr, dom, mo, dow] = parts;
+  if (dow !== '*' && !hr.includes(',') && dom === '*') return { freq: 'v_weekly', day: dow, time: hr + ':' + mn };
+  if (!hr.includes(',') && !hr.includes('/') && dom === '*' && dow === '*' && !mn.includes('/')) return { freq: 'v_once', time: hr + ':' + mn };
+  if (hr.includes(',') && hr.split(',').length === 2 && dom === '*' && dow === '*') { const [h1, h2] = hr.split(','); return { freq: 'v_twice', time1: h1 + ':' + mn, time2: h2 + ':' + mn }; }
+  if (hr.includes(',') && hr.split(',').length === 3 && dom === '*' && dow === '*') { const [h1, h2, h3] = hr.split(','); return { freq: 'v_thrice', time1: h1 + ':' + mn, time2: h2 + ':' + mn, time3: h3 + ':' + mn }; }
+  return { freq: 'v_custom', cron };
+}
+
+function togVidDashEn() {
+  const t = $('togVidDash'), on = t.classList.toggle('on');
+  $('togVidDashLbl').textContent = on ? 'Enabled' : 'Disabled';
+}
+
+async function saveVideoSched() {
+  const body = {
+    videoEnabled: $('togVidDash').classList.contains('on'),
+    videoCronSchedule: buildVideoCron(),
+  };
+  const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
+  toast(r.ok ? 'Video schedule saved!' : 'Error', r.ok ? 'ok' : 'err');
+  loadVideo();
+}
+
+async function loadVideo() {
+  try {
+    const [st, teamList, cfg] = await Promise.all([api('/video/status'), api('/team'), api('/config')]);
+    $('vQ').textContent = st.queue;
+    $('vS').textContent = cronNice(st.scheduler.cron);
+    $('vL').textContent = ago(st.scheduler.lastRun);
+    $('vGen').textContent = st.scheduler.generating ? 'generating…' : (st.scheduler.posting ? 'posting…' : 'idle');
+
+    // scheduler toggle
+    const vidOn = !!cfg.videoEnabled;
+    $('togVidDash').classList.toggle('on', vidOn);
+    $('togVidDashLbl').textContent = vidOn ? 'Enabled' : 'Disabled';
+
+    // scheduler frequency
+    const parsed = vidCronToFreq(cfg.videoCronSchedule || '0 12 * * *');
+    $('vFreq').value = parsed.freq;
+    if (parsed.freq === 'v_once') setTimeVal('vTime1', parsed.time);
+    if (parsed.freq === 'v_twice') { setTimeVal('vTime2a', parsed.time1); setTimeVal('vTime2b', parsed.time2); }
+    if (parsed.freq === 'v_thrice') { setTimeVal('vTime3a', parsed.time1); setTimeVal('vTime3b', parsed.time2); setTimeVal('vTime3c', parsed.time3); }
+    if (parsed.freq === 'v_weekly') { $('vWeekday').value = parsed.day; setTimeVal('vTimeW', parsed.time); }
+    if (parsed.freq === 'v_custom') $('vCron').value = parsed.cron || cfg.videoCronSchedule;
+    vFreqChanged();
+
+    // populate influencer dropdown
+    const sel = $('vInf');
+    sel.innerHTML = '<option value="">Random</option>' +
+      teamList.map(i => '<option value="' + i.id + '">' + esc(i.name) + '</option>').join('');
+
+    // populate game image dropdown (with metadata titles)
+    const imgs = await api('/game-images');
+    const games = await api('/games');
+    var gMap = {};
+    games.forEach(function(g) { gMap[g.image_filename] = g; });
+    const gSel = $('vGameImg');
+    gSel.innerHTML = '<option value="">Random from library</option>' +
+      imgs.map(function(img) {
+        var g = gMap[img.name];
+        var label = g && g.title ? g.title + ' (' + (g.console || img.name) + ')' : img.name;
+        return '<option value="' + esc(img.name) + '" data-game-id="' + (g ? g.id : '') + '">' + esc(label) + '</option>';
+      }).join('');
+
+    // load video queue
+    const vq = await api('/video/queue');
+    if (!vq.length) {
+      $('vqList').innerHTML = '';
+      $('vqEmpty').classList.remove('hidden');
+    } else {
+      $('vqEmpty').classList.add('hidden');
+      $('vqList').innerHTML = vq.map(v =>
+        '<div class="hrow">' +
+          '<div class="icon">🎬</div>' +
+          '<div class="body">' +
+            '<div class="cap" style="font-weight:600">' + esc(v.name) + '</div>' +
+            '<div class="meta">' + v.sizeMB + ' MB · ' + ago(v.mtime) + '</div>' +
+          '</div>' +
+          '<button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="delVideoQ(\'' + esc(v.name) + '\')">&times;</button>' +
+        '</div>'
+      ).join('');
+    }
+
+    // load game images grid
+    loadGameImages(imgs);
+  } catch (e) { console.error(e); }
+}
+
+function getVideoBody() {
+  const body = {};
+  if ($('vInf').value) body.influencerId = $('vInf').value;
+  if ($('vBg').value) body.background = $('vBg').value;
+  if ($('vStyle').value) body.style = $('vStyle').value;
+  if ($('vTopic').value) body.topic = $('vTopic').value;
+  if ($('vGameImg').value) {
+    body.gameImage = $('vGameImg').value;
+    // Also pass gameId if available from the data attribute
+    var sel = $('vGameImg');
+    var opt = sel.options[sel.selectedIndex];
+    if (opt && opt.dataset.gameId) body.gameId = opt.dataset.gameId;
+  }
+  if ($('vOutfit').value) body.outfit = $('vOutfit').value;
+  if ($('vCustomPrompt').value.trim()) body.customPrompt = $('vCustomPrompt').value.trim();
+  return body;
+}
+
+async function previewScript() {
+  const btn = $('vPreviewBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing…';
+  try {
+    const r = await api('/video/preview-script', { method: 'POST', body: JSON.stringify(getVideoBody()) });
+    if (r.ok) {
+      $('vScriptEdit').value = r.script;
+      $('vScriptBox').classList.remove('hidden');
+      var extra = '';
+      if (r.score) extra += ' | Score: ' + r.score + '/10';
+      if (r.firstComment) extra += ' | First comment ready';
+      toast('Script ready' + extra + ' — edit if you want, then generate', 'ok');
+    } else {
+      toast(r.error || 'Failed', 'err');
+    }
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+  btn.disabled = false; btn.textContent = '📝 Preview Script';
+}
+
+async function generateFromScript() {
+  const script = $('vScriptEdit').value.trim();
+  if (!script) { toast('Script is empty', 'err'); return; }
+  const btn = $('vGenBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Generating…';
+  const box = $('vGenStatus'); box.classList.remove('hidden');
+  box.innerHTML = '<span class="spin"></span> Sending script to Veo 3.1… this may take 2-5 minutes.';
+  try {
+    const body = getVideoBody();
+    body.customPrompt = script;
+    const r = await api('/video/generate', { method: 'POST', body: JSON.stringify(body) });
+    if (r.ok) {
+      var info = '✅ Generated! ' + r.filename + ' (' + r.influencer + ')';
+      if (r.score) info += '\nScore: ' + r.score + '/10';
+      info += '\n\nCaption: ' + (r.caption || '');
+      if (r.firstComment) info += '\n\nFirst Comment: ' + r.firstComment;
+      box.textContent = info;
+      toast('Video generated!', 'ok');
+      $('vScriptBox').classList.add('hidden');
+    } else {
+      box.textContent = '❌ ' + (r.error || 'Failed');
+      toast(r.error || 'Failed', 'err');
+    }
+  } catch (e) { box.textContent = '❌ ' + e.message; toast('Error', 'err'); }
+  btn.disabled = false; btn.textContent = '🎬 Generate Video';
+  loadVideo();
+}
+
+async function generateVideo() {
+  const btn = $('vGenBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Generating…';
+  const box = $('vGenStatus'); box.classList.remove('hidden');
+  box.innerHTML = '<span class="spin"></span> Gemini is writing a script, then Veo 3.1 will generate the video. This may take 2-5 minutes…';
+  try {
+    const r = await api('/video/generate', { method: 'POST', body: JSON.stringify(getVideoBody()) });
+    if (r.ok) {
+      var genInfo = '✅ Generated! ' + r.filename + ' (' + r.influencer + ')';
+      if (r.score) genInfo += '\nScore: ' + r.score + '/10';
+      genInfo += '\n\nPrompt: ' + (r.prompt || '') + '\n\nCaption: ' + (r.caption || '');
+      if (r.firstComment) genInfo += '\n\nFirst Comment: ' + r.firstComment;
+      box.textContent = genInfo;
+      toast('Video generated!', 'ok');
+    } else {
+      box.textContent = '❌ ' + (r.error || 'Failed');
+      toast(r.error || 'Failed', 'err');
+    }
+  } catch (e) { box.textContent = '❌ ' + e.message; toast('Error', 'err'); }
+  btn.disabled = false; btn.textContent = '🎬 Generate Video';
+  loadVideo();
+}
+
+async function postVideo() {
+  const btn = $('vPostBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Posting…';
+  try {
+    const r = await api('/video/post-now', { method: 'POST' });
+    toast(r.ok ? 'Reel posted!' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+  } catch { toast('Network error', 'err'); }
+  btn.disabled = false; btn.textContent = '📤 Post Next Reel';
+  loadVideo();
+}
+
+async function delVideoQ(name) {
+  if (!confirm('Remove "' + name + '"?')) return;
+  await api('/video/queue/' + encodeURIComponent(name), { method: 'DELETE' });
+  toast('Removed'); loadVideo();
+}
+
+// ── game images ──────────────────────────────────────────
+async function loadGameImages(preloaded) {
+  try {
+    const [imgs, games] = await Promise.all([
+      preloaded || api('/game-images'),
+      api('/games'),
+    ]);
+    // Index games by image_filename for quick lookup
+    var gameMap = {};
+    games.forEach(function(g) { gameMap[g.image_filename] = g; });
+
+    if (!imgs.length) {
+      $('gameGrid').innerHTML = '';
+      $('gameEmpty').classList.remove('hidden');
+    } else {
+      $('gameEmpty').classList.add('hidden');
+      $('gameGrid').innerHTML = imgs.map(function(img) {
+        var g = gameMap[img.name];
+        var meta = '';
+        if (g && g.ai_extracted) {
+          meta = '<div style="font-size:11px;color:var(--t2);padding:2px 4px;line-height:1.3">' +
+            '<b>' + esc(g.title || 'Unknown') + '</b>' +
+            (g.console ? ' <span style="color:var(--t3)">(' + esc(g.console) + ')</span>' : '') +
+            (g.genre_name ? '<br>' + esc(g.genre_name) : '') +
+            '</div>';
+        } else if (g && !g.ai_extracted) {
+          meta = '<div style="font-size:11px;padding:2px 4px">' +
+            '<span style="color:var(--amber)">⏳ Extracting...</span> ' +
+            '<button class="btn btn-s" style="font-size:10px;padding:1px 6px" onclick="event.stopPropagation();extractGame(' + g.id + ')">Re-extract</button>' +
+            '</div>';
+        }
+        return '<div class="img" style="cursor:pointer" onclick="showGameDetail(' + (g ? g.id : 0) + ')">' +
+          '<img src="' + img.url + '" alt="">' +
+          '<button class="x" onclick="event.stopPropagation();delGameImg(\'' + esc(img.name) + '\')">&times;</button>' +
+          '<div class="nm">' + esc(img.name) + '</div>' +
+          meta +
+        '</div>';
+      }).join('');
+    }
+  } catch (e) { console.error(e); }
+}
+
+// game image upload drag/drop
+(function() {
+  const dz2 = $('gameDropZone'), fi2 = $('gameFileIn');
+  dz2.onclick = () => fi2.click();
+  dz2.ondragover = e => { e.preventDefault(); dz2.classList.add('over'); };
+  dz2.ondragleave = () => dz2.classList.remove('over');
+  dz2.ondrop = e => { e.preventDefault(); dz2.classList.remove('over'); uploadGameImgs(e.dataTransfer.files); };
+  fi2.onchange = () => { uploadGameImgs(fi2.files); fi2.value = ''; };
+})();
+
+async function uploadGameImgs(files) {
+  if (!files.length) return;
+  const fd = new FormData();
+  for (const f of files) fd.append('images', f);
+  try {
+    const r = await fetch('/api/game-images', { method: 'POST', body: fd }).then(r => r.json());
+    toast(r.ok ? 'Uploaded ' + r.count + ' image(s)' : 'Failed', r.ok ? 'ok' : 'err');
+    loadGameImages();
+  } catch { toast('Upload failed', 'err'); }
+}
+
+async function delGameImg(name) {
+  if (!confirm('Remove "' + name + '"?')) return;
+  await api('/game-images/' + encodeURIComponent(name), { method: 'DELETE' });
+  toast('Removed'); loadGameImages();
+}
+
+async function extractGame(gameId) {
+  toast('Extracting metadata...');
+  try {
+    var r = await api('/games/' + gameId + '/extract', { method: 'POST' });
+    if (r.ok) {
+      toast('Extracted: ' + (r.game?.title || 'Done'));
+      loadGameImages();
+    } else {
+      toast(r.error || 'Extraction failed', 'err');
+    }
+  } catch (e) { toast('Extraction failed', 'err'); }
+}
+
+async function showGameDetail(gameId) {
+  if (!gameId) return;
+  try {
+    var g = await api('/games/' + gameId);
+    if (!g || g.error) { toast('Game not found', 'err'); return; }
+    var info = [
+      '<h4 style="margin:0 0 8px">' + esc(g.title || 'Unknown Title') + '</h4>',
+      '<div style="font-size:13px;color:var(--t2);line-height:1.8">',
+      '<b>Console:</b> ' + esc(g.console || '-'),
+      '<br><b>Genre:</b> ' + esc(g.genre_name || '-'),
+      '<br><b>Studio:</b> ' + esc(g.studio || '-'),
+      '<br><b>Year:</b> ' + esc(g.year || '-'),
+      '<br><b>Lead Artist:</b> ' + esc(g.lead_artist || '-'),
+      '<br><b>Lead Creative:</b> ' + esc(g.lead_creative || '-'),
+      '<br><b>Lead Musician:</b> ' + esc(g.lead_musician || '-'),
+      '<br><b>AI Extracted:</b> ' + (g.ai_extracted ? '✅ Yes' : '❌ No'),
+      '</div>',
+      '<div class="btns" style="margin-top:12px">',
+      '<button class="btn btn-s" onclick="extractGame(' + g.id + ')">🔄 Re-extract</button>',
+      '<button class="btn btn-s" onclick="editGame(' + g.id + ')">✏️ Edit</button>',
+      '</div>',
+    ].join('');
+    // Use a simple alert-style overlay (inline for SPA simplicity)
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--card);border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3)';
+    card.innerHTML = info;
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+  } catch (e) { console.error(e); }
+}
+
+async function editGame(gameId) {
+  // Close any overlay
+  document.querySelectorAll('div[style*="position:fixed"][style*="inset:0"]').forEach(function(el) { el.remove(); });
+  try {
+    var g = await api('/games/' + gameId);
+    if (!g) return;
+    var title = prompt('Title:', g.title || '');
+    if (title === null) return;
+    var console_ = prompt('Console:', g.console || '');
+    if (console_ === null) return;
+    var studio = prompt('Studio:', g.studio || '');
+    if (studio === null) return;
+    var year = prompt('Year:', g.year || '');
+    if (year === null) return;
+    await api('/games/' + gameId, {
+      method: 'PUT',
+      body: JSON.stringify({ title: title, console: console_, studio: studio, year: year }),
+    });
+    toast('Updated'); loadGameImages();
+  } catch (e) { toast('Update failed', 'err'); }
+}
+
+/* ─── history ──────────────────────────────────────────── */
+async function loadH() {
+  const hi = await api('/history');
+  if (!hi.length) { $('hList').innerHTML = ''; $('hEmpty').classList.remove('hidden'); return; }
+  $('hEmpty').classList.add('hidden');
+  $('hList').innerHTML = hi.map(h =>
+    `<div class="hrow">` +
+      `<div class="icon">${h.status === 'success' ? '✅' : h.status === 'generated' ? '🎬' : '❌'}</div>` +
+      `<div class="body"><div class="cap">${esc(h.caption || h.error || '–')}</div>` +
+      `<div class="meta">${h.type === 'video' ? '🎬 ' : '📸 '}${esc(h.filename || '')} · ${ago(h.timestamp)}</div></div>` +
+      `<span class="badge ${h.status === 'success' || h.status === 'generated' ? 'ok' : 'err'}">${h.status}</span>` +
+    `</div>`
+  ).join('');
+}
+
+/* ─── settings ─────────────────────────────────────────── */
+
+// populate time dropdowns with 30-min intervals
+function populateTimeSelects() {
+  const times = [];
+  for (let h = 0; h < 24; h++) {
+    for (let m of [0, 30]) {
+      const hr = h % 12 || 12;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      const label = hr + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+      times.push({ value: h + ':' + m, label, h, m });
+    }
+  }
+  ['cTime1','cTime2a','cTime2b','cTime3a','cTime3b','cTime3c','cTimeW'].forEach(id => {
+    const sel = $(id);
+    if (!sel) return;
+    sel.innerHTML = times.map(t => '<option value="' + t.h + ':' + t.m + '">' + t.label + '</option>').join('');
+  });
+  // sensible defaults
+  setTimeVal('cTime1', '9:0');
+  setTimeVal('cTime2a', '10:0');
+  setTimeVal('cTime2b', '19:0');
+  setTimeVal('cTime3a', '9:0');
+  setTimeVal('cTime3b', '14:0');
+  setTimeVal('cTime3c', '20:0');
+  setTimeVal('cTimeW', '9:0');
+}
+function setTimeVal(id, val) { const el = $(id); if (el) el.value = val; }
+
+function freqChanged() {
+  const v = $('cFreq').value;
+  ['schedOnce','schedTwice','schedThrice','schedWeekly','schedCustom'].forEach(id => $(id).classList.add('hidden'));
+  if (v === 'once') $('schedOnce').classList.remove('hidden');
+  else if (v === 'twice') $('schedTwice').classList.remove('hidden');
+  else if (v === 'thrice') $('schedThrice').classList.remove('hidden');
+  else if (v === 'weekly') $('schedWeekly').classList.remove('hidden');
+  else if (v === 'custom') $('schedCustom').classList.remove('hidden');
+}
+
+function buildCron() {
+  const v = $('cFreq').value;
+  if (v === 'once') {
+    const [h, m] = $('cTime1').value.split(':');
+    return m + ' ' + h + ' * * *';
+  }
+  if (v === 'twice') {
+    const [h1, m1] = $('cTime2a').value.split(':');
+    const [h2, m2] = $('cTime2b').value.split(':');
+    if (m1 === m2) return m1 + ' ' + h1 + ',' + h2 + ' * * *';
+    return m1 + ' ' + h1 + ' * * *';
+  }
+  if (v === 'thrice') {
+    const [h1, m1] = $('cTime3a').value.split(':');
+    const [h2] = $('cTime3b').value.split(':');
+    const [h3] = $('cTime3c').value.split(':');
+    return m1 + ' ' + h1 + ',' + h2 + ',' + h3 + ' * * *';
+  }
+  if (v === 'weekly') {
+    const [h, m] = $('cTimeW').value.split(':');
+    return m + ' ' + h + ' * * ' + $('cWeekday').value;
+  }
+  if (v === 'custom') return $('cCron').value;
+  return v; // preset cron string
+}
+
+function cronToFreq(cron) {
+  const presets = {
+    '*/30 * * * *': '*/30 * * * *',
+    '0 */1 * * *': '0 */1 * * *',
+    '0 */2 * * *': '0 */2 * * *',
+    '0 */3 * * *': '0 */3 * * *',
+    '0 */6 * * *': '0 */6 * * *',
+    '0 */12 * * *': '0 */12 * * *',
+  };
+  if (presets[cron]) return { freq: cron };
+
+  const parts = cron.split(' ');
+  if (parts.length !== 5) return { freq: 'custom', cron };
+  const [mn, hr, dom, mo, dow] = parts;
+
+  // weekly: specific dow
+  if (dow !== '*' && !hr.includes(',') && dom === '*') {
+    return { freq: 'weekly', day: dow, time: hr + ':' + mn };
+  }
+  // once a day: single hour, no commas
+  if (!hr.includes(',') && !hr.includes('/') && dom === '*' && dow === '*' && !mn.includes('/')) {
+    return { freq: 'once', time: hr + ':' + mn };
+  }
+  // twice a day
+  if (hr.includes(',') && hr.split(',').length === 2 && dom === '*' && dow === '*') {
+    const [h1, h2] = hr.split(',');
+    return { freq: 'twice', time1: h1 + ':' + mn, time2: h2 + ':' + mn };
+  }
+  // three times a day
+  if (hr.includes(',') && hr.split(',').length === 3 && dom === '*' && dow === '*') {
+    const [h1, h2, h3] = hr.split(',');
+    return { freq: 'thrice', time1: h1 + ':' + mn, time2: h2 + ':' + mn, time3: h3 + ':' + mn };
+  }
+  return { freq: 'custom', cron };
+}
+
+populateTimeSelects();
+
+async function loadCfg() {
+  const c = await api('/config');
+  // parse cron into dropdown state
+  const parsed = cronToFreq(c.cronSchedule || '0 */6 * * *');
+  $('cFreq').value = parsed.freq;
+  if (parsed.freq === 'once') setTimeVal('cTime1', parsed.time);
+  if (parsed.freq === 'twice') { setTimeVal('cTime2a', parsed.time1); setTimeVal('cTime2b', parsed.time2); }
+  if (parsed.freq === 'thrice') { setTimeVal('cTime3a', parsed.time1); setTimeVal('cTime3b', parsed.time2); setTimeVal('cTime3c', parsed.time3); }
+  if (parsed.freq === 'weekly') { $('cWeekday').value = parsed.day; setTimeVal('cTimeW', parsed.time); }
+  if (parsed.freq === 'custom') $('cCron').value = parsed.cron || c.cronSchedule;
+  freqChanged();
+
+  $('cIgTok').value = c.instagramToken || '';
+  $('cIgId').value = c.instagramAccountId || '';
+  $('cUrl').value = c.publicUrl || '';
+  $('cPrompt').value = c.captionPrompt || '';
+  $('cHCnt').value = c.hashtagCount || 30;
+  $('cHStyle').value = c.hashtagStyle || 'mixed';
+  $('cIn').value = c.mediaFolder || '/data/incoming';
+  $('cOut').value = c.postedFolder || '/data/posted';
+  const on = !!c.enabled;
+  $('togOn').classList.toggle('on', on);
+  $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
+
+  // video settings (just API key + defaults, scheduler is in Video tab)
+  $('cGemKey').value = c.geminiApiKey || '';
+  $('cVidBg').value = c.videoBackground || '';
+  $('cVidDur').value = c.videoDuration || 8;
+
+  // populate influencer dropdown in video settings
+  try {
+    const teamList = await api('/team');
+    const sel = $('cVidInf');
+    sel.innerHTML = '<option value="">Random</option>' +
+      teamList.map(i => '<option value="' + i.id + '"' + (i.id === c.videoInfluencerId ? ' selected' : '') + '>' + esc(i.name) + '</option>').join('');
+  } catch (e) { console.error(e); }
+
+  // load genre taxonomy
+  loadGenres();
+}
+function togEn() {
+  const t = $('togOn'), on = t.classList.toggle('on');
+  $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
+}
+
+async function saveCfg() {
+  const body = {
+    cronSchedule: buildCron(),
+    instagramToken: $('cIgTok').value,
+    instagramAccountId: $('cIgId').value,
+    publicUrl: $('cUrl').value,
+    captionPrompt: $('cPrompt').value,
+    hashtagCount: parseInt($('cHCnt').value) || 30,
+    hashtagStyle: $('cHStyle').value,
+    mediaFolder: $('cIn').value,
+    postedFolder: $('cOut').value,
+    enabled: $('togOn').classList.contains('on'),
+    // video (just API key + defaults)
+    geminiApiKey: $('cGemKey').value,
+    videoBackground: $('cVidBg').value,
+    videoDuration: parseInt($('cVidDur').value) || 8,
+    videoInfluencerId: $('cVidInf').value,
+  };
+  const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
+  toast(r.ok ? 'Saved!' : 'Error', r.ok ? 'ok' : 'err');
+  loadDash();
+}
+async function verifyIg() {
+  try {
+    const r = await api('/verify-ig', { method: 'POST' });
+    toast(r.valid ? 'Connected! (' + (r.info?.name || r.info?.id) + ')' : 'Invalid: ' + r.error, r.valid ? 'ok' : 'err');
+  } catch { toast('Failed', 'err'); }
+}
+
+/* ─── team ─────────────────────────────────────────────── */
+let currentInfId = null;
+
+async function loadTeam() {
+  try {
+    const list = await api('/team');
+    const el = $('teamList');
+    const empty = $('teamEmpty');
+    $('infForm').classList.add('hidden');
+    $('infDetail').classList.add('hidden');
+    if (!list.length) { el.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    el.innerHTML = list.map(function(inf) {
+      return '<div class="hrow" style="cursor:pointer" onclick="showInfDetail(\'' + inf.id + '\')">' +
+        '<div class="icon">🎭</div>' +
+        '<div class="body">' +
+          '<div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
+          '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div>' +
+        '</div>' +
+        '<span class="badge ok">' + (inf.photos || []).length + ' photos</span>' +
+      '</div>';
+    }).join('');
+  } catch (e) { console.error(e); }
+}
+
+function showAddInf() {
+  $('infEditId').value = ''; $('infName').value = ''; $('infPersonality').value = '';
+  $('infQuirks').value = ''; $('infExpressions').value = ''; $('infOutfit').value = '';
+  $('infIntroPhrase').value = ''; $('infGameTastes').value = ''; $('infFashionStyle').value = '';
+  $('infBoyfriend').value = ''; $('infPicture').value = ''; $('infRoom').value = '';
+  $('infFormTitle').textContent = 'Add Influencer';
+  $('infForm').classList.remove('hidden'); $('infDetail').classList.add('hidden');
+}
+
+function cancelInf() { $('infForm').classList.add('hidden'); }
+
+async function saveInf() {
+  var id = $('infEditId').value;
+  var body = {
+    name: $('infName').value, personality: $('infPersonality').value,
+    quirks: $('infQuirks').value, expressions: $('infExpressions').value,
+    outfit: $('infOutfit').value, intro_phrase: $('infIntroPhrase').value,
+    game_tastes: $('infGameTastes').value, fashion_style: $('infFashionStyle').value,
+    boyfriend: $('infBoyfriend').value, picture: $('infPicture').value, room: $('infRoom').value,
+  };
+  if (id) {
+    await api('/team/' + id, { method: 'PUT', body: JSON.stringify(body) });
+    toast('Updated!'); showInfDetail(id);
+  } else {
+    var inf = await api('/team', { method: 'POST', body: JSON.stringify(body) });
+    toast('Added!'); showInfDetail(inf.id);
+  }
+  $('infForm').classList.add('hidden'); loadTeam();
+}
+
+async function showInfDetail(id) {
+  currentInfId = id;
+  var inf = await api('/team/' + id);
+  if (!inf || inf.error) { toast('Not found', 'err'); return; }
+  $('infDetailName').textContent = inf.name;
+  $('infDetailPersonality').textContent = inf.personality || '-';
+  $('infDetailQuirks').textContent = inf.quirks || '-';
+  $('infDetailExpressions').textContent = inf.expressions || '-';
+  $('infDetailOutfit').textContent = inf.outfit || '-';
+  $('infDetailIntroPhrase').textContent = inf.intro_phrase || '-';
+  $('infDetailGameTastes').textContent = inf.game_tastes || '-';
+  $('infDetailFashionStyle').textContent = inf.fashion_style || '-';
+  $('infDetailBoyfriend').textContent = inf.boyfriend || '-';
+  $('infDetailPicture').textContent = inf.picture || '-';
+  $('infDetailRoom').textContent = inf.room || '-';
+  $('infDetail').classList.remove('hidden'); $('infForm').classList.add('hidden');
+  var pe = $('infPhotos');
+  if (inf.photos && inf.photos.length) {
+    pe.innerHTML = inf.photos.map(function(p) {
+      return '<div class="img"><img src="/api/team/' + id + '/photos/' + p + '" alt="">' +
+        '<button class="x" onclick="event.stopPropagation();delInfPhoto(\'' + p + '\')">&times;</button>' +
+        '<div class="nm">' + esc(p) + '</div></div>';
+    }).join('');
+  } else { pe.innerHTML = '<p style="color:var(--t3);font-size:13px">No photos yet</p>'; }
+  var dz2 = $('infDropZone'), fi2 = $('infFileIn');
+  dz2.onclick = function() { fi2.click(); };
+  dz2.ondragover = function(e) { e.preventDefault(); dz2.classList.add('over'); };
+  dz2.ondragleave = function() { dz2.classList.remove('over'); };
+  dz2.ondrop = function(e) { e.preventDefault(); dz2.classList.remove('over'); uploadInfPhotos(e.dataTransfer.files); };
+  fi2.onchange = function() { uploadInfPhotos(fi2.files); fi2.value = ''; };
+}
+
+async function uploadInfPhotos(files) {
+  if (!files.length || !currentInfId) return;
+  var fd = new FormData();
+  for (var i = 0; i < files.length; i++) fd.append('photos', files[i]);
+  try {
+    var r = await fetch('/api/team/' + currentInfId + '/photos', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+    toast(r.ok ? 'Uploaded ' + r.files.length + ' photo(s)' : 'Failed', r.ok ? 'ok' : 'err');
+    showInfDetail(currentInfId);
+  } catch(e) { toast('Upload failed', 'err'); }
+}
+
+async function delInfPhoto(fn) {
+  if (!confirm('Remove this photo?')) return;
+  await api('/team/' + currentInfId + '/photos/' + fn, { method: 'DELETE' });
+  toast('Removed'); showInfDetail(currentInfId);
+}
+
+function editInf() {
+  $('infEditId').value = currentInfId;
+  $('infName').value = $('infDetailName').textContent;
+  $('infPersonality').value = $('infDetailPersonality').textContent === '-' ? '' : $('infDetailPersonality').textContent;
+  $('infQuirks').value = $('infDetailQuirks').textContent === '-' ? '' : $('infDetailQuirks').textContent;
+  $('infExpressions').value = $('infDetailExpressions').textContent === '-' ? '' : $('infDetailExpressions').textContent;
+  $('infOutfit').value = $('infDetailOutfit').textContent === '-' ? '' : $('infDetailOutfit').textContent;
+  $('infIntroPhrase').value = $('infDetailIntroPhrase').textContent === '-' ? '' : $('infDetailIntroPhrase').textContent;
+  $('infGameTastes').value = $('infDetailGameTastes').textContent === '-' ? '' : $('infDetailGameTastes').textContent;
+  $('infFashionStyle').value = $('infDetailFashionStyle').textContent === '-' ? '' : $('infDetailFashionStyle').textContent;
+  $('infBoyfriend').value = $('infDetailBoyfriend').textContent === '-' ? '' : $('infDetailBoyfriend').textContent;
+  $('infPicture').value = $('infDetailPicture').textContent === '-' ? '' : $('infDetailPicture').textContent;
+  $('infRoom').value = $('infDetailRoom').textContent === '-' ? '' : $('infDetailRoom').textContent;
+  $('infFormTitle').textContent = 'Edit ' + $('infDetailName').textContent;
+  $('infForm').classList.remove('hidden');
+}
+
+async function deleteInf() {
+  if (!confirm('Delete this influencer and all their photos?')) return;
+  await api('/team/' + currentInfId, { method: 'DELETE' });
+  toast('Deleted'); currentInfId = null;
+  $('infDetail').classList.add('hidden'); loadTeam();
+}
+
+/* ─── influencer picture/room pickers ─────────────────── */
+function pickInfPicture() {
+  var id = $('infEditId').value;
+  if (!id) { toast('Save influencer first, then edit to pick picture', 'err'); return; }
+  pickFromPhotos(id, function(fn) { $('infPicture').value = fn; });
+}
+function pickInfRoom() {
+  var id = $('infEditId').value;
+  if (!id) { toast('Save influencer first, then edit to pick room', 'err'); return; }
+  pickFromPhotos(id, function(fn) { $('infRoom').value = fn; });
+}
+async function pickFromPhotos(infId, cb) {
+  var inf = await api('/team/' + infId);
+  if (!inf.photos || !inf.photos.length) { toast('Upload photos first', 'err'); return; }
+  var pick = prompt('Available photos:\\n' + inf.photos.join('\\n') + '\\n\\nType the filename:');
+  if (pick && inf.photos.includes(pick)) cb(pick);
+  else if (pick) toast('Photo not found in list', 'err');
+}
+
+/* ─── genres ──────────────────────────────────────────── */
+async function loadGenres() {
+  try {
+    var list = await api('/genres');
+    var el = $('genreList');
+    if (!list.length) { el.innerHTML = '<p style="color:var(--t3);font-size:13px">No genres yet.</p>'; return; }
+    el.innerHTML = list.map(function(g) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--bdr)">' +
+        '<span style="flex:1;font-size:13px">' + esc(g.name) + '</span>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:2px 8px" onclick="editGenre(' + g.id + ',\'' + esc(g.name).replace(/'/g, "\\'") + '\')">✏️</button>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:2px 8px;color:var(--rose)" onclick="delGenre(' + g.id + ')">✕</button>' +
+      '</div>';
+    }).join('');
+  } catch (e) { console.error(e); }
+}
+async function addGenre() {
+  var name = $('genreNewName').value.trim();
+  if (!name) return;
+  var r = await api('/genres', { method: 'POST', body: JSON.stringify({ name: name }) });
+  if (r.error) { toast(r.error, 'err'); return; }
+  toast('Added genre: ' + name); $('genreNewName').value = '';
+  loadGenres();
+}
+async function editGenre(id, oldName) {
+  var name = prompt('Rename genre:', oldName);
+  if (!name || name === oldName) return;
+  var r = await api('/genres/' + id, { method: 'PUT', body: JSON.stringify({ name: name }) });
+  if (r.error) { toast(r.error, 'err'); return; }
+  toast('Renamed'); loadGenres();
+}
+async function delGenre(id) {
+  if (!confirm('Delete this genre?')) return;
+  var r = await api('/genres/' + id, { method: 'DELETE' });
+  if (r.error) { toast(r.error, 'err'); return; }
+  toast('Deleted'); loadGenres();
+}
+
+/* ─── settings vertical tabs ──────────────────────────── */
+function cfgTab(name) {
+  document.querySelectorAll('#cfgNav button').forEach(function(b) { b.classList.remove('on'); });
+  document.querySelectorAll('.vtabs-body .vtab').forEach(function(t) { t.classList.remove('on'); });
+  event.target.classList.add('on');
+  var el = $('cfg-' + name);
+  if (el) el.classList.add('on');
+}
+
+/* ─── analytics ───────────────────────────────────────── */
+let anView = 'game';
+
+async function loadAnalytics() {
+  try {
+    var sum = await api('/analytics/summary');
+    $('anSummary').innerHTML =
+      '<div class="an-card"><b>' + sum.total + '</b><small>total posts</small></div>' +
+      '<div class="an-card"><b>' + sum.posted + '</b><small>posted</small></div>' +
+      '<div class="an-card"><b>' + sum.failed + '</b><small>failed</small></div>' +
+      '<div class="an-card"><b>' + sum.successRate + '%</b><small>success rate</small></div>' +
+      '<div class="an-card"><b>' + sum.photos + '</b><small>photos</small></div>' +
+      '<div class="an-card"><b>' + sum.videos + '</b><small>videos</small></div>' +
+      (sum.avgScore ? '<div class="an-card"><b>' + sum.avgScore + '</b><small>avg score</small></div>' : '');
+    loadAnView(anView);
+  } catch (e) { console.error(e); }
+}
+
+async function loadAnView(view) {
+  anView = view;
+  // Highlight active tab
+  document.querySelectorAll('#anTabs button').forEach(function(b) { b.classList.remove('on'); });
+  document.querySelectorAll('#anTabs button').forEach(function(b) {
+    if (b.textContent.toLowerCase().includes(view)) b.classList.add('on');
+  });
+  try {
+    var data = await api('/analytics/by-' + view);
+    var table = $('anTable');
+    if (!data.length) {
+      table.innerHTML = '<div class="empty" style="padding:20px"><p>No data yet for this view.</p></div>';
+      return;
+    }
+    var html = '<table class="an-table"><thead><tr>';
+    // Build columns based on view
+    var cols = [];
+    if (view === 'game') cols = [['title','Game'],['console','Console'],['post_count','Posts'],['posted_count','Posted'],['avg_score','Avg Score']];
+    else if (view === 'genre') cols = [['name','Genre'],['post_count','Posts'],['posted_count','Posted'],['avg_score','Avg Score']];
+    else if (view === 'console') cols = [['console','Console'],['post_count','Posts'],['posted_count','Posted'],['avg_score','Avg Score']];
+    else if (view === 'influencer') cols = [['name','Influencer'],['post_count','Posts'],['photo_count','Photos'],['video_count','Videos'],['avg_score','Avg Score']];
+    else if (view === 'platform') cols = [['platform','Platform'],['post_count','Posts'],['posted_count','Posted'],['photo_count','Photos'],['video_count','Videos']];
+    else if (view === 'format') cols = [['type','Type'],['format','Format'],['post_count','Posts'],['posted_count','Posted'],['avg_score','Avg Score']];
+    for (var c of cols) html += '<th>' + c[1] + '</th>';
+    html += '</tr></thead><tbody>';
+    for (var row of data) {
+      html += '<tr>';
+      for (var c of cols) {
+        var val = row[c[0]];
+        if (val === null || val === undefined) val = '–';
+        html += '<td>' + esc(String(val)) + '</td>';
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+    table.innerHTML = html;
+  } catch (e) { console.error(e); $('anTable').innerHTML = '<p style="color:var(--rose)">Failed to load</p>'; }
+}
+
+/* ─── boot ─────────────────────────────────────────────── */
+loadDash();
+setInterval(function() {
+  if (tab === 'dash') loadDash();
+  else if (tab === 'queue') loadQ();
+}, 25000);
+</script>
+</body>
+</html>

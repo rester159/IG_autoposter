@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Data directories (user data, not source)
+data/
+incoming/
+posted/
+incoming_video/
+posted_video/
+game_images/
+team/
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+
+# Environment / secrets
+.env
+config.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Agents / Claude state
+.agents/
+.claude/
+skills-lock.json
+
+# Backup files
+*.bak
+*_old.js
