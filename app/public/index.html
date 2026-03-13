@@ -146,7 +146,13 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .tl-item:active{cursor:grabbing}
 .tl-item.dragging{opacity:.4;border-color:var(--accent);transform:scale(1.02) rotate(1deg)}
 .tl-item.drag-over{border-color:var(--info);background:rgba(103,232,249,.06)}
-.tl-item .tl-thumb{width:34px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0}
+.tl-item .tl-thumb{width:34px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;cursor:pointer;position:relative}
+.tl-item .tl-thumb.video-thumb::after{content:'\25B6';position:absolute;inset:0;display:grid;place-items:center;font-size:12px;color:#fff;background:rgba(0,0,0,0.35);border-radius:6px;pointer-events:none}
+.video-player-ov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;flex-direction:column;animation:fadeIn .2s ease}
+.video-player-ov video{max-width:100%;max-height:80vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.5)}
+.video-player-ov .vp-close{position:absolute;top:max(12px,env(safe-area-inset-top));right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:22px;cursor:pointer;display:grid;place-items:center;backdrop-filter:blur(8px)}
+.video-player-ov .vp-close:hover{background:rgba(255,255,255,0.25)}
+.video-player-ov .vp-info{color:var(--t2);font-size:12px;margin-top:12px;text-align:center;max-width:90vw}
 .tl-item .tl-thumb img{width:100%;height:100%;object-fit:cover}
 .tl-item .tl-body{flex:1;min-width:0}
 .tl-item .tl-body .tl-cap{font-size:12px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
@@ -741,6 +747,35 @@ function showModal(opts) {
     if (firstInput) setTimeout(() => firstInput.focus(), 100);
   });
 }
+function playVideo(postId, fileName, filePath) {
+  // Extract actual filename from file_path (posted videos get renamed with timestamp prefix)
+  var actualName = filePath ? filePath.split('/').pop() : fileName;
+  var url = '';
+  if (filePath.includes('/posted_video/')) url = '/media/posted_video/' + encodeURIComponent(actualName);
+  else if (filePath.includes('/incoming_video/')) url = '/media/incoming_video/' + encodeURIComponent(actualName);
+  else url = '/media/incoming_video/' + encodeURIComponent(fileName);
+
+  var ov = document.createElement('div');
+  ov.className = 'video-player-ov';
+  ov.innerHTML = '<button class="vp-close" onclick="this.parentElement.remove()">&times;</button>' +
+    '<video controls autoplay playsinline src="' + url + '"></video>' +
+    '<div class="vp-info">' + esc(fileName) + '</div>';
+  ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+  // Close on escape
+  var handler = function(e) { if (e.key === 'Escape') { ov.remove(); document.removeEventListener('keydown', handler); } };
+  document.addEventListener('keydown', handler);
+}
+function previewImage(url) {
+  var ov = document.createElement('div');
+  ov.className = 'video-player-ov';
+  ov.innerHTML = '<button class="vp-close" onclick="this.parentElement.remove()">&times;</button>' +
+    '<img src="' + url + '" style="max-width:90vw;max-height:80vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,0.5)">';
+  ov.onclick = function(e) { if (e.target === ov) ov.remove(); };
+  document.body.appendChild(ov);
+  var handler = function(e) { if (e.key === 'Escape') { ov.remove(); document.removeEventListener('keydown', handler); } };
+  document.addEventListener('keydown', handler);
+}
 function closeModal(result) {
   $('modal-root').classList.remove('open');
   $('modal-root').innerHTML = '';
@@ -829,9 +864,11 @@ function renderTimeline(items, containerId, emptyId, draggable) {
     var cap = p.caption || p.full_caption || p.file_name || '\u2013';
     if (cap.length > 80) cap = cap.substring(0, 80) + '\u2026';
     var thumb = '';
-    if (p.thumb) thumb = '<div class="tl-thumb"><img src="' + p.thumb + '" alt=""></div>';
-    else if (p.type === 'photo' && p.file_name) thumb = '<div class="tl-thumb"><img src="/media/incoming/' + encodeURIComponent(p.file_name) + '" alt="" onerror="this.parentElement.style.background=\'var(--bg3)\';this.remove()"></div>';
-    else thumb = '<div class="tl-thumb" style="background:var(--bg3);display:grid;place-items:center;font-size:18px">' + (p.type === 'video' ? '\u{1F3AC}' : '\u{1F4F8}') + '</div>';
+    if (p.thumb && p.type === 'photo') thumb = '<div class="tl-thumb" onclick="event.stopPropagation();previewImage(\'/media/incoming/' + encodeURIComponent(p.file_name) + '\')"><img src="' + p.thumb + '" alt=""></div>';
+    else if (p.thumb && p.type === 'video') thumb = '<div class="tl-thumb video-thumb" onclick="event.stopPropagation();playVideo(' + p.id + ',\'' + esc(p.file_name || '') + '\',\'' + esc(p.file_path || '') + '\')"><img src="' + p.thumb + '" alt=""></div>';
+    else if (p.type === 'photo' && p.file_name) thumb = '<div class="tl-thumb" onclick="event.stopPropagation();previewImage(\'/media/incoming/' + encodeURIComponent(p.file_name) + '\')"><img src="/media/incoming/' + encodeURIComponent(p.file_name) + '" alt="" onerror="this.parentElement.style.background=\'var(--bg3)\';this.remove()"></div>';
+    else if (p.type === 'video') thumb = '<div class="tl-thumb video-thumb" style="background:var(--bg3);display:grid;place-items:center;font-size:14px" onclick="event.stopPropagation();playVideo(' + p.id + ',\'' + esc(p.file_name || '') + '\',\'' + esc(p.file_path || '') + '\')">\u{1F3AC}</div>';
+    else thumb = '<div class="tl-thumb" style="background:var(--bg3);display:grid;place-items:center;font-size:18px">\u{1F4F8}</div>';
     var canPost = p.status !== 'posted';
     return '<div class="tl-item" ' + (draggable ? 'draggable="true" ' : '') + 'data-post-id="' + p.id + '">' +
       '<div class="tl-time">' + esc(schedStr) + '</div>' +

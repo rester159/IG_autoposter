@@ -497,6 +497,16 @@ app.get('/media/incoming_video/:file', (req, res) => {
   res.sendFile(fp);
 });
 
+// ── serve posted video files ───────────────────────────────────
+app.get('/media/posted_video/:file', (req, res) => {
+  const cfg = loadConfig();
+  const folder = cfg.videoPostedFolder || '/data/posted_video';
+  const fp = path.join(folder, req.params.file);
+  if (!fp.startsWith(path.resolve(folder))) return res.sendStatus(403);
+  if (!fs.existsSync(fp)) return res.sendStatus(404);
+  res.sendFile(fp);
+});
+
 // ── serve game images ─────────────────────────────────────────────
 app.get('/media/game_images/:file', (req, res) => {
   const cfg = loadConfig();
