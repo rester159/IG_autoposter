@@ -13,14 +13,12 @@ function summary() {
   const photos = db.prepare("SELECT COUNT(*) as n FROM posts WHERE type = 'photo'").get().n;
   const videos = db.prepare("SELECT COUNT(*) as n FROM posts WHERE type = 'video'").get().n;
 
-  // Posts per day (last 30 days)
   const perDay = db.prepare(`
     SELECT date(posted_at) as day, COUNT(*) as n
     FROM posts WHERE status = 'posted' AND posted_at >= date('now', '-30 days')
     GROUP BY day ORDER BY day DESC
   `).all();
 
-  // Average score
   const avgScore = db.prepare('SELECT AVG(score) as avg FROM posts WHERE score IS NOT NULL').get().avg;
 
   return {
@@ -133,6 +131,42 @@ function postDetail(id) {
   `).get(id) || null;
 }
 
+// ── Instagram Insights summary ─────────────────────────
+function insightsSummary() {
+  return db.prepare(`
+    SELECT
+      SUM(ig_likes) as total_likes,
+      SUM(ig_comments_count) as total_comments,
+      SUM(ig_shares) as total_shares,
+      SUM(ig_reach) as total_reach,
+      SUM(ig_impressions) as total_impressions,
+      SUM(ig_saves) as total_saves,
+      AVG(ig_likes) as avg_likes,
+      AVG(ig_reach) as avg_reach,
+      COUNT(CASE WHEN insights_fetched_at IS NOT NULL THEN 1 END) as synced_count
+    FROM posts WHERE status = 'posted'
+  `).get();
+}
+
+// ── Per-post metrics with all joins ────────────────────
+function postsWithMetrics() {
+  return db.prepare(`
+    SELECT p.id, p.type, p.format, p.caption, p.score, p.ig_media_id,
+           p.ig_likes, p.ig_comments_count, p.ig_shares, p.ig_reach,
+           p.ig_impressions, p.ig_saves, p.ml_score, p.ml_recommendation,
+           p.posted_at, p.scheduled_at,
+           i.name as influencer_name,
+           g.title as game_title, g.console as game_console,
+           gen.name as genre_name
+    FROM posts p
+    LEFT JOIN influencers i ON p.influencer_id = i.id
+    LEFT JOIN games g ON p.game_id = g.id
+    LEFT JOIN genres gen ON g.genre_id = gen.id
+    WHERE p.status = 'posted'
+    ORDER BY p.posted_at DESC
+  `).all();
+}
+
 module.exports = {
   summary,
   statsByGame,
@@ -142,4 +176,6 @@ module.exports = {
   statsByPlatform,
   statsByFormat,
   postDetail,
+  insightsSummary,
+  postsWithMetrics,
 };

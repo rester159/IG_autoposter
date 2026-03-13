@@ -3,21 +3,17 @@ const path = require('path');
 const fs = require('fs');
 
 /**
- * Overlay a score (e.g. "8/10") on the last ~3 seconds of a video.
- *
- * Uses ffmpeg drawtext filter:
- * - White text with black border/shadow
- * - Centered horizontally, lower-third of 9:16 frame
- * - Fades in during the last 3 seconds of the video
+ * Overlay a score on the last ~3 seconds of a video.
  *
  * @param {string} videoPath - Path to input video (.mp4)
- * @param {number} score - Score value (1-10)
+ * @param {number|string} score - Score value to display (e.g. 8.5 for "8.5/10")
  * @param {string} [outputPath] - Output path. If omitted, overwrites input via temp file.
+ * @param {object} [opts] - Options
+ * @param {string} [opts.scoreText] - Custom score text override (e.g. "8.5/10")
  * @returns {Promise<string>} Path to the output video
  */
-async function overlayScore(videoPath, score, outputPath) {
+async function overlayScore(videoPath, score, outputPath, opts = {}) {
   if (!fs.existsSync(videoPath)) throw new Error('Video not found: ' + videoPath);
-  if (score < 1 || score > 10) throw new Error('Score must be 1-10, got: ' + score);
 
   // If no output path, use a temp file then rename
   const useTemp = !outputPath;
@@ -30,9 +26,11 @@ async function overlayScore(videoPath, score, outputPath) {
 
   // Get video duration first
   const duration = await getVideoDuration(videoPath);
-  const fadeInStart = Math.max(0, duration - 3); // Start showing score 3s before end
+  const fadeInStart = Math.max(0, duration - 3);
 
-  const scoreText = `${score}/10`;
+  // Build score text — accept pre-formatted string or format as X/10
+  const scoreText = opts.scoreText || `${score}/10`;
+  const fontsize = scoreText.length > 4 ? 100 : 120;
 
   console.log('[ffmpeg] overlaying score', scoreText, 'on', path.basename(videoPath),
     `(duration: ${duration.toFixed(1)}s, fade at ${fadeInStart.toFixed(1)}s)`);
@@ -44,7 +42,7 @@ async function overlayScore(videoPath, score, outputPath) {
           filter: 'drawtext',
           options: {
             text: scoreText,
-            fontsize: 120,
+            fontsize,
             fontcolor: 'white',
             borderw: 4,
             bordercolor: 'black',
@@ -58,24 +56,22 @@ async function overlayScore(videoPath, score, outputPath) {
           },
         },
       ])
-      .outputOptions(['-c:a', 'copy']) // keep audio untouched
+      .outputOptions(['-c:a', 'copy'])
       .output(outputPath)
       .on('end', () => {
         console.log('[ffmpeg] score overlay done:', path.basename(outputPath));
         if (useTemp) {
-          // Replace original with scored version
           try {
             fs.unlinkSync(videoPath);
             fs.renameSync(outputPath, videoPath);
             resolve(videoPath);
           } catch (e) {
-            // Cross-device fallback
             if (e.code === 'EXDEV') {
               fs.copyFileSync(outputPath, videoPath);
               fs.unlinkSync(outputPath);
               resolve(videoPath);
             } else {
-              resolve(outputPath); // leave scored version if rename fails
+              resolve(outputPath);
             }
           }
         } else {
@@ -84,7 +80,6 @@ async function overlayScore(videoPath, score, outputPath) {
       })
       .on('error', (err) => {
         console.error('[ffmpeg] overlay error:', err.message);
-        // Clean up temp file on failure
         if (useTemp && fs.existsSync(outputPath)) {
           try { fs.unlinkSync(outputPath); } catch {}
         }

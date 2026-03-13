@@ -56,7 +56,35 @@ const stmts = {
     LIMIT 1
   `),
   reorder: db.prepare('UPDATE posts SET sort_order = ? WHERE id = ?'),
-  maxSort: db.prepare('SELECT MAX(sort_order) as m FROM posts WHERE status IN (\'queued\',\'ready\')'),
+  maxSort: db.prepare("SELECT MAX(sort_order) as m FROM posts WHERE status IN ('queued','ready')"),
+  updateInsights: db.prepare(`
+    UPDATE posts SET
+      ig_likes = @ig_likes,
+      ig_comments_count = @ig_comments_count,
+      ig_shares = @ig_shares,
+      ig_reach = @ig_reach,
+      ig_impressions = @ig_impressions,
+      ig_saves = @ig_saves,
+      insights_fetched_at = @insights_fetched_at
+    WHERE id = @id
+  `),
+  updateMlScore: db.prepare(`
+    UPDATE posts SET
+      ml_score = @ml_score,
+      ml_recommendation = @ml_recommendation,
+      ml_scored_at = @ml_scored_at
+    WHERE id = @id
+  `),
+  listPostedWithInsights: db.prepare(`
+    SELECT p.*, i.name as influencer_name, g.title as game_title,
+           g.console as game_console, gen.name as genre_name
+    FROM posts p
+    LEFT JOIN influencers i ON p.influencer_id = i.id
+    LEFT JOIN games g ON p.game_id = g.id
+    LEFT JOIN genres gen ON g.genre_id = gen.id
+    WHERE p.status = 'posted'
+    ORDER BY p.posted_at DESC
+  `),
 };
 
 function list(filters = {}) {
@@ -130,4 +158,18 @@ const reorder = db.transaction((items) => {
   }
 });
 
-module.exports = { list, get, add, update, del, nextReady, reorder };
+function updateInsights(id, data) {
+  stmts.updateInsights.run({ id, ...data });
+  return get(id);
+}
+
+function updateMlScore(id, data) {
+  stmts.updateMlScore.run({ id, ...data });
+  return get(id);
+}
+
+function listPostedWithInsights() {
+  return stmts.listPostedWithInsights.all();
+}
+
+module.exports = { list, get, add, update, del, nextReady, reorder, updateInsights, updateMlScore, listPostedWithInsights };

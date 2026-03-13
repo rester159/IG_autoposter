@@ -10,6 +10,7 @@ const { overlayScore } = require('./ffmpeg-overlay');
 const team = require('./team');
 const gameModel = require('./models/game');
 const { extractGameMetadata } = require('./game-metadata');
+const { enrichGame } = require('./rawg');
 
 let job = null;
 let posting = false;
@@ -122,9 +123,45 @@ async function generateOne(opts = {}) {
       }
     }
 
+    // RAWG enrichment: fetch metacritic score + official box art
+    let verifiedBoxArtPath = null;
+    if (gameRecord && gameRecord.title && cfg.rawgApiKey) {
+      if (!gameRecord.rawg_id) {
+        console.log('[video] enriching game from RAWG:', gameRecord.title);
+        try {
+          const enrichResult = await enrichGame(
+            gameRecord.id, cfg.rawgApiKey, cfg.geminiApiKey, cfg
+          );
+          if (enrichResult.updated) {
+            gameRecord = gameModel.get(gameRecord.id); // reload
+          }
+          if (enrichResult.verified && enrichResult.boxArtPath) {
+            verifiedBoxArtPath = enrichResult.boxArtPath;
+            console.log('[video] using verified RAWG box art:', verifiedBoxArtPath);
+          }
+        } catch (e) {
+          console.error('[video] RAWG enrichment failed:', e.message);
+        }
+      } else if (gameRecord.box_art_url) {
+        // Already enriched — check if verified box art exists on disk
+        const boxArtFile = path.join(gameFolder, `rawg_${gameRecord.rawg_id}_boxart.jpg`);
+        if (fs.existsSync(boxArtFile)) {
+          verifiedBoxArtPath = boxArtFile;
+          console.log('[video] using existing verified box art:', verifiedBoxArtPath);
+        }
+      }
+    }
+
+    // Convert metacritic score to X/10 format
+    const displayScore = gameRecord?.metacritic_score
+      ? (gameRecord.metacritic_score / 10).toFixed(1)
+      : null;
+
     console.log('[video] influencer:', influencer.name,
       '| game:', gameRecord?.title || '(no metadata)',
-      '| image:', gameImagePath || 'none');
+      '| image:', gameImagePath || 'none',
+      '| score:', displayScore ? displayScore + '/10' : 'none',
+      '| boxArt:', verifiedBoxArtPath ? 'verified' : 'uploaded');
 
     // 1 — Get the Veo prompt(s) + score + first comment
     let part1Prompt, part2Prompt, part3Prompt, score = null, firstComment = '';
@@ -142,6 +179,7 @@ async function generateOne(opts = {}) {
         style: opts.style,
         outfit: opts.outfit,
         game: gameRecord || {},
+        verifiedBoxArtPath,
       });
       part1Prompt = script.part1;
       part2Prompt = script.part2;
@@ -164,8 +202,10 @@ async function generateOne(opts = {}) {
       const roomPath = path.join('/data/team', influencer.id, influencer.room);
       if (fs.existsSync(roomPath)) referencePhotos.push(roomPath);
     }
-    if (gameImagePath && fs.existsSync(gameImagePath)) {
-      referencePhotos.push(gameImagePath);
+    // Use verified box art or uploaded game image as reference
+    const gameRefImage = verifiedBoxArtPath || gameImagePath;
+    if (gameRefImage && fs.existsSync(gameRefImage)) {
+      referencePhotos.push(gameRefImage);
     }
     console.log('[video] reference photos:', referencePhotos.length, '(influencer + room + game)');
 
@@ -215,9 +255,10 @@ async function generateOne(opts = {}) {
 
     // 6 — ffmpeg score overlay (if score available)
     if (score && finalVideo.filePath && fs.existsSync(finalVideo.filePath)) {
-      console.log('[video] applying ffmpeg score overlay:', score + '/10');
+      const scoreText = displayScore ? `${displayScore}/10` : `${score}/10`;
+      console.log('[video] applying ffmpeg score overlay:', scoreText);
       try {
-        await overlayScore(finalVideo.filePath, score);
+        await overlayScore(finalVideo.filePath, score, undefined, { scoreText });
         console.log('[video] score overlay applied');
       } catch (e) {
         console.error('[video] score overlay failed (video still usable):', e.message);
@@ -233,6 +274,7 @@ async function generateOne(opts = {}) {
 
       const gameTitle = gameRecord?.title || 'a retro game';
       const gameConsole = gameRecord?.console || '';
+      const scoreLabel = displayScore ? displayScore + '/10' : (score ? score + '/10' : 'not given');
 
       const res = await axios.post(geminiUrl, {
         contents: [{
@@ -240,7 +282,7 @@ async function generateOne(opts = {}) {
             text: `Write a captivating Instagram Reels caption for a video of ${influencer.name} ` +
               `(personality: ${influencer.personality || 'energetic gamer'}) reviewing ${gameTitle}` +
               `${gameConsole ? ' for ' + gameConsole : ''}. ` +
-              `Score: ${score || 'not given'}. ` +
+              `Score: ${scoreLabel}. ` +
               `Be fun, authentic, and brief (1-2 sentences). Then add ${cfg.hashtagCount || 20} relevant hashtags.\n\n` +
               `Format:\nCAPTION: <caption>\nHASHTAGS: #tag1 #tag2 ...`,
           }],
@@ -270,6 +312,7 @@ async function generateOne(opts = {}) {
       game_id: gameRecord?.id || null,
       veo_prompt: part1Prompt.slice(0, 500),
       score: score || null,
+      metacritic_score: gameRecord?.metacritic_score || null,
       status: 'ready',  // video is generated and ready to post
     });
     console.log('[video] created post #' + postRow.id + ' in unified queue');
@@ -287,9 +330,12 @@ async function generateOne(opts = {}) {
       post_id: postRow.id,
       metadata: {
         score,
+        displayScore,
         firstComment,
         gameId: gameRecord?.id || null,
         gameTitle: gameRecord?.title || null,
+        metacriticScore: gameRecord?.metacritic_score || null,
+        verifiedBoxArt: !!verifiedBoxArtPath,
       },
     };
     addHistory(entry);
@@ -299,6 +345,7 @@ async function generateOne(opts = {}) {
       ...entry,
       fullCaption: caption.full,
       score,
+      displayScore,
       firstComment,
       postId: postRow.id,
     };

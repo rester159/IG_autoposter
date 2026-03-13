@@ -110,6 +110,31 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_games_image ON games(image_filename);
 `);
 
+// ── Schema migrations (idempotent) ──────────────────────────────
+const migrations = [
+  'ALTER TABLE posts ADD COLUMN ig_likes INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN ig_comments_count INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN ig_shares INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN ig_reach INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN ig_impressions INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN ig_saves INTEGER DEFAULT 0',
+  'ALTER TABLE posts ADD COLUMN insights_fetched_at TEXT',
+  'ALTER TABLE posts ADD COLUMN ml_score REAL',
+  'ALTER TABLE posts ADD COLUMN ml_recommendation TEXT',
+  'ALTER TABLE posts ADD COLUMN ml_scored_at TEXT',
+  'ALTER TABLE posts ADD COLUMN metacritic_score INTEGER',
+  'ALTER TABLE posts ADD COLUMN metacritic_url TEXT',
+  'ALTER TABLE games ADD COLUMN metacritic_score INTEGER',
+  'ALTER TABLE games ADD COLUMN metacritic_url TEXT',
+  'ALTER TABLE games ADD COLUMN box_art_url TEXT',
+  'ALTER TABLE games ADD COLUMN rawg_id INTEGER',
+];
+for (const sql of migrations) {
+  try { db.exec(sql); } catch (e) {
+    if (!e.message.includes('duplicate column')) console.error('[db] migration:', e.message);
+  }
+}
+
 // ── Seed genres ──────────────────────────────────────────────────
 
 const SEED_GENRES = [

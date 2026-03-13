@@ -21,7 +21,9 @@ const stmts = {
       title = @title, console = @console, genre_id = @genre_id,
       studio = @studio, year = @year,
       lead_artist = @lead_artist, lead_creative = @lead_creative,
-      lead_musician = @lead_musician, ai_extracted = @ai_extracted
+      lead_musician = @lead_musician, ai_extracted = @ai_extracted,
+      metacritic_score = @metacritic_score, metacritic_url = @metacritic_url,
+      box_art_url = @box_art_url, rawg_id = @rawg_id
     WHERE id = @id
   `),
   del: db.prepare('DELETE FROM games WHERE id = ?'),
@@ -70,6 +72,10 @@ function update(id, data) {
     lead_creative: data.lead_creative ?? existing.lead_creative,
     lead_musician: data.lead_musician ?? existing.lead_musician,
     ai_extracted: data.ai_extracted !== undefined ? data.ai_extracted : existing.ai_extracted,
+    metacritic_score: data.metacritic_score !== undefined ? data.metacritic_score : (existing.metacritic_score ?? null),
+    metacritic_url: data.metacritic_url ?? (existing.metacritic_url ?? null),
+    box_art_url: data.box_art_url ?? (existing.box_art_url ?? null),
+    rawg_id: data.rawg_id !== undefined ? data.rawg_id : (existing.rawg_id ?? null),
   };
   stmts.update.run(merged);
   return get(id);

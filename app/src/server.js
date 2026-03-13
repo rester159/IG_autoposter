@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const cron = require('node-cron');
+const axios = require('axios');
 const { loadConfig, saveConfig, loadHistory, ensureDir } = require('./config');
 const { listQueue, thumbnail, toBase64, nextInQueue } = require('./media');
 const { generateCaption } = require('./caption');
@@ -12,6 +14,11 @@ const videoSched = require('./video-scheduler');
 const { listVideoQueue, nextVideoInQueue } = require('./video');
 const queue = require('./queue');
 const postModel = require('./models/post');
+const gameModel = require('./models/game');
+const analytics = require('./models/analytics');
+const { syncAllInsights } = require('./instagram-insights');
+const { scoreQueue, getTopRecommended } = require('./ml-scoring');
+const { enrichGame } = require('./rawg');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -108,6 +115,7 @@ app.get('/api/config', (_req, res) => {
     ...c,
     instagramToken: mask(c.instagramToken),
     geminiApiKey: mask(c.geminiApiKey),
+    rawgApiKey: mask(c.rawgApiKey),
   });
 });
 
@@ -117,6 +125,7 @@ app.put('/api/config', (req, res) => {
   // don't clobber secrets with masked placeholders
   if (body.instagramToken?.startsWith('••')) delete body.instagramToken;
   if (body.geminiApiKey?.startsWith('••')) delete body.geminiApiKey;
+  if (body.rawgApiKey?.startsWith('••')) delete body.rawgApiKey;
 
   const cfg = saveConfig(body);
 
@@ -130,6 +139,7 @@ app.put('/api/config', (req, res) => {
       ...cfg,
       instagramToken: mask(cfg.instagramToken),
       geminiApiKey: mask(cfg.geminiApiKey),
+      rawgApiKey: mask(cfg.rawgApiKey),
     },
   });
 });
@@ -170,7 +180,23 @@ app.get('/api/unified-queue', async (req, res) => {
   try {
     const filters = {};
     if (req.query.status) filters.status = req.query.status;
-    const posts = queue.getQueue(filters);
+    const cfg = loadConfig();
+    let posts = queue.getQueue(filters);
+
+    // If model-driven mode, sort by ml_score desc for queued/ready items
+    if (cfg.modelDriven === true || cfg.modelDriven === 'true') {
+      posts.sort((a, b) => {
+        // Posted items stay at the end sorted by posted_at
+        if (a.status === 'posted' && b.status !== 'posted') return 1;
+        if (b.status === 'posted' && a.status !== 'posted') return -1;
+        if (a.status === 'posted' && b.status === 'posted') return 0;
+        // Sort by ml_score desc (null scores go last)
+        const sa = a.ml_score ?? -1;
+        const sb = b.ml_score ?? -1;
+        return sb - sa;
+      });
+    }
+
     // Enrich with thumbnails for photos
     const enriched = [];
     for (const p of posts) {
@@ -254,8 +280,7 @@ app.delete('/api/unified-queue/:id', (req, res) => {
   res.json({ ok: true });
 });
 
-// ── Analytics routes ──────────────────────────────────────
-const analytics = require('./models/analytics');
+// ═══════════════════════  ANALYTICS ROUTES  ══════════════════════
 
 app.get('/api/analytics/summary', (_req, res) => {
   try { res.json(analytics.summary()); }
@@ -288,6 +313,45 @@ app.get('/api/analytics/by-format', (_req, res) => {
 app.get('/api/analytics/post/:id', (req, res) => {
   const post = analytics.postDetail(Number(req.params.id));
   post ? res.json(post) : res.status(404).json({ error: 'Not found' });
+});
+
+// ── Instagram Insights ───────────────────────────────────────────
+app.get('/api/analytics/insights-summary', (_req, res) => {
+  try { res.json(analytics.insightsSummary()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/analytics/posts-metrics', (_req, res) => {
+  try { res.json(analytics.postsWithMetrics()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/insights/sync', async (_req, res) => {
+  try {
+    const result = await syncAllInsights();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── ML Scoring ───────────────────────────────────────────────────
+app.post('/api/ml/score-queue', async (_req, res) => {
+  try {
+    const result = await scoreQueue();
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.get('/api/ml/recommendation', (_req, res) => {
+  try {
+    const top = getTopRecommended();
+    res.json({ ok: true, post: top || null });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // ── Team routes ───────────────────────────────────────────
@@ -341,6 +405,61 @@ app.get('/api/team/:id/photos/:filename', (req, res) => {
   const fp = path.join(team.getPhotoDir(req.params.id), req.params.filename);
   if (!fs.existsSync(fp)) return res.sendStatus(404);
   res.sendFile(fp);
+});
+
+// ── Team AI Suggest ──────────────────────────────────────────────
+app.post('/api/team/:id/suggest-field', async (req, res) => {
+  const { field } = req.body;
+  if (!field) return res.status(400).json({ error: 'field is required' });
+
+  const cfg = loadConfig();
+  if (!cfg.geminiApiKey) return res.status(400).json({ error: 'Gemini API key not configured' });
+
+  const inf = team.getInfluencer(req.params.id);
+  if (!inf) return res.status(404).json({ error: 'Influencer not found' });
+
+  const currentValue = inf[field] || '';
+  const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+  const geminiUrl = `${GEMINI_API}/models/gemini-2.5-flash:generateContent?key=${cfg.geminiApiKey}`;
+
+  const contextBlock = `Influencer profile:
+Name: ${inf.name}
+Personality: ${inf.personality || '(empty)'}
+Quirks: ${inf.quirks || '(empty)'}
+Expressions: ${inf.expressions || '(empty)'}
+Outfit: ${inf.outfit || '(empty)'}
+Intro Phrase: ${inf.intro_phrase || '(empty)'}
+Game Tastes: ${inf.game_tastes || '(empty)'}
+Fashion Style: ${inf.fashion_style || '(empty)'}
+Boyfriend: ${inf.boyfriend || '(empty)'}`;
+
+  let prompt;
+  if (!currentValue) {
+    prompt = `${contextBlock}
+
+The field "${field}" is currently empty. Generate 3 creative, distinct suggestions for this field.
+This influencer reviews retro and indie games on Instagram. Suggestions should be vivid, specific, and fun.
+Return ONLY a JSON array of 3 strings. No explanation, no markdown.`;
+  } else {
+    prompt = `${contextBlock}
+
+The field "${field}" currently has: "${currentValue}"
+Expand this into 3 richer, more detailed versions that keep the original spirit but add more personality and specificity.
+Return ONLY a JSON array of 3 strings. No explanation, no markdown.`;
+  }
+
+  try {
+    const r = await axios.post(geminiUrl, {
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+    const text = r.data.candidates[0].content.parts[0].text.trim();
+    // Parse JSON array from response (handle markdown code blocks)
+    const cleaned = text.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+    const suggestions = JSON.parse(cleaned);
+    res.json({ ok: true, suggestions });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // ── serve video files (IG Graph API fetches from here) ────────────
@@ -446,9 +565,9 @@ app.post('/api/video/preview-script', async (req, res) => {
     const cfg = loadConfig();
     if (!cfg.geminiApiKey) return res.status(400).json({ ok: false, error: 'Gemini API key not configured' });
 
-    const team = require('./team');
+    const teamMod = require('./team');
     const { generateVideoScript } = require('./video-script');
-    const teamList = team.loadTeam();
+    const teamList = teamMod.loadTeam();
 
     // pick influencer
     let influencer;
@@ -518,8 +637,6 @@ app.get('/api/game-images', (_req, res) => {
     .sort((a, b) => a.mtime - b.mtime);
   res.json(files);
 });
-
-const gameModel = require('./models/game');
 
 // game images: upload (also creates a games DB record per image + auto-extract)
 app.post('/api/game-images', gameUpload.array('images', 20), async (req, res) => {
@@ -625,6 +742,25 @@ app.post('/api/games/:id/extract', async (req, res) => {
   }
 });
 
+// ═══════════════════════  RAWG ENRICHMENT  ════════════════════════
+
+app.post('/api/games/:id/enrich', async (req, res) => {
+  const id = Number(req.params.id);
+  const game = gameModel.get(id);
+  if (!game) return res.status(404).json({ error: 'Game not found' });
+
+  const cfg = loadConfig();
+  if (!cfg.rawgApiKey) return res.status(400).json({ error: 'RAWG API key not configured' });
+  if (!cfg.geminiApiKey) return res.status(400).json({ error: 'Gemini API key not configured (needed for box art verification)' });
+
+  try {
+    const result = await enrichGame(id, cfg.rawgApiKey, cfg.geminiApiKey, cfg);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // SPA fallback
 app.get('*', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
 
@@ -641,4 +777,15 @@ app.listen(PORT, '0.0.0.0', () => {
   ensureDir(cfg.gameImagesFolder || '/data/game_images');
   if (cfg.enabled) sched.start();
   if (cfg.videoEnabled) videoSched.start();
+
+  // Insights sync cron: every 6 hours
+  cron.schedule('0 */6 * * *', async () => {
+    console.log('[cron] syncing Instagram insights...');
+    try {
+      const result = await syncAllInsights();
+      console.log('[cron] insights synced:', result.synced, 'posts');
+    } catch (e) {
+      console.error('[cron] insights sync failed:', e.message);
+    }
+  });
 });

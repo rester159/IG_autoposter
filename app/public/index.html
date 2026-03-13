@@ -182,7 +182,7 @@ header .pill.off .dot{background:var(--rose)}
 
   <!-- tabs -->
   <div class="tabs" id="tabs">
-    <button class="on" data-t="dash">Dashboard</button>
+    <button class="on" data-t="dash">Timeline</button>
     <button data-t="queue">Posts</button>
     <button data-t="video">Video</button>
     <button data-t="hist">History</button>
@@ -217,7 +217,10 @@ header .pill.off .dot{background:var(--rose)}
       <div id="prevBox" class="preview hidden"></div>
     </div>
     <div class="card">
-      <h3>Upcoming Timeline</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
+        <h3 style="margin:0">Upcoming Timeline</h3>
+        <button class="btn btn-p" style="font-size:12px;padding:5px 14px" onclick="showCreatePostModal()">+ New Post</button>
+      </div>
       <div id="tlFeed"></div>
       <div id="tlEmpty" class="empty hidden"><div class="ei">📅</div><p>No upcoming posts. Upload photos or generate videos to get started.</p></div>
     </div>
@@ -425,14 +428,14 @@ header .pill.off .dot{background:var(--rose)}
       <h3 id="infFormTitle">Add Influencer</h3>
       <input type="hidden" id="infEditId" value="">
       <div class="fg"><label>Name</label><input id="infName" placeholder="e.g. Luna"></div>
-      <div class="fg"><label>Personality</label><textarea id="infPersonality" rows="2" placeholder="e.g. Energetic, sarcastic, loves retro games"></textarea></div>
-      <div class="fg"><label>Expressions &amp; Quirks</label><textarea id="infQuirks" rows="2" placeholder="e.g. Raises one eyebrow, does finger guns, says Lets gooo"></textarea></div>
-      <div class="fg"><label>Visual Description</label><textarea id="infExpressions" rows="2" placeholder="e.g. Young woman, glasses, wavy dark hair with bangs, casual style"></textarea></div>
-      <div class="fg"><label>Default Outfit</label><textarea id="infOutfit" rows="2" placeholder="e.g. Colorful streetwear with gaming pins, or cosplay-ready — leave blank to auto-generate per game"></textarea></div>
-      <div class="fg"><label>Intro Phrase</label><input id="infIntroPhrase" placeholder="e.g. Hey gamers, it's Luna!"></div>
-      <div class="fg"><label>Game Tastes</label><textarea id="infGameTastes" rows="2" placeholder="e.g. Loves JRPGs and platformers, hates battle royale, nostalgia for SNES era"></textarea></div>
-      <div class="fg"><label>Fashion Style</label><textarea id="infFashionStyle" rows="2" placeholder="e.g. Y2K aesthetic, pastel colors, oversized hoodies"></textarea></div>
-      <div class="fg"><label>Boyfriend / Character Lore</label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake — she teases him about his aim"></textarea></div>
+      <div class="fg"><label>Personality</label><textarea id="infPersonality" rows="2" placeholder="e.g. Energetic, sarcastic, loves retro games"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('personality','infPersonality')">AI Suggest</button><div id="infPersonalitySuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Expressions &amp; Quirks</label><textarea id="infQuirks" rows="2" placeholder="e.g. Raises one eyebrow, does finger guns, says Lets gooo"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('quirks','infQuirks')">AI Suggest</button><div id="infQuirksSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Visual Description</label><textarea id="infExpressions" rows="2" placeholder="e.g. Young woman, glasses, wavy dark hair with bangs, casual style"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('expressions','infExpressions')">AI Suggest</button><div id="infExpressionsSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Default Outfit</label><textarea id="infOutfit" rows="2" placeholder="e.g. Colorful streetwear with gaming pins, or cosplay-ready — leave blank to auto-generate per game"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('outfit','infOutfit')">AI Suggest</button><div id="infOutfitSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Intro Phrase</label><input id="infIntroPhrase" placeholder="e.g. Hey gamers, it's Luna!"><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('intro_phrase','infIntroPhrase')">AI Suggest</button><div id="infIntroPhraseSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Game Tastes</label><textarea id="infGameTastes" rows="2" placeholder="e.g. Loves JRPGs and platformers, hates battle royale, nostalgia for SNES era"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('game_tastes','infGameTastes')">AI Suggest</button><div id="infGameTastesSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Fashion Style</label><textarea id="infFashionStyle" rows="2" placeholder="e.g. Y2K aesthetic, pastel colors, oversized hoodies"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('fashion_style','infFashionStyle')">AI Suggest</button><div id="infFashionStyleSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Boyfriend / Character Lore</label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake — she teases him about his aim"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('boyfriend','infBoyfriend')">AI Suggest</button><div id="infBoyfriendSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
       <div class="fg">
         <label>Profile Picture</label>
         <div class="row2">
@@ -482,6 +485,18 @@ header .pill.off .dot{background:var(--rose)}
   <!-- ═══ ANALYTICS ═══ -->
   <section id="p-analytics" class="hidden">
     <div id="anSummary" class="an-cards"></div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <h3 style="margin:0">Instagram Insights</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-s" id="syncInsightsBtn" onclick="syncInsights()">Sync Insights</button>
+          <button class="btn btn-s" id="scorePostsBtn" onclick="scorePosts()">Score Posts (ML)</button>
+        </div>
+      </div>
+      <div id="anInsights" class="an-cards" style="margin-top:8px">
+        <div style="color:var(--t3);font-size:13px">No insights data yet. Click "Sync Insights" after posting to Instagram.</div>
+      </div>
+    </div>
     <div class="card">
       <div class="an-tabs" id="anTabs">
         <button class="on" onclick="loadAnView('game')">By Game</button>
@@ -490,6 +505,7 @@ header .pill.off .dot{background:var(--rose)}
         <button onclick="loadAnView('influencer')">By Influencer</button>
         <button onclick="loadAnView('platform')">By Platform</button>
         <button onclick="loadAnView('format')">By Format</button>
+        <button onclick="loadAnView('metrics')">Post Metrics</button>
       </div>
       <div id="anTable"></div>
     </div>
@@ -517,6 +533,10 @@ header .pill.off .dot{background:var(--rose)}
           <button class="btn btn-s" onclick="verifyIg()" style="margin-bottom:20px">Verify Connection</button>
           <h3 style="margin-bottom:16px">Gemini / Video AI</h3>
           <div class="fg"><label>Gemini API Key (Veo 3.1)</label><input id="cGemKey" type="password" placeholder="AIzaSy…"></div>
+          <h3 style="margin-top:20px;margin-bottom:16px">Game Data</h3>
+          <div class="fg"><label>RAWG.io API Key</label><input id="cRawgKey" type="password" placeholder="your-rawg-api-key">
+            <div class="hint">Get a free key at rawg.io/apidocs — used for game scores and official box art</div>
+          </div>
         </div>
         <!-- Post Types & Prompts tab -->
         <div class="vtab" id="cfg-prompts">
@@ -677,6 +697,23 @@ async function loadDash() {
     else { p.className = 'pill off'; l.textContent = 'disabled'; }
     $('warnCard').style.display = st.configured ? 'none' : '';
     $('postBtn').disabled = !st.configured;
+
+    // Populate post controls
+    const cfg = await api('/config');
+    const photoOn = !!cfg.enabled;
+    $('togPhotoDash').classList.toggle('on', photoOn);
+    $('togPhotoDashLbl').textContent = photoOn ? 'on' : 'off';
+    const vidOn2 = !!cfg.videoEnabled;
+    $('togVideoDash2').classList.toggle('on', vidOn2);
+    $('togVideoDash2Lbl').textContent = vidOn2 ? 'on' : 'off';
+    const mdOn = cfg.modelDriven === true || cfg.modelDriven === 'true';
+    $('togModelDriven').classList.toggle('on', mdOn);
+    $('togModelDrivenLbl').textContent = mdOn ? 'on' : 'off';
+    $('pillPhotoFreq').textContent = photoOn ? cronNice(cfg.cronSchedule) : 'off';
+    $('pillVideoFreq').textContent = vidOn2 ? cronNice(cfg.videoCronSchedule) : 'off';
+    // Find last posted item
+    const lastPosted = queue.filter(p => p.status === 'posted').sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''))[0];
+    $('pillLastPost').textContent = lastPosted ? ago(lastPosted.posted_at) : 'never';
 
     // Timeline — show upcoming (queued + ready) sorted by scheduled_at
     const upcoming = queue
@@ -1574,6 +1611,8 @@ async function loadCfg() {
   $('togOn').classList.toggle('on', on);
   $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
 
+  // RAWG key
+  if ($('cRawgKey')) $('cRawgKey').value = c.rawgApiKey || '';
   // video settings (just API key + defaults, scheduler is in Video tab)
   $('cGemKey').value = c.geminiApiKey || '';
   $('cVidBg').value = c.videoBackground || '';
@@ -1609,6 +1648,7 @@ async function saveCfg() {
     enabled: $('togOn').classList.contains('on'),
     // video (just API key + defaults)
     geminiApiKey: $('cGemKey').value,
+    rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
     videoBackground: $('cVidBg').value,
     videoDuration: parseInt($('cVidDur').value) || 8,
     videoInfluencerId: $('cVidInf').value,
@@ -1831,6 +1871,20 @@ async function loadAnalytics() {
       '<div class="an-card"><b>' + sum.photos + '</b><small>photos</small></div>' +
       '<div class="an-card"><b>' + sum.videos + '</b><small>videos</small></div>' +
       (sum.avgScore ? '<div class="an-card"><b>' + sum.avgScore + '</b><small>avg score</small></div>' : '');
+    // IG Insights
+    try {
+      var insights = await api('/analytics/insights-summary');
+      if (insights && insights.synced_count > 0) {
+        $('anInsights').innerHTML =
+          '<div class="an-card"><b>' + (insights.total_likes || 0) + '</b><small>total likes</small></div>' +
+          '<div class="an-card"><b>' + (insights.total_comments || 0) + '</b><small>total comments</small></div>' +
+          '<div class="an-card"><b>' + (insights.total_shares || 0) + '</b><small>total shares</small></div>' +
+          '<div class="an-card"><b>' + (insights.total_reach || 0) + '</b><small>total reach</small></div>' +
+          '<div class="an-card"><b>' + (insights.total_impressions || 0) + '</b><small>impressions</small></div>' +
+          '<div class="an-card"><b>' + (insights.total_saves || 0) + '</b><small>saves</small></div>' +
+          '<div class="an-card"><b>' + (insights.synced_count || 0) + '</b><small>synced posts</small></div>';
+      }
+    } catch(e2) { console.log('insights not available:', e2.message); }
     loadAnView(anView);
   } catch (e) { console.error(e); }
 }
@@ -1843,6 +1897,39 @@ async function loadAnView(view) {
     if (b.textContent.toLowerCase().includes(view)) b.classList.add('on');
   });
   try {
+    // Special: metrics view shows per-post engagement data
+    if (view === 'metrics') {
+      var metrics = await api('/analytics/posts-metrics');
+      var table = $('anTable');
+      if (!metrics.length) { table.innerHTML = '<div class="empty" style="padding:20px"><p>No posted items with metrics yet.</p></div>'; return; }
+      var mhtml = '<table class="an-table"><thead><tr>' +
+        '<th>#</th><th>Type</th><th>Game</th><th>Console</th><th>Influencer</th>' +
+        '<th>Likes</th><th>Comments</th><th>Shares</th><th>Reach</th><th>Saves</th><th>ML Score</th><th>Posted</th>' +
+        '</tr></thead><tbody>';
+      var maxMl = 0;
+      metrics.forEach(function(m) { if (m.ml_score && m.ml_score > maxMl) maxMl = m.ml_score; });
+      for (var mi = 0; mi < metrics.length; mi++) {
+        var m = metrics[mi];
+        var star = (m.ml_score && m.ml_score === maxMl && maxMl > 0) ? ' \u2B50' : '';
+        mhtml += '<tr>' +
+          '<td>' + m.id + '</td>' +
+          '<td>' + (m.type || '-') + '</td>' +
+          '<td>' + esc(m.game_title || '-') + '</td>' +
+          '<td>' + esc(m.console_name || '-') + '</td>' +
+          '<td>' + esc(m.influencer_name || '-') + '</td>' +
+          '<td>' + (m.ig_likes || 0) + '</td>' +
+          '<td>' + (m.ig_comments_count || 0) + '</td>' +
+          '<td>' + (m.ig_shares || 0) + '</td>' +
+          '<td>' + (m.ig_reach || 0) + '</td>' +
+          '<td>' + (m.ig_saves || 0) + '</td>' +
+          '<td>' + (m.ml_score ? m.ml_score.toFixed(1) + star : '-') + '</td>' +
+          '<td>' + ago(m.posted_at) + '</td>' +
+          '</tr>';
+      }
+      mhtml += '</tbody></table>';
+      table.innerHTML = mhtml;
+      return;
+    }
     var data = await api('/analytics/by-' + view);
     var table = $('anTable');
     if (!data.length) {
@@ -1872,6 +1959,84 @@ async function loadAnView(view) {
     html += '</tbody></table>';
     table.innerHTML = html;
   } catch (e) { console.error(e); $('anTable').innerHTML = '<p style="color:var(--rose)">Failed to load</p>'; }
+}
+
+/* ─── post controls (timeline) ─────────────────────────── */
+async function togglePhotoDash() {
+  var on = $('togPhotoDash').classList.toggle('on');
+  $('togPhotoDashLbl').textContent = on ? 'on' : 'off';
+  await api('/config', { method: 'PUT', body: JSON.stringify({ enabled: on }) });
+  toast(on ? 'Photo posts enabled' : 'Photo posts disabled');
+}
+async function toggleVideoDash() {
+  var on = $('togVideoDash2').classList.toggle('on');
+  $('togVideoDash2Lbl').textContent = on ? 'on' : 'off';
+  await api('/config', { method: 'PUT', body: JSON.stringify({ videoEnabled: on }) });
+  toast(on ? 'Video posts enabled' : 'Video posts disabled');
+}
+async function toggleModelDriven() {
+  var on = $('togModelDriven').classList.toggle('on');
+  $('togModelDrivenLbl').textContent = on ? 'on' : 'off';
+  await api('/config', { method: 'PUT', body: JSON.stringify({ modelDriven: on }) });
+  toast(on ? 'Model-driven mode on — timeline sorted by ML score' : 'Model-driven mode off');
+  loadDash();
+}
+function showCreatePostModal() {
+  var choice = prompt('Create a new post:\n1. Photo Post\n2. Video Post\n\nEnter 1 or 2:');
+  if (choice === '1') go('queue');
+  else if (choice === '2') go('video');
+}
+
+/* ─── insights & ML ───────────────────────────────────── */
+async function syncInsights() {
+  var btn = $('syncInsightsBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Syncing...';
+  try {
+    var r = await api('/insights/sync', { method: 'POST' });
+    toast(r.ok ? 'Synced ' + (r.synced || 0) + ' posts' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+  } catch(e) { toast('Sync failed', 'err'); }
+  btn.disabled = false; btn.textContent = 'Sync Insights';
+  loadAnalytics();
+}
+
+async function scorePosts() {
+  var btn = $('scorePostsBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Scoring...';
+  try {
+    var r = await api('/ml/score-queue', { method: 'POST' });
+    toast(r.ok ? 'Scored ' + (r.scored || 0) + ' posts' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+  } catch(e) { toast('Scoring failed', 'err'); }
+  btn.disabled = false; btn.textContent = 'Score Posts (ML)';
+  loadAnalytics();
+}
+
+/* ─── AI suggest for team fields ──────────────────────── */
+async function suggestField(fieldName, inputId) {
+  var infId = $('infEditId').value;
+  if (!infId) { toast('Save influencer first, then edit to use AI Suggest', 'err'); return; }
+  var container = $(inputId + 'Suggestions');
+  container.innerHTML = '<span class="spin"></span>';
+  try {
+    var r = await api('/team/' + infId + '/suggest-field', {
+      method: 'POST', body: JSON.stringify({ field: fieldName }),
+    });
+    if (r.ok && r.suggestions) {
+      container.innerHTML = r.suggestions.map(function(s) {
+        return '<button type="button" class="btn btn-s" style="font-size:11px;padding:3px 8px;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" ' +
+          'title="' + esc(s) + '" onclick="applySuggestion(\'' + inputId + '\',this.title)">' + esc(s.substring(0, 40)) + (s.length > 40 ? '...' : '') + '</button>';
+      }).join('');
+    } else {
+      container.innerHTML = '<span style="color:var(--rose);font-size:11px">' + (r.error || 'Failed') + '</span>';
+    }
+  } catch(e) {
+    container.innerHTML = '<span style="color:var(--rose);font-size:11px">Error</span>';
+  }
+}
+function applySuggestion(inputId, value) {
+  var el = $(inputId);
+  if (el) el.value = value;
+  var container = $(inputId + 'Suggestions');
+  if (container) container.innerHTML = '';
 }
 
 /* ─── boot ─────────────────────────────────────────────── */

@@ -23,6 +23,8 @@ const DEFAULT_CONFIG = {
   videoBackground: 'retro arcade with neon lights and vintage cabinets',
   videoDuration: 8,
   gameImagesFolder: '/data/game_images',
+  rawgApiKey: '',
+  modelDriven: false,
   videoCaptionPrompt: '',
 };
 
