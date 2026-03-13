@@ -7,6 +7,15 @@ services:
     ports:
       - "3099:3000"
     volumes:
+      # SQLite database (autoposter.db lives here — persists all data)
+      - /mnt/user/appdata/ig-autoposter/data:/app/data
+      # Photo queues
       - /mnt/user/appdata/ig-autoposter/incoming:/data/incoming
       - /mnt/user/appdata/ig-autoposter/posted:/data/posted
-      - /mnt/user/appdata/ig-autoposter/data:/app/data
+      # Video queues
+      - /mnt/user/appdata/ig-autoposter/incoming_video:/data/incoming_video
+      - /mnt/user/appdata/ig-autoposter/posted_video:/data/posted_video
+      # Game cover images
+      - /mnt/user/appdata/ig-autoposter/game_images:/data/game_images
+      # Influencer assets (photos, profile pics, room refs)
+      - /mnt/user/appdata/ig-autoposter/team:/data/team

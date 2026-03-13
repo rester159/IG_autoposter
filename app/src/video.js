@@ -11,7 +11,7 @@ const VEO_API = 'https://generativelanguage.googleapis.com/v1beta';
  *
  * @param {string} prompt - The text prompt
  * @param {object} config - App config with geminiApiKey etc.
- * @param {object} opts - Optional: { referencePhotos: ['/path/to/img1.jpg', ...] }
+ * @param {object} opts - Optional: { referencePhotos: ['/path/to/img1.jpg', ...], duration: number }
  *
  * Returns the local file path of the saved .mp4.
  */
@@ -59,13 +59,13 @@ async function generateVideo(prompt, config, opts = {}) {
   // Parameters — don't use personGeneration with reference images
   const parameters = {
     aspectRatio: '9:16',
-    durationSeconds: 8,
+    durationSeconds: opts.duration || 8,
   };
   if (!instance.referenceImages) {
     parameters.personGeneration = 'allow_all';
   }
 
-  console.log('[veo] submitting job, prompt length:', prompt.length, '| refs:', refPhotos.length);
+  console.log('[veo] submitting job, prompt length:', prompt.length, '| refs:', refPhotos.length, '| duration:', parameters.durationSeconds + 's');
 
   // 1 ── submit long-running generation
   const { data: op } = await axios.post(url, {

@@ -8,9 +8,9 @@ COPY package.json ./
 RUN npm install --production
 COPY . .
 
-RUN mkdir -p /data/incoming /data/posted /data/incoming_video /data/posted_video /data/game_images /data/team /app/data
+RUN mkdir -p /data/incoming /data/posted /data/incoming_video /data/posted_video /data/game_images /data/team
 
-ENV PORT=3000 NODE_ENV=production
+ENV PORT=3000 NODE_ENV=production DATA_DIR=/data
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

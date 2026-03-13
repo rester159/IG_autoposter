@@ -42,7 +42,8 @@ const stmts = {
       error = @error,
       veo_prompt = COALESCE(@veo_prompt, veo_prompt),
       veo_uri = COALESCE(@veo_uri, veo_uri),
-      score = COALESCE(@score, score)
+      score = COALESCE(@score, score),
+      game_id = COALESCE(@game_id, game_id)
     WHERE id = @id
   `),
   del: db.prepare('DELETE FROM posts WHERE id = ?'),
@@ -140,6 +141,7 @@ function update(id, data) {
     veo_prompt: data.veo_prompt || null,
     veo_uri: data.veo_uri || null,
     score: data.score ?? null,
+    game_id: data.game_id || null,
   });
   return get(id);
 }

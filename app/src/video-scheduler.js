@@ -61,6 +61,7 @@ async function generateOne(opts = {}) {
 
   try {
     const cfg = loadConfig();
+    if (opts.duration) cfg.videoDuration = opts.duration; // per-request override
     if (!cfg.geminiApiKey) throw new Error('Gemini API key missing');
 
     // Pick an influencer
@@ -211,7 +212,9 @@ async function generateOne(opts = {}) {
 
     // 3 — Generate Part 1: INTRO (8 seconds)
     console.log('[video] generating part 1 (intro)...');
-    const video1 = await generateVideo(part1Prompt, cfg, { referencePhotos });
+    const videoDur = cfg.videoDuration || 8;
+    console.log('[video] using duration:', videoDur + 's per part');
+    const video1 = await generateVideo(part1Prompt, cfg, { referencePhotos, duration: videoDur });
 
     // 4 — Extend with Part 2: BULK REVIEW (adds 8 seconds → 16s total)
     let finalVideo = video1;

@@ -82,8 +82,10 @@ app.get('/api/queue', async (_req, res) => {
 });
 
 // upload photos from the web UI — also creates posts in unified queue
+// Auto-extracts game metadata via Gemini in background
 app.post('/api/upload', upload.array('images', 50), (req, res) => {
   if (!req.files?.length) return res.status(400).json({ error: 'No files' });
+  const cfg = loadConfig();
   const posts = [];
   for (const f of req.files) {
     const post = queue.addPhotoPost({
@@ -91,6 +93,29 @@ app.post('/api/upload', upload.array('images', 50), (req, res) => {
       file_name: f.filename,
     });
     posts.push({ filename: f.filename, postId: post.id, scheduled_at: post.scheduled_at });
+
+    // Auto-extract game metadata in background
+    if (cfg.geminiApiKey) {
+      const gameModel = require('./models/game');
+      const postModel = require('./models/post');
+      const { extractGameMetadata } = require('./game-metadata');
+
+      // Create a game record for this image
+      const game = gameModel.add({ image_filename: f.filename });
+      console.log('[upload] created game record #' + game.id + ' for:', f.filename);
+
+      // Link post to game immediately (before extraction)
+      postModel.update(post.id, { game_id: game.id });
+
+      // Extract metadata in background (non-blocking)
+      extractGameMetadata(game.id, f.path, cfg.geminiApiKey)
+        .then(result => {
+          console.log('[upload] extracted game metadata:', result.game?.title || '(no title)',
+            '| console:', result.game?.console || '-',
+            '| post #' + post.id);
+        })
+        .catch(e => console.error('[upload] game extraction failed for', f.filename, ':', e.message));
+    }
   }
   res.json({ ok: true, count: req.files.length, files: req.files.map(f => f.filename), posts });
 });
@@ -552,6 +577,7 @@ app.post('/api/video/generate', async (req, res) => {
       gameId: req.body.gameId ? Number(req.body.gameId) : undefined,
       customPrompt: req.body.customPrompt,
       outfit: req.body.outfit,
+      duration: req.body.duration ? Number(req.body.duration) : undefined,
     });
     res.json(result);
   } catch (err) {
