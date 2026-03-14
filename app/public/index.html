@@ -407,7 +407,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     <div class="topbar-center">
       <span class="topbar-logo">AuraPost</span>
     </div>
-    <div class="topbar-right"><div class="pill off" id="hPill"><span class="dot"></span></div></div>
+    <div class="topbar-right"></div>
   </header>
 
   <!-- ═══ DASHBOARD ═══ -->
@@ -882,9 +882,7 @@ async function loadDash() {
     $('sP').textContent = posted;
     $('sS').textContent = cronNice(st.scheduler.cron);
     $('sL').textContent = ago(st.scheduler.lastRun);
-    const p = $('hPill');
-    if (st.scheduler.enabled) { p.className = 'pill on'; }
-    else { p.className = 'pill off'; }
+
     $('warnCard').style.display = st.configured ? 'none' : '';
     $('warnCard').classList.toggle('hidden', st.configured);
     if ($('postBtn')) $('postBtn').disabled = !st.configured;
