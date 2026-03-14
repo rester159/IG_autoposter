@@ -904,7 +904,7 @@ function renderTimeline(items, containerId, emptyId, draggable) {
         '</div>' +
       '</div>' +
       '<div class="tl-overflow">' +
-        '<button class="overflow-btn" onclick="event.stopPropagation();this.parentElement.classList.toggle(\'open\')">\u22EF</button>' +
+        '<button class="overflow-btn" onclick="event.stopPropagation();toggleOverflow(this)">\u22EF</button>' +
         '<div class="overflow-menu">' +
           '<button onclick="editPostSchedule(' + p.id + ')">Schedule</button>' +
           '<button onclick="editPostCaption(' + p.id + ')">Edit Caption</button>' +

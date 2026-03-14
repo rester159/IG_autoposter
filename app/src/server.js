@@ -270,6 +270,44 @@ app.put('/api/unified-queue/:id/caption', (req, res) => {
   post ? res.json({ ok: true, ...post }) : res.status(404).json({ error: 'Not found' });
 });
 
+// Regenerate caption or hashtags via Gemini
+app.post('/api/unified-queue/:id/regenerate', async (req, res) => {
+  const id = Number(req.params.id);
+  const post = postModel.get(id);
+  if (!post) return res.status(404).json({ error: 'Not found' });
+  const { field } = req.body; // 'caption' or 'hashtags'
+  if (!['caption', 'hashtags'].includes(field)) return res.status(400).json({ error: 'Invalid field' });
+  const cfg = loadConfig();
+  if (!cfg.geminiApiKey) return res.status(400).json({ error: 'Gemini API key not configured' });
+  try {
+    const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+    const geminiUrl = `${GEMINI_API}/models/gemini-2.5-flash:generateContent?key=${cfg.geminiApiKey}`;
+    let prompt;
+    if (field === 'caption') {
+      prompt = `Write a captivating Instagram caption for a ${post.type === 'video' ? 'Reel video' : 'photo post'} about retro/indie gaming. ` +
+        (post.caption ? `Current caption: "${post.caption}". Write a completely different one. ` : '') +
+        'Be fun, authentic, and brief (1-2 sentences). Return ONLY the caption text, nothing else.';
+    } else {
+      prompt = `Generate ${cfg.hashtagCount || 20} relevant Instagram hashtags for a ${post.type === 'video' ? 'gaming Reel' : 'gaming photo'} post. ` +
+        (post.caption ? `The caption is: "${post.caption}". ` : '') +
+        (post.hashtags ? `Current hashtags: ${post.hashtags}. Generate completely different ones. ` : '') +
+        'Return ONLY the hashtags as #tag1 #tag2 ... format, nothing else.';
+    }
+    const r = await axios.post(geminiUrl, {
+      contents: [{ parts: [{ text: prompt }] }],
+    });
+    const text = r.data.candidates[0].content.parts[0].text.trim();
+    const updates = {};
+    if (field === 'caption') updates.caption = text;
+    else updates.hashtags = text;
+    updates.full_caption = `${field === 'caption' ? text : (post.caption || '')}\n\n${field === 'hashtags' ? text : (post.hashtags || '')}`.trim();
+    postModel.update(id, updates);
+    res.json({ ok: true, [field]: text });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // Post a specific item immediately
 app.post('/api/unified-queue/:id/post-now', async (req, res) => {
   const id = Number(req.params.id);
