@@ -473,7 +473,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   </div>
 
   <div id="videoPanel" class="panel">
-    <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><h2>Video Pipeline</h2><button class="panel-close" onclick="closePanel('videoPanel')">&times;</button></div>
+    <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><h2>Video Post</h2><button class="panel-close" onclick="closePanel('videoPanel')">&times;</button></div>
     <div class="panel-body">
     <div class="stats">
       <div class="stat"><b id="vQ">&ndash;</b><small>videos queued</small></div>
@@ -511,7 +511,16 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg"><label>Script Template</label><select id="vScriptId"><option value="">No script (auto-generate)</option></select><div class="hint">Pick a saved script template or auto-generate</div></div>
       <div class="fg"><label>Background</label><select id="vBgMode"><option value="influencer">Influencer room</option><option value="game-inspired">Game-inspired</option></select><div class="hint">Use influencer's room photo or a game-themed environment</div></div>
       <div class="fg"><label>Outfit</label><select id="vOutfitMode"><option value="game-inspired">Game-inspired cosplay</option><option value="influencer">Influencer default</option></select><div class="hint">Auto-design cosplay or use influencer's default outfit</div></div>
-      <div class="fg"><label>Game Image</label><select id="vGameImg"><option value="">Random from library</option></select><div class="hint">Pick a game image or leave random</div></div>
+      <div class="fg"><label>Game Image</label>
+        <div id="vGameImgPreview" style="display:none;margin-bottom:8px"><img id="vGameImgThumb" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--bdr)"><button class="btn btn-s" onclick="clearGameImg()" style="font-size:11px;padding:2px 8px;margin-left:8px">&times;</button></div>
+        <input type="hidden" id="vGameImg" value="">
+        <input type="hidden" id="vGameImgGameId" value="">
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-s" onclick="gameImgCapture()" style="flex:1;font-size:12px;padding:8px">\uD83D\uDCF7 Take / Upload</button>
+          <button class="btn btn-s" onclick="gameImgFromLibrary()" style="flex:1;font-size:12px;padding:8px">\uD83D\uDCC2 From Library</button>
+        </div>
+        <div class="hint">Take a photo, upload, or pick from game image library</div>
+      </div>
       <div class="fg"><label>Video Length <span id="vDurLabel" style="color:var(--accent);font-weight:600">24s</span> <span id="vDurCost" style="color:var(--t3);font-size:11px">~$1.05</span></label><input type="range" id="vDuration" min="8" max="64" step="8" value="24" oninput="updateDurLabel()" style="width:100%;accent-color:var(--accent)"><div class="hint">Total video length. Auto-splits into 8s segments for Veo.</div></div>
 
       <div class="btns">
@@ -1027,8 +1036,26 @@ async function showCreatePostModal() {
     cancel: true, okText: 'Cancel'
   });
   if (r === 'camera') openCamera();
-  else if (r === 'photo') openPanel('photoPanel');
+  else if (r === 'photo') openPhotoCapture();
   else if (r === 'video') openPanel('videoPanel');
+}
+function openPhotoCapture() {
+  // Opens native picker — on mobile shows camera + gallery options
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.multiple = true;
+  input.onchange = async function() {
+    if (!input.files || !input.files.length) return;
+    var fd = new FormData();
+    for (var i = 0; i < input.files.length; i++) fd.append('images', input.files[i]);
+    try {
+      var r = await fetch('/api/upload', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+      if (r.ok) { toast('Created ' + r.count + ' photo post(s)', 'ok'); loadDash(); }
+      else toast('Upload failed', 'err');
+    } catch (e) { toast('Upload error: ' + e.message, 'err'); }
+  };
+  input.click();
 }
 function openCamera() {
   // Use file input with capture attribute — works over HTTP on mobile
@@ -1047,6 +1074,60 @@ function openCamera() {
     } catch (e) { toast('Upload error: ' + e.message, 'err'); }
   };
   input.click();
+}
+function gameImgCapture() {
+  // Opens native file picker — on mobile shows camera + gallery
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function() {
+    if (!input.files || !input.files.length) return;
+    var fd = new FormData();
+    fd.append('images', input.files[0]);
+    try {
+      var r = await fetch('/api/game-images', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+      if (r.ok && r.files && r.files[0]) {
+        setGameImg(r.files[0].filename, r.files[0].gameId);
+        toast('Game image uploaded', 'ok');
+      } else toast('Upload failed', 'err');
+    } catch (e) { toast('Upload error: ' + e.message, 'err'); }
+  };
+  input.click();
+}
+async function gameImgFromLibrary() {
+  try {
+    var imgs = await api('/game-images');
+    if (!imgs.length) { toast('No game images available', 'err'); return; }
+    var games = await api('/games');
+    var gMap = {}; games.forEach(function(g) { gMap[g.image_filename] = g; });
+    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto">';
+    imgs.forEach(function(img, i) {
+      var g = gMap[img.name];
+      var label = g && g.title ? g.title : img.name;
+      html += '<div style="cursor:pointer;text-align:center" onclick="closeModal(' + i + ')">' +
+        '<img src="' + img.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--bdr)">' +
+        '<div style="font-size:10px;color:var(--t2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(label) + '</div></div>';
+    });
+    html += '</div>';
+    var r = await showModal({ title: 'Choose Game Image', html: html, cancel: true });
+    if (r === null || r === false) return;
+    var picked = imgs[r];
+    if (!picked) return;
+    var g = gMap[picked.name];
+    setGameImg(picked.name, g ? g.id : '');
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+function setGameImg(filename, gameId) {
+  $('vGameImg').value = filename;
+  $('vGameImgGameId').value = gameId || '';
+  $('vGameImgPreview').style.display = 'flex';
+  $('vGameImgPreview').style.alignItems = 'center';
+  $('vGameImgThumb').src = '/media/game_images/' + encodeURIComponent(filename);
+}
+function clearGameImg() {
+  $('vGameImg').value = '';
+  $('vGameImgGameId').value = '';
+  $('vGameImgPreview').style.display = 'none';
 }
 async function pickGameImage() {
   try {
@@ -1415,13 +1496,8 @@ async function loadVideo() {
       $('vScriptId').innerHTML = '<option value="">No script (auto-generate)</option>' +
         scripts.map(s => '<option value="' + s.id + '">' + esc(s.title) + '</option>').join('');
     } catch(e) { console.error('scripts load:', e); }
-    // Load game images dropdown
-    const imgs = await api('/game-images'), games = await api('/games');
-    var gMap = {}; games.forEach(g => { gMap[g.image_filename] = g; });
-    const gSel = $('vGameImg');
-    gSel.innerHTML = '<option value="">Random from library</option>' +
-      imgs.map(function(img) { var g = gMap[img.name]; var label = g && g.title ? g.title + ' (' + (g.console || img.name) + ')' : img.name;
-        return '<option value="' + esc(img.name) + '" data-game-id="' + (g ? g.id : '') + '">' + esc(label) + '</option>'; }).join('');
+    // Game image is now selected via buttons, not a dropdown
+    clearGameImg();
     // Load video queue
     const vq = await api('/video/queue');
     if (!vq.length) { $('vqList').innerHTML = ''; $('vqEmpty').classList.remove('hidden'); }
@@ -1450,7 +1526,7 @@ function getVideoBody() {
   body.outfitMode = $('vOutfitMode').value || 'game-inspired';
   if ($('vStyle').value) body.style = $('vStyle').value;
   if ($('vScriptId').value) body.scriptId = $('vScriptId').value;
-  if ($('vGameImg').value) { body.gameImage = $('vGameImg').value; var sel = $('vGameImg'); var opt = sel.options[sel.selectedIndex]; if (opt && opt.dataset.gameId) body.gameId = opt.dataset.gameId; }
+  if ($('vGameImg').value) { body.gameImage = $('vGameImg').value; if ($('vGameImgGameId').value) body.gameId = $('vGameImgGameId').value; }
   body.duration = Number($('vDuration').value) || 24;
   return body;
 }
