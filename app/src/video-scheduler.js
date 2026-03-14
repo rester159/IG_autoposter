@@ -175,12 +175,15 @@ async function generateOne(opts = {}) {
     } else {
       const script = await generateVideoScript(cfg, influencer, gameImagePath, {
         background: opts.background || cfg.videoBackground,
-        duration: cfg.videoDuration || 8,
+        duration: cfg.videoDuration || 24,
         topic: opts.topic,
         style: opts.style,
         outfit: opts.outfit,
         game: gameRecord || {},
         verifiedBoxArtPath,
+        bgMode: opts.bgMode || 'influencer',
+        outfitMode: opts.outfitMode || 'game-inspired',
+        scriptContent: opts.scriptContent || null,
       });
       part1Prompt = script.part1;
       part2Prompt = script.part2;
@@ -217,7 +220,7 @@ async function generateOne(opts = {}) {
     console.log('[video] reference photos:', referencePhotos.length, '(game + influencer pic + room/default bg)');
 
     // 3 — Generate video with total duration auto-split into 8s segments
-    const totalDur = cfg.videoDuration || 8;
+    const totalDur = cfg.videoDuration || 24;
     const segmentDur = 8; // each Veo segment is 8s
     const numSegments = Math.max(1, Math.round(totalDur / segmentDur));
     console.log('[video] total duration:', totalDur + 's →', numSegments, 'segment(s) of', segmentDur + 's each');

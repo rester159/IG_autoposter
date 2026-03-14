@@ -457,7 +457,8 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <p>Drop images here or click to upload</p>
       <input type="file" id="fileIn" multiple accept="image/*" style="display:none">
     </div>
-    <div class="card">
+    <button class="btn btn-s" onclick="pickGameImage()" style="margin-top:8px;width:100%;font-size:12px;padding:8px">\uD83D\uDCC2 Pick game image from queue</button>
+    <div class="card" style="display:none">
       <h3>Content Queue <span id="qLabel" style="color:var(--t3);font-weight:400"></span></h3>
       <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
         <button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="loadQ('all')" id="qFAll">All</button>
@@ -480,8 +481,8 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="stat"><b id="vL">&ndash;</b><small>last run</small></div>
       <div class="stat"><b id="vGen">&ndash;</b><small>status</small></div>
     </div>
-    <div class="card">
-      <h3>Video Scheduler</h3>
+    <div class="card hidden" id="oldVideoScheduler">
+      <h3>Video Scheduler (legacy)</h3>
       <div class="tog-row"><div class="tog" id="togVidDash" onclick="togVidDashEn()"></div><span id="togVidDashLbl" style="font-size:13px">Disabled</span></div>
       <div class="fg"><label>Post Frequency</label>
         <select id="vFreq" onchange="vFreqChanged()">
@@ -528,12 +529,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       </div>
       <div id="vGenStatus" class="preview hidden"></div>
     </div>
-    <div class="card"><h3>Game Images</h3>
-      <p style="font-size:12px;color:var(--t3);margin-bottom:12px">Upload game screenshots/box art. Pick one when generating or let it choose randomly.</p>
-      <div class="drop" id="gameDropZone" style="padding:20px"><div class="di" style="font-size:20px">&#127918;</div><p style="font-size:12px">Drop game images here or click to upload</p><input type="file" id="gameFileIn" multiple accept="image/*" style="display:none"></div>
-      <div id="gameGrid" class="grid" style="margin-top:12px"></div>
-      <div id="gameEmpty" class="empty hidden" style="padding:20px"><p>No game images yet.</p></div>
-    </div>
+
     <div class="card"><h3>Video Queue</h3><div id="vqList"></div><div id="vqEmpty" class="empty hidden"><div class="ei">&#127916;</div><p>No videos queued. Generate one above!</p></div></div>
     </div>
   </div>
@@ -566,7 +562,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg"><label>Boyfriend / Character Lore <button type="button" class="ai-star" onclick="suggestField('boyfriend','infBoyfriend')" title="AI Suggest">&#10024;</button></label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake"></textarea><div id="infBoyfriendSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
       <div class="fg"><label style="display:flex;align-items:center;justify-content:space-between">Influencer Picture <label class="btn btn-s" style="font-size:11px;padding:3px 8px;cursor:pointer;margin:0">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadInfProfilePic(this.files)"></label></label><input id="infPicture" placeholder="No picture uploaded" readonly style="flex:1"><div id="infPicturePreview" style="margin-top:4px"></div></div>
       <div class="fg"><label style="display:flex;align-items:center;justify-content:space-between">Room / Background <label class="btn btn-s" style="font-size:11px;padding:3px 8px;cursor:pointer;margin:0">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadInfRoomPic(this.files)"></label></label><input id="infRoom" placeholder="No room uploaded" readonly style="flex:1"><div id="infRoomPreview" style="margin-top:4px"></div></div>
-
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-p" onclick="saveInf()" style="font-size:12px;padding:4px 12px">Save</button><button class="btn btn-s" onclick="cancelInf()" style="font-size:12px;padding:4px 12px">Cancel</button></div>
     </div>
     <div id="infDetail" class="card hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -1024,16 +1020,79 @@ async function toggleModelDriven() {
 }
 async function showCreatePostModal() {
   var r = await showModal({
-    title: 'Create New Post',
-    message: 'What type of post would you like to create?',
-    html: '<div class="btns" style="flex-direction:column;margin-top:12px">' +
-      '<button class="btn btn-p" style="justify-content:center" onclick="closeModal(\'photo\')">Photo Post</button>' +
-      '<button class="btn btn-s" style="justify-content:center" onclick="closeModal(\'video\')">Video Post</button>' +
+    title: 'Create',
+    html: '<div style="display:flex;gap:16px;justify-content:center;margin-top:12px">' +
+      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'camera\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83D\uDCF7</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Take Picture</div></div>' +
+      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'photo\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83D\uDDBC\uFE0F</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Photo Post</div></div>' +
+      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'video\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83C\uDFAC</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Video Post</div></div>' +
       '</div>',
     cancel: true, okText: 'Cancel'
   });
-  if (r === 'photo') openPanel('photoPanel');
+  if (r === 'camera') openCamera();
+  else if (r === 'photo') openPanel('photoPanel');
   else if (r === 'video') openPanel('videoPanel');
+}
+async function openCamera() {
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    setTimeout(function() { var v = $('camVid'); if (v) v.srcObject = stream; }, 100);
+    var r = await showModal({
+      title: 'Take Picture',
+      html: '<div style="text-align:center"><video id="camVid" autoplay playsinline style="width:100%;max-height:60vh;border-radius:8px;background:#000"></video>' +
+        '<canvas id="camCanvas" style="display:none"></canvas>' +
+        '<button class="btn btn-p" id="camCapture" onclick="capturePhoto()" style="margin-top:12px;font-size:14px">\uD83D\uDCF8 Capture</button></div>',
+      cancel: true, okText: 'Cancel'
+    });
+    stream.getTracks().forEach(function(t) { t.stop(); });
+    if (r === 'captured') { toast('Photo saved to game images', 'ok'); }
+  } catch (e) {
+    toast('Camera access denied: ' + e.message, 'err');
+  }
+}
+async function capturePhoto() {
+  var vid = $('camVid'), canvas = $('camCanvas');
+  canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid, 0, 0);
+  canvas.toBlob(async function(blob) {
+    var fd = new FormData();
+    fd.append('images', blob, 'camera_' + Date.now() + '.jpg');
+    try {
+      var r = await fetch('/api/game-images', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+      if (r.ok) { closeModal('captured'); } else toast('Upload failed', 'err');
+    } catch (e) { toast('Upload error', 'err'); }
+  }, 'image/jpeg', 0.85);
+}
+async function pickGameImage() {
+  try {
+    var imgs = await api('/game-images');
+    if (!imgs.length) { toast('No game images available', 'err'); return; }
+    var games = await api('/games');
+    var gMap = {}; games.forEach(function(g) { gMap[g.image_filename] = g; });
+    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-height:50vh;overflow-y:auto">';
+    imgs.forEach(function(img, i) {
+      var g = gMap[img.name];
+      var label = g && g.title ? g.title : img.name;
+      html += '<div style="cursor:pointer;text-align:center" onclick="closeModal(' + i + ')">' +
+        '<img src="' + img.url + '" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--bdr)">' +
+        '<div style="font-size:10px;color:var(--t2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(label) + '</div></div>';
+    });
+    html += '</div>';
+    var r = await showModal({ title: 'Pick Game Image', html: html, cancel: true });
+    if (r === null || r === false) return;
+    var picked = imgs[r];
+    if (!picked) return;
+    // Copy game image to incoming as a photo post
+    var blob = await fetch(picked.url).then(function(r) { return r.blob(); });
+    var fd = new FormData();
+    fd.append('images', blob, picked.name);
+    var up = await fetch('/api/upload', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+    if (up.ok) { toast('Photo post created from ' + picked.name, 'ok'); loadDash(); }
+    else toast('Failed to create post', 'err');
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+function cancelInf() {
+  $('infForm').classList.add('hidden');
+  if (currentInfId) showInfDetail(currentInfId);
 }
 
 // ── Show Post Detail popup ──
@@ -1361,24 +1420,23 @@ async function loadVideo() {
     $('vQ').textContent = st.queue; $('vS').textContent = cronNice(st.scheduler.cron);
     $('vL').textContent = ago(st.scheduler.lastRun);
     $('vGen').textContent = st.scheduler.generating ? 'generating\u2026' : (st.scheduler.posting ? 'posting\u2026' : 'idle');
-    const vidOn = !!cfg.videoEnabled;
-    $('togVidDash').classList.toggle('on', vidOn); $('togVidDashLbl').textContent = vidOn ? 'Enabled' : 'Disabled';
-    const parsed = vidCronToFreq(cfg.videoCronSchedule || '0 12 * * *');
-    $('vFreq').value = parsed.freq;
-    if (parsed.freq === 'v_once') setTimeVal('vTime1', parsed.time);
-    if (parsed.freq === 'v_twice') { setTimeVal('vTime2a', parsed.time1); setTimeVal('vTime2b', parsed.time2); }
-    if (parsed.freq === 'v_thrice') { setTimeVal('vTime3a', parsed.time1); setTimeVal('vTime3b', parsed.time2); setTimeVal('vTime3c', parsed.time3); }
-    if (parsed.freq === 'v_weekly') { $('vWeekday').value = parsed.day; setTimeVal('vTimeW', parsed.time); }
-    if (parsed.freq === 'v_custom') $('vCron').value = parsed.cron || cfg.videoCronSchedule;
-    vFreqChanged();
+    // Load influencer dropdown
     const sel = $('vInf');
     sel.innerHTML = '<option value="">Random</option>' + teamList.map(i => '<option value="' + i.id + '">' + esc(i.name) + '</option>').join('');
+    // Load script template dropdown
+    try {
+      const scripts = await api('/video-scripts');
+      $('vScriptId').innerHTML = '<option value="">No script (auto-generate)</option>' +
+        scripts.map(s => '<option value="' + s.id + '">' + esc(s.title) + '</option>').join('');
+    } catch(e) { console.error('scripts load:', e); }
+    // Load game images dropdown
     const imgs = await api('/game-images'), games = await api('/games');
     var gMap = {}; games.forEach(g => { gMap[g.image_filename] = g; });
     const gSel = $('vGameImg');
     gSel.innerHTML = '<option value="">Random from library</option>' +
       imgs.map(function(img) { var g = gMap[img.name]; var label = g && g.title ? g.title + ' (' + (g.console || img.name) + ')' : img.name;
         return '<option value="' + esc(img.name) + '" data-game-id="' + (g ? g.id : '') + '">' + esc(label) + '</option>'; }).join('');
+    // Load video queue
     const vq = await api('/video/queue');
     if (!vq.length) { $('vqList').innerHTML = ''; $('vqEmpty').classList.remove('hidden'); }
     else {
@@ -1388,7 +1446,8 @@ async function loadVideo() {
         '<button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="delVideoQ(\'' + esc(v.name) + '\')">&times;</button></div>'
       ).join('');
     }
-    loadGameImages(imgs);
+    // Update duration label
+    updateDurLabel();
   } catch (e) { console.error(e); }
 }
 function updateDurLabel() {
@@ -1401,13 +1460,12 @@ function updateDurLabel() {
 function getVideoBody() {
   var body = {};
   if ($('vInf').value) body.influencerId = $('vInf').value;
-  if ($('vBg').value) body.background = $('vBg').value;
+  body.bgMode = $('vBgMode').value || 'influencer';
+  body.outfitMode = $('vOutfitMode').value || 'game-inspired';
   if ($('vStyle').value) body.style = $('vStyle').value;
-  if ($('vTopic').value) body.topic = $('vTopic').value;
+  if ($('vScriptId').value) body.scriptId = $('vScriptId').value;
   if ($('vGameImg').value) { body.gameImage = $('vGameImg').value; var sel = $('vGameImg'); var opt = sel.options[sel.selectedIndex]; if (opt && opt.dataset.gameId) body.gameId = opt.dataset.gameId; }
-  if ($('vOutfit').value) body.outfit = $('vOutfit').value;
-  if ($('vCustomPrompt').value.trim()) body.customPrompt = $('vCustomPrompt').value.trim();
-  body.duration = Number($('vDuration').value) || 8;
+  body.duration = Number($('vDuration').value) || 24;
   return body;
 }
 async function previewScript() {
@@ -1609,7 +1667,7 @@ async function loadCfg() {
   const on = !!c.enabled; $('togOn').classList.toggle('on', on); $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
   if ($('cRawgKey')) $('cRawgKey').value = c.rawgApiKey || '';
   $('cGemKey').value = c.geminiApiKey || '';
-  $('cVidDur').value = c.videoDuration || 8;
+  $('cVidDur').value = c.videoDuration || 24;
   $('cPhotoFreq').value = c.photoFrequency || '1d';
   $('cVideoFreq').value = c.videoFrequency || '1d';
   if (c.videoBackgroundImage) {
@@ -1617,6 +1675,7 @@ async function loadCfg() {
     $('cVidBgImg').src = '/data/' + encodeURIComponent(c.videoBackgroundImage);
   }
   loadGenres();
+  loadScriptTemplates();
 }
 function togEn() { const t = $('togOn'), on = t.classList.toggle('on'); $('togLbl').textContent = on ? 'Enabled' : 'Disabled'; }
 async function saveCfg() {
@@ -1626,7 +1685,7 @@ async function saveCfg() {
     hashtagCount: parseInt($('cHCnt').value) || 30, hashtagStyle: $('cHStyle').value,
     mediaFolder: $('cIn').value, postedFolder: $('cOut').value, enabled: $('togOn').classList.contains('on'),
     geminiApiKey: $('cGemKey').value, rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
-    videoDuration: parseInt($('cVidDur').value) || 8,
+    videoDuration: parseInt($('cVidDur').value) || 24,
     photoFrequency: $('cPhotoFreq').value, videoFrequency: $('cVideoFreq').value,
   };
   const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
@@ -1641,6 +1700,79 @@ function cfgTab(name) {
   document.querySelectorAll('.vtabs-body .vtab').forEach(t => t.classList.remove('on'));
   event.target.classList.add('on');
   var el = $('cfg-' + name); if (el) el.classList.add('on');
+}
+
+/* ═══ SCRIPT TEMPLATES ═══ */
+async function loadScriptTemplates() {
+  try {
+    const scripts = await api('/video-scripts');
+    const el = $('scriptTemplateList');
+    if (!el) return;
+    if (!scripts.length) { el.innerHTML = '<p style="color:var(--t3);font-size:12px">No scripts defined yet.</p>'; return; }
+    el.innerHTML = scripts.map(function(s) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)">' +
+        '<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13px">' + esc(s.title) + '</div>' +
+        '<div style="font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc((s.content || '').slice(0,60)) + '</div></div>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:3px 8px;flex-shrink:0" onclick="editScriptTemplate(' + s.id + ')">Edit</button>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:3px 8px;flex-shrink:0;color:var(--err)" onclick="deleteScriptTemplate(' + s.id + ')">&times;</button>' +
+        '</div>';
+    }).join('');
+  } catch (e) { console.error('loadScriptTemplates:', e); }
+}
+async function addScriptTemplate() {
+  var r = await showModal({
+    title: 'Define Script',
+    html: '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Title <button class="ai-star" onclick="suggestScriptField(\'title\')" title="AI suggest">\u2728</button></label><input id="mdScriptTitle" placeholder="e.g. Epic Boss Battle Review"></div>' +
+      '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Content <button class="ai-star" onclick="suggestScriptField(\'content\')" title="AI suggest">\u2728</button></label><textarea id="mdScriptContent" rows="4" placeholder="Creative direction for the video script..."></textarea></div>',
+    ok: 'Save', cancel: true
+  });
+  if (r !== 'ok') return;
+  var title = $('mdScriptTitle').value.trim();
+  var content = $('mdScriptContent').value.trim();
+  if (!title) { toast('Title required', 'err'); return; }
+  try {
+    await api('/video-scripts', { method: 'POST', body: JSON.stringify({ title: title, content: content }) });
+    toast('Script saved', 'ok'); loadScriptTemplates();
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+async function editScriptTemplate(id) {
+  var scripts = await api('/video-scripts');
+  var s = scripts.find(function(x) { return x.id === id; });
+  if (!s) return;
+  var r = await showModal({
+    title: 'Edit Script',
+    html: '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Title <button class="ai-star" onclick="suggestScriptField(\'title\')" title="AI suggest">\u2728</button></label><input id="mdScriptTitle" value="' + esc(s.title) + '"></div>' +
+      '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Content <button class="ai-star" onclick="suggestScriptField(\'content\')" title="AI suggest">\u2728</button></label><textarea id="mdScriptContent" rows="4">' + esc(s.content || '') + '</textarea></div>',
+    ok: 'Save', cancel: true
+  });
+  if (r !== 'ok') return;
+  var title = $('mdScriptTitle').value.trim();
+  var content = $('mdScriptContent').value.trim();
+  if (!title) { toast('Title required', 'err'); return; }
+  try {
+    await api('/video-scripts/' + id, { method: 'PUT', body: JSON.stringify({ title: title, content: content }) });
+    toast('Updated', 'ok'); loadScriptTemplates();
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+async function deleteScriptTemplate(id) {
+  var r = await showModal({ title: 'Delete Script?', message: 'This cannot be undone.', ok: 'Delete', cancel: true });
+  if (r !== 'ok') return;
+  try {
+    await api('/video-scripts/' + id, { method: 'DELETE' });
+    toast('Deleted', 'ok'); loadScriptTemplates();
+  } catch (e) { toast('Error: ' + e.message, 'err'); }
+}
+async function suggestScriptField(field) {
+  var current = field === 'title' ? ($('mdScriptTitle') ? $('mdScriptTitle').value : '') : ($('mdScriptContent') ? $('mdScriptContent').value : '');
+  try {
+    var r = await api('/video-scripts/suggest', { method: 'POST', body: JSON.stringify({ field: field, current: current }) });
+    if (field === 'title' && r.suggestions) {
+      var pick = await showModal({ title: 'Pick a title', html: r.suggestions.map(function(s, i) { return '<div class="bs-item" onclick="closeModal(' + i + ')">' + esc(s) + '</div>'; }).join(''), cancel: true });
+      if (pick !== null && pick !== false && r.suggestions[pick]) $('mdScriptTitle').value = r.suggestions[pick];
+    } else if (r.suggestion) {
+      $('mdScriptContent').value = r.suggestion;
+    }
+  } catch (e) { toast('AI suggest failed', 'err'); }
 }
 
 /* ═══ TEAM ═══ */

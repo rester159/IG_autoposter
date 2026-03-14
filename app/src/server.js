@@ -15,6 +15,7 @@ const { listVideoQueue, nextVideoInQueue } = require('./video');
 const queue = require('./queue');
 const postModel = require('./models/post');
 const gameModel = require('./models/game');
+const videoScriptModel = require('./models/video-script');
 const analytics = require('./models/analytics');
 const { syncAllInsights } = require('./instagram-insights');
 const { scoreQueue, getTopRecommended } = require('./ml-scoring');
@@ -743,16 +744,23 @@ app.delete('/api/video/queue/:name', (req, res) => {
 // generate a video (script → Veo) — does NOT post
 app.post('/api/video/generate', async (req, res) => {
   try {
+    // Load script content if scriptId provided
+    let scriptContent = null;
+    if (req.body.scriptId) {
+      const script = videoScriptModel.get(Number(req.body.scriptId));
+      if (script) scriptContent = script.content;
+    }
     const result = await videoSched.generateOne({
       influencerId: req.body.influencerId,
-      background: req.body.background,
       topic: req.body.topic,
       style: req.body.style,
       gameImage: req.body.gameImage,
       gameId: req.body.gameId ? Number(req.body.gameId) : undefined,
-      customPrompt: req.body.customPrompt,
       outfit: req.body.outfit,
       duration: req.body.duration ? Number(req.body.duration) : undefined,
+      bgMode: req.body.bgMode || 'influencer',
+      outfitMode: req.body.outfitMode || 'game-inspired',
+      scriptContent: scriptContent,
     });
     res.json(result);
   } catch (err) {
@@ -793,13 +801,20 @@ app.post('/api/video/preview-script', async (req, res) => {
       gameRecord = gameModel.getByImage(req.body.gameImage);
     }
 
+    // Load script content if scriptId provided
+    let previewScriptContent = null;
+    if (req.body.scriptId) {
+      const s = videoScriptModel.get(Number(req.body.scriptId));
+      if (s) previewScriptContent = s.content;
+    }
     const script = await generateVideoScript(cfg, influencer, gameImagePath, {
-      background: req.body.background || cfg.videoBackground,
-      duration: cfg.videoDuration || 8,
+      duration: cfg.videoDuration || 24,
       topic: req.body.topic,
       style: req.body.style,
-      outfit: req.body.outfit,
       game: gameRecord || {},
+      bgMode: req.body.bgMode || 'influencer',
+      outfitMode: req.body.outfitMode || 'game-inspired',
+      scriptContent: previewScriptContent,
     });
 
     res.json({
@@ -868,6 +883,55 @@ app.delete('/api/game-images/:name', (req, res) => {
   if (!fs.existsSync(fp)) return res.status(404).json({ error: 'Not found' });
   fs.unlinkSync(fp);
   res.json({ ok: true });
+});
+
+// ═══════════════════════  VIDEO SCRIPT ROUTES  ═══════════════════
+
+app.get('/api/video-scripts', (_req, res) => res.json(videoScriptModel.list()));
+
+app.post('/api/video-scripts', (req, res) => {
+  try {
+    const script = videoScriptModel.add(req.body.title || 'Untitled', req.body.content || '');
+    res.json(script);
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.put('/api/video-scripts/:id', (req, res) => {
+  const script = videoScriptModel.update(Number(req.params.id), req.body.title, req.body.content);
+  script ? res.json(script) : res.status(404).json({ error: 'Not found' });
+});
+
+app.delete('/api/video-scripts/:id', (req, res) => {
+  res.json({ ok: videoScriptModel.del(Number(req.params.id)) });
+});
+
+// AI suggest for script fields
+app.post('/api/video-scripts/suggest', async (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg.geminiApiKey) return res.status(400).json({ error: 'Gemini API key not configured' });
+  const { field, current } = req.body;
+  const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+  const geminiUrl = GEMINI_API + '/models/gemini-2.5-flash:generateContent?key=' + cfg.geminiApiKey;
+  let prompt;
+  if (field === 'title') {
+    prompt = 'Generate 3 creative script titles for a retro/indie game review video. ' +
+      (current ? 'Current title: "' + current + '". Write different ones. ' : '') +
+      'Each should be catchy and descriptive (3-6 words). Return ONLY a JSON array of 3 strings.';
+  } else {
+    prompt = 'Generate a creative video script direction/template for a retro game review video by an influencer. ' +
+      (current ? 'Current content: "' + current + '". Expand/improve it. ' : '') +
+      'Include guidance on tone, key talking points, and structure. 2-4 sentences. Return ONLY the text, no JSON.';
+  }
+  try {
+    const r = await axios.post(geminiUrl, { contents: [{ parts: [{ text: prompt }] }] });
+    const text = r.data.candidates[0].content.parts[0].text.trim();
+    if (field === 'title') {
+      const cleaned = text.replace(/^```json?\s*/i, '').replace(/```\s*$/, '').trim();
+      res.json({ ok: true, suggestions: JSON.parse(cleaned) });
+    } else {
+      res.json({ ok: true, suggestion: text });
+    }
+  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
 });
 
 // ═══════════════════════  GENRE API ROUTES  ═══════════════════════

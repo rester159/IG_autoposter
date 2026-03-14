@@ -108,6 +108,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_posts_sort ON posts(status, sort_order);
   CREATE INDEX IF NOT EXISTS idx_history_timestamp ON history(timestamp DESC);
   CREATE INDEX IF NOT EXISTS idx_games_image ON games(image_filename);
+
+  CREATE TABLE IF NOT EXISTS video_scripts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 // ── Schema migrations (idempotent) ──────────────────────────────

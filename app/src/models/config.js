@@ -21,7 +21,7 @@ const DEFAULT_CONFIG = {
   videoPostedFolder: '/data/posted_video',
   videoInfluencerId: '',
   videoBackground: 'retro arcade with neon lights and vintage cabinets',
-  videoDuration: 8,
+  videoDuration: 24,
   gameImagesFolder: '/data/game_images',
   rawgApiKey: '',
   modelDriven: false,

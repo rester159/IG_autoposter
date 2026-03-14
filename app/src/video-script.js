@@ -77,6 +77,9 @@ async function generateVideoScript(config, influencer, gameImagePath, opts = {})
   }
 
   const background = opts.background || config.videoBackground || 'retro arcade with neon lights';
+  const bgMode = opts.bgMode || 'influencer';
+  const outfitMode = opts.outfitMode || 'game-inspired';
+  const scriptContent = opts.scriptContent || null;
   const game = opts.game || {};
 
   // Convert metacritic score to X/10 format (one decimal)
@@ -131,7 +134,7 @@ Name: ${influencer.name}
 Personality: ${influencer.personality || 'Energetic gamer'}
 Quirks: ${influencer.quirks || 'Expressive reactions'}
 Visual description: ${influencer.expressions || 'Young person in casual gaming attire'}
-Outfit: ${influencer.outfit || "Inspired by the game — cosplay elements, colors, and accessories that reference the game's characters or aesthetic"}
+Outfit: ${outfitMode === 'game-inspired' ? "Inspired by the game — design a creative cosplay outfit with colors, accessories, and elements that reference the game's characters or aesthetic" : (influencer.outfit || 'Casual gaming attire')}
 Intro Phrase: ${influencer.intro_phrase || `Hey everyone, it's ${influencer.name}!`}
 Game Tastes: ${influencer.game_tastes || 'Loves all kinds of games'}
 Fashion Style: ${influencer.fashion_style || 'Gaming-inspired streetwear'}
@@ -140,8 +143,8 @@ ${gameInfo}
 
 IMAGE INDEX:
 ${imageIndex}
-${hasRoom ? 'Use the ROOM reference image as the primary background/setting for the video scene.\n' : `Background: ${background}\n`}
-${opts.topic ? 'SCRIPT / TOPIC: ' + opts.topic : ''}
+${bgMode === 'game-inspired' ? 'BACKGROUND: Design a creative environment INSPIRED BY THE GAME being reviewed. The setting should reference the game\'s world, art style, and atmosphere — NOT the influencer\'s usual room.\n' : (hasRoom ? 'Use the ROOM reference image as the primary background/setting for the video scene.\n' : `Background: ${background}\n`)}
+${scriptContent ? 'SCRIPT TEMPLATE / CREATIVE DIRECTION:\n' + scriptContent + '\n' : (opts.topic ? 'SCRIPT / TOPIC: ' + opts.topic : '')}
 ${styleGuide ? 'STYLE: ' + styleGuide : ''}
 
 TASK: Write THREE video prompts for Veo 3.1 that together form a ~24-second vertical 9:16 video WITH AUDIO. This is a structured game review. Each part MUST be 40-60 words. Use precise, technical language.
