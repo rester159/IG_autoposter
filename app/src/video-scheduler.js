@@ -206,7 +206,15 @@ async function generateOne(opts = {}) {
       const roomPath = path.join('/data/team', influencer.id, influencer.room);
       if (fs.existsSync(roomPath)) referencePhotos.push(roomPath);
     }
-    console.log('[video] reference photos:', referencePhotos.length, '(game + influencer pic + room)');
+    // If influencer has no room photo, use default background image from config
+    if (!influencer.room && cfg.videoBackgroundImage) {
+      const defaultBgPath = path.join('/data', cfg.videoBackgroundImage);
+      if (fs.existsSync(defaultBgPath)) {
+        referencePhotos.push(defaultBgPath);
+        console.log('[video] using default bg image (influencer has no room):', cfg.videoBackgroundImage);
+      }
+    }
+    console.log('[video] reference photos:', referencePhotos.length, '(game + influencer pic + room/default bg)');
 
     // 3 — Generate video with total duration auto-split into 8s segments
     const totalDur = cfg.videoDuration || 8;

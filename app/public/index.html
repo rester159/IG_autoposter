@@ -210,6 +210,19 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .overflow-menu button:hover{background:var(--bg3);color:var(--t1)}
 .overflow-menu .danger{color:var(--err)}
 .overflow-menu .danger:hover{background:rgba(251,113,133,.1)}
+.tl-item.menu-open{z-index:100;position:relative}
+.tl-inf-link{color:var(--accent);cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+.tl-inf-link:hover{color:var(--accent2);text-decoration:underline solid}
+.genre-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.genre-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;font-size:12px;color:var(--t2);cursor:pointer;transition:.15s}
+.genre-chip.selected{background:var(--accent);border-color:var(--accent);color:#fff}
+.genre-chip:hover{border-color:var(--accent)}
+.ctrl-freq{font-size:13px;color:#fff;cursor:pointer;padding:2px 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--bdr);min-width:80px;text-align:center}
+.ctrl-freq:hover{border-color:var(--accent)}
+.ctrl-freq-select{position:absolute;top:100%;left:0;z-index:50;background:var(--bg4);border:1px solid var(--bdr);border-radius:var(--r);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:140px;display:none}
+.ctrl-freq-select.open{display:block}
+.ctrl-freq-select button{display:block;width:100%;padding:6px 10px;background:none;border:none;color:var(--t2);font-size:12px;cursor:pointer;border-radius:4px;text-align:left}
+.ctrl-freq-select button:hover{background:var(--bg3);color:var(--t1)}
 
 /* ── Image Grid ── */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
@@ -413,22 +426,19 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     <div class="card">
       <h3>Post Controls</h3>
       <div class="ctrl-row">
-        <span class="ctrl-label">Photo Posts</span>
-        <span class="ctrl-val" id="pillPhotoFreq">off</span>
+        <span class="ctrl-label">Photo frequency</span>
+        <span class="ctrl-freq" id="pillPhotoFreq" onclick="toggleFreqDropdown('photo')">off</span>
         <div class="tog" id="togPhotoDash" onclick="togglePhotoDash()"></div>
-        <span style="font-size:12px;color:var(--t3);width:24px" id="togPhotoDashLbl">off</span>
       </div>
       <div class="ctrl-row">
-        <span class="ctrl-label">Video Posts</span>
-        <span class="ctrl-val" id="pillVideoFreq">off</span>
+        <span class="ctrl-label">Video frequency</span>
+        <span class="ctrl-freq" id="pillVideoFreq" onclick="toggleFreqDropdown('video')">off</span>
         <div class="tog" id="togVideoDash2" onclick="toggleVideoDash()"></div>
-        <span style="font-size:12px;color:var(--t3);width:24px" id="togVideoDash2Lbl">off</span>
       </div>
       <div class="ctrl-row">
-        <span class="ctrl-label">Model-Driven</span>
+        <span class="ctrl-label">Model driven timeline</span>
         <span class="ctrl-val" id="pillLastPost">never</span>
         <div class="tog" id="togModelDriven" onclick="toggleModelDriven()"></div>
-        <span style="font-size:12px;color:var(--t3);width:24px" id="togModelDrivenLbl">off</span>
       </div>
     </div>
     <div class="card">
@@ -550,7 +560,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg"><label>Visual Description <button type="button" class="ai-star" onclick="suggestField('expressions','infExpressions')" title="AI Suggest">&#10024;</button></label><textarea id="infExpressions" rows="2" placeholder="e.g. Young woman, glasses, wavy dark hair"></textarea><div id="infExpressionsSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
       <div class="fg"><label>Default Outfit <button type="button" class="ai-star" onclick="suggestField('outfit','infOutfit')" title="AI Suggest">&#10024;</button></label><textarea id="infOutfit" rows="2" placeholder="e.g. Colorful streetwear with gaming pins"></textarea><div id="infOutfitSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
       <div class="fg"><label>Intro Phrase <button type="button" class="ai-star" onclick="suggestField('intro_phrase','infIntroPhrase')" title="AI Suggest">&#10024;</button></label><input id="infIntroPhrase" placeholder="e.g. Hey gamers, it's Luna!"><div id="infIntroPhraseSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
-      <div class="fg"><label>Game Tastes <button type="button" class="ai-star" onclick="suggestField('game_tastes','infGameTastes')" title="AI Suggest">&#10024;</button></label><textarea id="infGameTastes" rows="2" placeholder="e.g. Loves JRPGs and platformers"></textarea><div id="infGameTastesSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
+      <div class="fg"><label>Game Tastes</label><div id="infGameTastesGrid" class="genre-chips"></div><input type="hidden" id="infGameTastes"></div>
       <div class="fg"><label>Fashion Style <button type="button" class="ai-star" onclick="suggestField('fashion_style','infFashionStyle')" title="AI Suggest">&#10024;</button></label><textarea id="infFashionStyle" rows="2" placeholder="e.g. Y2K aesthetic, pastel colors"></textarea><div id="infFashionStyleSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
       <div class="fg"><label>Accent <button type="button" class="ai-star" onclick="suggestField('accent','infAccent')" title="AI Suggest">&#10024;</button></label><input id="infAccent" placeholder="e.g. British, Southern US, Japanese"><div id="infAccentSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
       <div class="fg"><label>Boyfriend / Character Lore <button type="button" class="ai-star" onclick="suggestField('boyfriend','infBoyfriend')" title="AI Suggest">&#10024;</button></label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake"></textarea><div id="infBoyfriendSuggestions" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div></div>
@@ -612,7 +622,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     <div class="vtabs">
       <div class="vtabs-nav" id="cfgNav">
         <button class="on" onclick="cfgTab('api')">API Keys</button>
-        <button onclick="cfgTab('prompts')">Post Types</button>
+        <button onclick="cfgTab('prompts')">Post Settings</button>
         <button onclick="cfgTab('genres')">Genres</button>
         <button onclick="cfgTab('sched')">Scheduler</button>
         <button onclick="cfgTab('paths')">File Paths</button>
@@ -630,17 +640,34 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
           <div class="fg"><label>RAWG.io API Key</label><input id="cRawgKey" type="password" placeholder="your-rawg-api-key"><div class="hint">Get a free key at rawg.io/apidocs</div></div>
         </div>
         <div class="vtab" id="cfg-prompts">
-          <h3 style="margin-bottom:16px">AI Captions</h3>
+          <h3 style="margin-bottom:16px">Photo Post Defaults</h3>
           <div class="fg"><label>Caption Prompt</label><textarea id="cPrompt" rows="3"></textarea></div>
           <div class="row2">
             <div class="fg"><label>Hashtag Count</label><input id="cHCnt" type="number" min="5" max="30" value="30"></div>
-            <div class="fg"><label>Hashtag Style</label><select id="cHStyle"><option value="viral">Viral</option><option value="niche">Niche</option><option value="mixed" selected>Mixed</option></select></div>
+            <div class="fg"><label>Hashtag Style</label><select id="cHStyle"><option value="viral" selected>Viral</option><option value="niche">Niche</option><option value="mixed">Mixed</option></select></div>
           </div>
-          <h3 style="margin-top:20px;margin-bottom:16px">Video Defaults</h3>
-          <div class="fg"><label>Default Background</label><input id="cVidBg" placeholder="retro arcade with neon lights"></div>
-          <div class="row2">
-            <div class="fg"><label>Video Duration (sec)</label><input id="cVidDur" type="number" min="4" max="16" value="8"></div>
-            <div class="fg"><label>Default Influencer</label><select id="cVidInf"><option value="">Random</option></select></div>
+          <div class="fg"><label>Default Frequency</label>
+            <select id="cPhotoFreq">
+              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
+              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
+              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
+              <option value="1w">Once a week</option>
+            </select>
+          </div>
+          <h3 style="margin-top:20px;margin-bottom:16px">Video Post Defaults</h3>
+          <div class="fg"><label>Default Background Image</label>
+            <div id="cVidBgPreview" style="width:80px;height:80px;border-radius:8px;background:var(--bg3);margin-bottom:8px;overflow:hidden;display:none"><img id="cVidBgImg" style="width:100%;height:100%;object-fit:cover"></div>
+            <input type="file" id="cVidBgFile" accept="image/*" onchange="uploadDefaultBg(this)" style="font-size:12px">
+            <div class="hint">Used when influencer has no room photo</div>
+          </div>
+          <div class="fg"><label>Video Duration (sec)</label><input id="cVidDur" type="number" min="4" max="16" value="8"></div>
+          <div class="fg"><label>Default Frequency</label>
+            <select id="cVideoFreq">
+              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
+              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
+              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
+              <option value="1w">Once a week</option>
+            </select>
           </div>
         </div>
         <div class="vtab" id="cfg-genres">
@@ -829,10 +856,21 @@ function closeSheet(){}
 function openPanel(id){$(id).classList.add('open');document.body.style.overflow='hidden';if(id==='photoPanel')loadQ();else if(id==='videoPanel')loadVideo();}
 function closePanel(id){$(id).classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.panel.open').forEach(function(p){p.classList.remove('open')});document.body.style.overflow='';}});
+function toggleOverflow(btn) {
+  var ov = btn.parentElement;
+  var item = ov.closest('.tl-item');
+  var wasOpen = ov.classList.contains('open');
+  closeAllOverflows();
+  if (!wasOpen) { ov.classList.add('open'); if(item) item.classList.add('menu-open'); }
+}
+function closeAllOverflows() {
+  document.querySelectorAll('.tl-overflow.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.tl-item.menu-open').forEach(el => el.classList.remove('menu-open'));
+}
 // Close overflow menus on outside click
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.tl-overflow')) {
-    document.querySelectorAll('.tl-overflow.open').forEach(el => el.classList.remove('open'));
+    closeAllOverflows();
   }
 });
 
@@ -857,15 +895,12 @@ async function loadDash() {
     const cfg = await api('/config');
     const photoOn = !!cfg.enabled;
     $('togPhotoDash').classList.toggle('on', photoOn);
-    $('togPhotoDashLbl').textContent = photoOn ? 'on' : 'off';
     const vidOn2 = !!cfg.videoEnabled;
     $('togVideoDash2').classList.toggle('on', vidOn2);
-    $('togVideoDash2Lbl').textContent = vidOn2 ? 'on' : 'off';
     const mdOn = cfg.modelDriven === true || cfg.modelDriven === 'true';
     $('togModelDriven').classList.toggle('on', mdOn);
-    $('togModelDrivenLbl').textContent = mdOn ? 'on' : 'off';
-    $('pillPhotoFreq').textContent = photoOn ? cronNice(cfg.cronSchedule) : 'off';
-    $('pillVideoFreq').textContent = vidOn2 ? cronNice(cfg.videoCronSchedule) : 'off';
+    $('pillPhotoFreq').textContent = photoOn ? freqToLabel(cfg.photoFrequency || '1d') : 'off';
+    $('pillVideoFreq').textContent = vidOn2 ? freqToLabel(cfg.videoFrequency || '1d') : 'off';
     const lastPosted = queue.filter(p => p.status === 'posted').sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''))[0];
     $('pillLastPost').textContent = lastPosted ? ago(lastPosted.posted_at) : 'never';
     const upcoming = queue.filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
@@ -882,11 +917,16 @@ function renderTimeline(items, containerId, emptyId, draggable) {
     var typeBadge = '<span class="tl-badge ' + p.type + '">' + p.type + '</span>';
     var statusBadge = '<span class="tl-status ' + p.status + '">' + p.status + '</span>';
     // Build simplified caption: influencer · game · platform
-    var parts = [];
-    if (p.influencer_name) parts.push(p.influencer_name);
-    if (p.game_title) parts.push(p.game_title);
-    parts.push(p.platform || 'instagram');
-    var cap = parts.join(' \u00B7 ');
+    var capParts = [];
+    if (p.type === 'video' && p.influencer_name && p.status !== 'posted') {
+      capParts.push('<span class="tl-inf-link" onclick="event.stopPropagation();changePostInfluencer(' + p.id + ')">' + esc(p.influencer_name) + '</span>');
+    } else if (p.influencer_name) {
+      capParts.push(esc(p.influencer_name));
+    }
+    if (p.game_title) capParts.push(esc(p.game_title));
+    capParts.push(esc(p.platform || 'instagram'));
+    var cap = capParts.join(' \u00B7 ');
+    var capIsHtml = (p.type === 'video' && p.influencer_name && p.status !== 'posted');
     var thumb = '';
     if (p.thumb && p.type === 'photo') thumb = '<div class="tl-thumb" onclick="event.stopPropagation();previewImage(\'/media/incoming/' + encodeURIComponent(p.file_name) + '\')"><img src="' + p.thumb + '" alt=""></div>';
     else if (p.thumb && p.type === 'video') thumb = '<div class="tl-thumb video-thumb" onclick="event.stopPropagation();playVideo(' + p.id + ',\'' + esc(p.file_name || '') + '\',\'' + esc(p.file_path || '') + '\')"><img src="' + p.thumb + '" alt=""></div>';
@@ -898,7 +938,7 @@ function renderTimeline(items, containerId, emptyId, draggable) {
       '<div class="tl-time">' + esc(schedStr) + '</div>' +
       typeBadge + statusBadge + thumb +
       '<div class="tl-body">' +
-        '<div class="tl-cap">' + esc(cap) + '</div>' +
+        '<div class="tl-cap">' + (capIsHtml ? cap : esc(cap)) + '</div>' +
         '<div class="tl-meta">' +
           esc(schedStr) +
         '</div>' +
@@ -906,10 +946,12 @@ function renderTimeline(items, containerId, emptyId, draggable) {
       '<div class="tl-overflow">' +
         '<button class="overflow-btn" onclick="event.stopPropagation();toggleOverflow(this)">\u22EF</button>' +
         '<div class="overflow-menu">' +
-          '<button onclick="editPostSchedule(' + p.id + ')">Schedule</button>' +
-          '<button onclick="editPostCaption(' + p.id + ')">Edit Caption</button>' +
-          (canPost ? '<button onclick="postOneNow(' + p.id + ')">Post Now</button>' : '') +
-          '<button class="danger" onclick="removePost(' + p.id + ')">Remove</button>' +
+          '<button onclick="showPostDetail(' + p.id + ')">\uD83D\uDC41 Show Post</button>' +
+          '<button onclick="editPostSchedule(' + p.id + ')">\uD83D\uDCC5 Schedule</button>' +
+          '<button onclick="editPostCaption(' + p.id + ')">\u270F\uFE0F Edit Caption</button>' +
+          (p.type === 'photo' && canPost ? '<button onclick="publishAsVideo(' + p.id + ')">\uD83C\uDFAC Publish as Video</button>' : '') +
+          (canPost ? '<button onclick="postOneNow(' + p.id + ')">\uD83D\uDE80 Post Now</button>' : '') +
+          '<button class="danger" onclick="removePost(' + p.id + ')">\uD83D\uDDD1 Remove</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -933,23 +975,51 @@ async function preview() {
     box.textContent = r.error ? 'Error: ' + r.error : '\u{1F4F8} ' + r.file + '\n\n' + r.full;
   } catch { box.textContent = 'Failed'; }
 }
+var _freqLabels = { '1h':'Every hour', '3h':'Every 3 hours', '6h':'Every 6 hours', '12h':'Every 12 hours', '1d':'Once a day', '3d':'Every 3 days', '1w':'Once a week' };
+function freqToLabel(f) { return _freqLabels[f] || f; }
+function freqToCron(f) {
+  var map = { '1h':'0 */1 * * *', '3h':'0 */3 * * *', '6h':'0 */6 * * *', '12h':'0 */12 * * *', '1d':'0 9 * * *', '3d':'0 9 */3 * *', '1w':'0 9 * * 1' };
+  return map[f] || '0 */6 * * *';
+}
+function toggleFreqDropdown(type) {
+  var cfg_key = type === 'photo' ? 'photoFrequency' : 'videoFrequency';
+  var cron_key = type === 'photo' ? 'cronSchedule' : 'videoCronSchedule';
+  var opts = Object.keys(_freqLabels).map(function(k) {
+    return '<button onclick="setFreq(\x27' + type + '\x27,\x27' + k + '\x27)">' + _freqLabels[k] + '</button>';
+  }).join('');
+  var pill = type === 'photo' ? $('pillPhotoFreq') : $('pillVideoFreq');
+  var existing = pill.querySelector('.ctrl-freq-select');
+  if (existing) { existing.remove(); return; }
+  pill.style.position = 'relative';
+  pill.insertAdjacentHTML('beforeend', '<div class="ctrl-freq-select open">' + opts + '</div>');
+}
+async function setFreq(type, val) {
+  var body = {};
+  if (type === 'photo') { body.photoFrequency = val; body.cronSchedule = freqToCron(val); }
+  else { body.videoFrequency = val; body.videoCronSchedule = freqToCron(val); }
+  await api('/config', { method: 'PUT', body: JSON.stringify(body) });
+  toast(freqToLabel(val)); loadDash();
+}
 async function togglePhotoDash() {
   var on = $('togPhotoDash').classList.toggle('on');
-  $('togPhotoDashLbl').textContent = on ? 'on' : 'off';
-  await api('/config', { method: 'PUT', body: JSON.stringify({ enabled: on }) });
+  var body = { enabled: on };
+  if (on) body.cronSchedule = freqToCron($('cPhotoFreq') ? $('cPhotoFreq').value : '1d');
+  await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Photo posts enabled' : 'Photo posts disabled');
+  loadDash();
 }
 async function toggleVideoDash() {
   var on = $('togVideoDash2').classList.toggle('on');
-  $('togVideoDash2Lbl').textContent = on ? 'on' : 'off';
-  await api('/config', { method: 'PUT', body: JSON.stringify({ videoEnabled: on }) });
+  var body = { videoEnabled: on };
+  if (on) body.videoCronSchedule = freqToCron($('cVideoFreq') ? $('cVideoFreq').value : '1d');
+  await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Video posts enabled' : 'Video posts disabled');
+  loadDash();
 }
 async function toggleModelDriven() {
   var on = $('togModelDriven').classList.toggle('on');
-  $('togModelDrivenLbl').textContent = on ? 'on' : 'off';
   await api('/config', { method: 'PUT', body: JSON.stringify({ modelDriven: on }) });
-  toast(on ? 'Model-driven mode on' : 'Model-driven mode off');
+  toast(on ? 'Model-driven timeline on' : 'Model-driven timeline off');
   loadDash();
 }
 async function showCreatePostModal() {
@@ -964,6 +1034,97 @@ async function showCreatePostModal() {
   });
   if (r === 'photo') openPanel('photoPanel');
   else if (r === 'video') openPanel('videoPanel');
+}
+
+// ── Show Post Detail popup ──
+async function showPostDetail(id) {
+  closeAllOverflows();
+  var post = await api('/unified-queue/' + id);
+  if (!post) { toast('Not found', 'err'); return; }
+  var imgHtml = '';
+  if (post.type === 'photo' && post.file_name) imgHtml = '<img src="/media/incoming/' + encodeURIComponent(post.file_name) + '" style="max-width:100%;max-height:300px;border-radius:8px;margin-bottom:12px" onerror="this.style.display=\'none\'">';
+  else if (post.type === 'video' && post.veo_prompt) imgHtml = '<div style="background:var(--bg3);padding:10px;border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--t2)"><b>Prompt:</b> ' + esc(post.veo_prompt) + '</div>';
+  showModal({
+    title: (post.type === 'photo' ? '\uD83D\uDCF8' : '\uD83C\uDFAC') + ' Post #' + id,
+    html: imgHtml +
+      '<div class="fg" style="margin-bottom:8px"><label>Caption <button type="button" class="ai-star" onclick="regenPostField(' + id + ',\'caption\')" title="Regenerate">\u2728</button></label><textarea id="pdCaption" rows="3" style="width:100%">' + esc(post.caption || '') + '</textarea></div>' +
+      '<div class="fg"><label>Hashtags <button type="button" class="ai-star" onclick="regenPostField(' + id + ',\'hashtags\')" title="Regenerate">\u2728</button></label><textarea id="pdHashtags" rows="2" style="width:100%">' + esc(post.hashtags || '') + '</textarea></div>',
+    okText: 'Save', cancelText: 'Close',
+  }).then(function(r) {
+    if (r) savePostDetail(id);
+  });
+}
+async function savePostDetail(id) {
+  var cap = $('pdCaption').value;
+  var hash = $('pdHashtags').value;
+  await api('/unified-queue/' + id + '/caption', { method: 'PUT', body: JSON.stringify({ caption: cap, hashtags: hash }) });
+  toast('Saved!'); loadDash();
+}
+async function regenPostField(id, field) {
+  var btn = event.target; btn.disabled = true; btn.textContent = '\u23F3';
+  try {
+    var r = await api('/unified-queue/' + id + '/regenerate', { method: 'POST', body: JSON.stringify({ field: field }) });
+    if (r.ok) {
+      if (field === 'caption') $('pdCaption').value = r.caption;
+      else $('pdHashtags').value = r.hashtags;
+      toast('Regenerated!');
+    } else toast(r.error || 'Failed', 'err');
+  } catch(e) { toast('Error', 'err'); }
+  btn.disabled = false; btn.textContent = '\u2728';
+}
+async function publishAsVideo(id) {
+  closeAllOverflows();
+  var ok = await showConfirm('Publish as Video', 'Generate a video version of this photo post?');
+  if (!ok) return;
+  toast('Generating video...');
+  try {
+    var post = await api('/unified-queue/' + id);
+    var body = {};
+    if (post.influencer_id) body.influencerId = post.influencer_id;
+    if (post.game_id) body.gameId = post.game_id;
+    var r = await api('/video/generate', { method: 'POST', body: JSON.stringify(body) });
+    toast(r.ok || r.postId ? 'Video created!' : (r.error || 'Failed'), r.ok || r.postId ? 'ok' : 'err');
+    loadDash();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+}
+// ── Change influencer on video post ──
+async function changePostInfluencer(postId) {
+  event.stopPropagation();
+  var teamList = await api('/team');
+  if (!teamList.length) { toast('No influencers', 'err'); return; }
+  var btns = teamList.map(function(inf) {
+    return '<button style="display:flex;align-items:center;gap:8px;width:100%;padding:8px;background:none;border:none;color:var(--t1);cursor:pointer;border-radius:6px;font-size:13px" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'none\'" onclick="selectInfluencer(' + postId + ',\x27' + inf.id + '\x27)">' +
+      (inf.picture ? '<img src="/api/team/' + inf.id + '/photos/' + encodeURIComponent(inf.picture) + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover">' : '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg3);display:grid;place-items:center">\uD83C\uDFAD</span>') +
+      esc(inf.name) + '</button>';
+  }).join('');
+  showModal({
+    title: 'Select Influencer',
+    html: '<div style="max-height:300px;overflow:auto">' + btns + '</div>',
+    cancel: true, okText: 'Cancel',
+  });
+}
+async function selectInfluencer(postId, infId) {
+  closeModal(true);
+  toast('Updating...');
+  try {
+    var r = await api('/unified-queue/' + postId + '/influencer', { method: 'PUT', body: JSON.stringify({ influencerId: infId }) });
+    toast(r.ok ? 'Influencer updated!' : (r.error || 'Failed'), r.ok ? 'ok' : 'err');
+    loadDash();
+  } catch(e) { toast('Error', 'err'); }
+}
+// ── Upload default video background ──
+async function uploadDefaultBg(input) {
+  if (!input.files.length) return;
+  var fd = new FormData();
+  fd.append('photo', input.files[0]);
+  try {
+    var r = await fetch('/api/config/upload-bg', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
+    if (r.ok) {
+      toast('Background uploaded!');
+      $('cVidBgPreview').style.display = 'block';
+      $('cVidBgImg').src = '/data/' + encodeURIComponent(r.filename);
+    } else toast(r.error || 'Failed', 'err');
+  } catch(e) { toast('Upload failed', 'err'); }
 }
 
 /* ═══ QUEUE (UNIFIED) ═══ */
@@ -1448,12 +1609,13 @@ async function loadCfg() {
   const on = !!c.enabled; $('togOn').classList.toggle('on', on); $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
   if ($('cRawgKey')) $('cRawgKey').value = c.rawgApiKey || '';
   $('cGemKey').value = c.geminiApiKey || '';
-  $('cVidBg').value = c.videoBackground || ''; $('cVidDur').value = c.videoDuration || 8;
-  try {
-    const teamList = await api('/team');
-    const sel = $('cVidInf');
-    sel.innerHTML = '<option value="">Random</option>' + teamList.map(i => '<option value="' + i.id + '"' + (i.id === c.videoInfluencerId ? ' selected' : '') + '>' + esc(i.name) + '</option>').join('');
-  } catch (e) { console.error(e); }
+  $('cVidDur').value = c.videoDuration || 8;
+  $('cPhotoFreq').value = c.photoFrequency || '1d';
+  $('cVideoFreq').value = c.videoFrequency || '1d';
+  if (c.videoBackgroundImage) {
+    $('cVidBgPreview').style.display = 'block';
+    $('cVidBgImg').src = '/data/' + encodeURIComponent(c.videoBackgroundImage);
+  }
   loadGenres();
 }
 function togEn() { const t = $('togOn'), on = t.classList.toggle('on'); $('togLbl').textContent = on ? 'Enabled' : 'Disabled'; }
@@ -1464,7 +1626,8 @@ async function saveCfg() {
     hashtagCount: parseInt($('cHCnt').value) || 30, hashtagStyle: $('cHStyle').value,
     mediaFolder: $('cIn').value, postedFolder: $('cOut').value, enabled: $('togOn').classList.contains('on'),
     geminiApiKey: $('cGemKey').value, rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
-    videoBackground: $('cVidBg').value, videoDuration: parseInt($('cVidDur').value) || 8, videoInfluencerId: $('cVidInf').value,
+    videoDuration: parseInt($('cVidDur').value) || 8,
+    photoFrequency: $('cPhotoFreq').value, videoFrequency: $('cVideoFreq').value,
   };
   const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(r.ok ? 'Saved!' : 'Error', r.ok ? 'ok' : 'err'); loadDash();
@@ -1496,19 +1659,29 @@ async function loadTeam() {
     ).join('');
   } catch (e) { console.error(e); }
 }
-function showAddInf() {
+async function showAddInf() {
   $('infEditId').value = ''; $('infName').value = ''; $('infPersonality').value = '';
   $('infQuirks').value = ''; $('infExpressions').value = ''; $('infOutfit').value = '';
   $('infIntroPhrase').value = ''; $('infGameTastes').value = ''; $('infFashionStyle').value = '';
   $('infBoyfriend').value = ''; $('infAccent').value = ''; $('infPicture').value = ''; $('infRoom').value = '';
+  // Populate genre chips
+  try {
+    var genres = await api('/genres');
+    $('infGameTastesGrid').innerHTML = genres.map(function(g) {
+      return '<span class="genre-chip" data-genre="' + esc(g.name) + '" onclick="this.classList.toggle(\'selected\')">' + esc(g.name) + '</span>';
+    }).join('');
+  } catch(e) {}
   $('infFormTitle').textContent = 'Add Influencer';
   $('infForm').classList.remove('hidden'); $('infDetail').classList.add('hidden');
 }
 function cancelInf() { $('infForm').classList.add('hidden'); }
 async function saveInf() {
   var id = $('infEditId').value;
+  // Collect selected genre chips
+  var selectedGenres = [];
+  document.querySelectorAll('#infGameTastesGrid .genre-chip.selected').forEach(function(c) { selectedGenres.push(c.dataset.genre); });
   var body = { name: $('infName').value, personality: $('infPersonality').value, quirks: $('infQuirks').value, expressions: $('infExpressions').value,
-    outfit: $('infOutfit').value, intro_phrase: $('infIntroPhrase').value, game_tastes: $('infGameTastes').value, fashion_style: $('infFashionStyle').value,
+    outfit: $('infOutfit').value, intro_phrase: $('infIntroPhrase').value, game_tastes: selectedGenres.join(', '), fashion_style: $('infFashionStyle').value,
     boyfriend: $('infBoyfriend').value, accent: $('infAccent').value, picture: $('infPicture').value, room: $('infRoom').value };
   if (id) { await api('/team/' + id, { method: 'PUT', body: JSON.stringify(body) }); toast('Updated!'); showInfDetail(id); }
   else { var inf = await api('/team', { method: 'POST', body: JSON.stringify(body) }); toast('Added!'); showInfDetail(inf.id); }
@@ -1556,6 +1729,15 @@ async function editInf() {
   $('infRoom').value = inf.room || '';
   if (inf.picture) { var pp = $('infPicturePreview'); if(pp) pp.innerHTML = '<img src="/api/team/' + currentInfId + '/photos/' + encodeURIComponent(inf.picture) + '" style="max-width:100%;max-height:120px;border-radius:6px">'; }
   if (inf.room) { var rp = $('infRoomPreview'); if(rp) rp.innerHTML = '<img src="/api/team/' + currentInfId + '/photos/' + encodeURIComponent(inf.room) + '" style="max-width:100%;max-height:120px;border-radius:6px">'; }
+  // Populate genre chips for game tastes
+  try {
+    var genres = await api('/genres');
+    var currentTastes = ($('infGameTastes').value || '').split(',').map(function(s) { return s.trim().toLowerCase(); });
+    $('infGameTastesGrid').innerHTML = genres.map(function(g) {
+      var sel = currentTastes.indexOf(g.name.toLowerCase()) >= 0 ? ' selected' : '';
+      return '<span class="genre-chip' + sel + '" data-genre="' + esc(g.name) + '" onclick="this.classList.toggle(\'selected\')">' + esc(g.name) + '</span>';
+    }).join('');
+  } catch(e) { console.error('genres load failed:', e); }
   $('infFormTitle').textContent = 'Edit ' + $('infDetailName').textContent;
   $('infForm').classList.remove('hidden');
   $('infDetail').classList.add('hidden');

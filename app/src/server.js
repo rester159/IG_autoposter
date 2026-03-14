@@ -27,6 +27,8 @@ app.use(express.json());
 
 // ── static dashboard ──────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '..', 'public')));
+// Serve default bg image and other data files
+app.use('/data', express.static('/data'));
 
 // ── serve incoming images (IG graph API fetches from here) ────────
 app.get('/media/incoming/:file', (req, res) => {
@@ -306,6 +308,66 @@ app.post('/api/unified-queue/:id/regenerate', async (req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
+});
+
+// Upload default video background image
+const bgUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => { ensureDir('/data'); cb(null, '/data'); },
+    filename: (_req, file, cb) => { cb(null, 'default_bg_' + Date.now() + path.extname(file.originalname)); },
+  }),
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+app.post('/api/config/upload-bg', bgUpload.single('photo'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const cfg = loadConfig();
+  // Delete old bg image if exists
+  if (cfg.videoBackgroundImage) {
+    const oldPath = path.join('/data', cfg.videoBackgroundImage);
+    try { fs.unlinkSync(oldPath); } catch (e) {}
+  }
+  configModel.set('videoBackgroundImage', req.file.filename);
+  res.json({ ok: true, filename: req.file.filename });
+});
+
+// Change influencer on a video post (regenerates prompt)
+app.put('/api/unified-queue/:id/influencer', async (req, res) => {
+  const id = Number(req.params.id);
+  const post = postModel.get(id);
+  if (!post) return res.status(404).json({ error: 'Not found' });
+  const { influencerId } = req.body;
+  if (!influencerId) return res.status(400).json({ error: 'influencerId required' });
+  const teamMod = require('./team');
+  const inf = teamMod.loadTeam().find(i => i.id === influencerId);
+  if (!inf) return res.status(404).json({ error: 'Influencer not found' });
+  // Update influencer_id
+  postModel.update(id, { influencer_id: influencerId });
+  // For video posts, regenerate the script with the new influencer
+  if (post.type === 'video' && (post.status === 'queued' || post.status === 'ready')) {
+    try {
+      const cfg = loadConfig();
+      if (cfg.geminiApiKey) {
+        const { generateVideoScript } = require('./video-script');
+        const gameRecord = post.game_id ? require('./models/game').get(post.game_id) : null;
+        const gameFolder = cfg.gameImagesFolder || '/data/game_images';
+        let gameImagePath = null;
+        if (gameRecord && gameRecord.image_filename) {
+          gameImagePath = path.join(gameFolder, gameRecord.image_filename);
+          if (!fs.existsSync(gameImagePath)) gameImagePath = null;
+        }
+        const script = await generateVideoScript(cfg, inf, gameImagePath, {
+          background: cfg.videoBackground,
+          duration: cfg.videoDuration || 8,
+          game: gameRecord || {},
+        });
+        postModel.update(id, { veo_prompt: script.part1.slice(0, 500) });
+      }
+    } catch (e) {
+      console.error('[influencer-change] script regen failed:', e.message);
+    }
+  }
+  const updated = postModel.get(id);
+  res.json({ ok: true, post: updated });
 });
 
 // Post a specific item immediately

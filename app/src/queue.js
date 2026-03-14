@@ -6,6 +6,7 @@
  */
 
 const postModel = require('./models/post');
+const { getAll: loadConfig } = require('./models/config');
 
 /**
  * Get the queue (all items), with optional filters.
@@ -140,8 +141,11 @@ function calculateNextSlot(type) {
     }
   }
 
-  // Add 3 hours for photos, 6 hours for videos
-  const intervalHours = type === 'video' ? 6 : 3;
+  // Use configured frequency (fallback to 3h photo / 6h video)
+  const cfg = loadConfig();
+  const freqMap = { '1h': 1, '3h': 3, '6h': 6, '12h': 12, '1d': 24, '3d': 72, '1w': 168 };
+  const freq = type === 'video' ? (cfg.videoFrequency || '1d') : (cfg.photoFrequency || '1d');
+  const intervalHours = freqMap[freq] || (type === 'video' ? 6 : 3);
   const next = new Date(latest.getTime() + intervalHours * 60 * 60 * 1000);
 
   return next.toISOString();

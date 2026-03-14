@@ -26,6 +26,9 @@ const DEFAULT_CONFIG = {
   rawgApiKey: '',
   modelDriven: false,
   videoCaptionPrompt: '',
+  photoFrequency: '1d',
+  videoFrequency: '1d',
+  videoBackgroundImage: '',
 };
 
 const stmts = {
