@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AuraPost</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,13 +18,13 @@
   --glass:rgba(30,26,37,0.75);--glb:rgba(192,132,252,0.15);
   --bdr:#2D2737;--bdr2:#3D3549;
   --r:10px;--r2:16px;
-  --font:'Inter',system-ui,sans-serif;
-  --heading:'Space Grotesk',system-ui,sans-serif;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --heading:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --safeb:env(safe-area-inset-bottom,0px);
 }
-html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:14px}
-body{overflow-x:hidden;min-height:100dvh}
+html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px}
+body{overflow-x:hidden;min-height:100dvh;overscroll-behavior-x:none}
 input,select,textarea,button{font-family:inherit;color:inherit;font-size:inherit}
 a{color:var(--accent);text-decoration:none}
 h1,h2,h3{font-family:var(--heading);font-weight:600}
@@ -72,18 +72,23 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .bs-item svg{width:22px;height:22px;color:var(--t3)}
 
 /* ── Main ── */
-#main{padding:16px 16px calc(72px + var(--safeb));max-width:1200px;margin:0 auto}
+#main{padding:12px 12px calc(68px + var(--safeb));max-width:1200px;margin:0 auto}
 
 /* ── Top Bar ── */
-#topbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+#topbar{display:flex;align-items:center;margin-bottom:14px;position:relative;height:36px}
 #topbar h1{
   font-size:20px;font-weight:700;letter-spacing:-.3px;
   background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
-.pill{font-family:var(--font);font-size:10px;padding:2px 8px;border-radius:99px;display:flex;align-items:center;gap:4px}
-.pill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.pill.on{background:rgba(52,211,153,.12);color:var(--ok)}.pill.on .dot{background:var(--ok);box-shadow:0 0 6px var(--ok)}
-.pill.off{background:rgba(251,113,133,.12);color:var(--err)}.pill.off .dot{background:var(--err)}
+.pill{padding:0;border-radius:50%;display:flex;align-items:center;background:none}
+.pill .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pill.on{background:none}.pill.on .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.pill.off{background:none}.pill.off .dot{background:var(--err);opacity:.6}
+
+.topbar-plus{position:absolute;left:0;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--grad);border:none;color:#fff;font-size:20px;font-weight:300;cursor:pointer;display:grid;place-items:center;line-height:1;box-shadow:0 2px 12px rgba(192,132,252,.3)}
+.topbar-plus:active{transform:translateY(-50%) scale(.92)}
+.topbar-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px}
+.topbar-right{position:absolute;right:0;top:50%;transform:translateY(-50%)}
 
 /* ── Sections ── */
 .section{display:none}.section.active{display:block;animation:fadeIn .2s ease}
@@ -91,7 +96,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 /* ── Cards ── */
 .card{
   background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid var(--glb);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px;transition:border-color .2s;
+  border:1px solid var(--glb);border-radius:var(--r2);padding:10px 12px;margin-bottom:8px;transition:border-color .2s;
 }
 .card:hover{border-color:rgba(192,132,252,0.25)}
 .card h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:8px}
@@ -99,14 +104,14 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 /* ── Stats ── */
 .stats{display:flex;gap:4px;margin-bottom:10px}
 .stat{flex:1;min-width:0;background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:4px 6px;text-align:center}
-.stat b{font-family:var(--heading);font-size:13px;font-weight:600;display:block}
-.stat small{font-size:8px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:0;display:block}
+.stat b{font-family:var(--heading);font-size:14px;font-weight:600;display:block}
+.stat small{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:0;display:block}
 
 /* ── Dashboard Grid ── */
 .dash-grid{display:grid;gap:16px}
 
 /* ── Control Rows ── */
-.ctrl-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.ctrl-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bdr)}
 .ctrl-row:last-child{border:none}
 .ctrl-label{flex:1;font-size:13px;font-weight:500}
 .ctrl-val{font-family:var(--mono);font-size:12px;color:var(--t3);margin-right:8px}
@@ -142,7 +147,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
 /* ── Timeline Items ── */
-.tl-item{display:flex;gap:8px;padding:4px 6px;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:3px;background:var(--glass);backdrop-filter:blur(4px);cursor:grab;transition:.2s;align-items:center}
+.tl-item{display:flex;gap:6px;padding:3px 4px;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:3px;background:var(--glass);backdrop-filter:blur(4px);cursor:grab;transition:.2s;align-items:center}
 .tl-item:active{cursor:grabbing}
 .tl-item.dragging{opacity:.4;border-color:var(--accent);transform:scale(1.02) rotate(1deg)}
 .tl-item.drag-over{border-color:var(--info);background:rgba(103,232,249,.06)}
@@ -154,9 +159,9 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .video-player-ov .vp-close:hover{background:rgba(255,255,255,0.25)}
 .video-player-ov .vp-info{color:var(--t2);font-size:12px;margin-top:12px;text-align:center;max-width:90vw}
 .tl-item .tl-thumb img{width:100%;height:100%;object-fit:cover}
-.tl-item .tl-body{flex:1;min-width:0}
-.tl-item .tl-body .tl-cap{font-size:13px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.tl-item .tl-body .tl-meta{font-size:11px;color:var(--t3);font-family:var(--mono);margin-top:1px}
+.tl-item .tl-body{flex:1;min-width:0;overflow:hidden}
+.tl-item .tl-body .tl-cap{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-item .tl-body .tl-meta{font-size:12px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tl-badge{font-size:10px;font-weight:500;padding:1px 5px;border-radius:99px;flex-shrink:0}
 .tl-badge.photo{background:rgba(52,211,153,.12);color:var(--ok)}
 .tl-badge.video{background:rgba(103,232,249,.12);color:var(--info)}
@@ -345,18 +350,21 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 <!-- ══ Bottom Bar (mobile) ══ -->
 <nav id="bottombar">
   <button class="on" data-t="dash" onclick="go('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Home</span></button>
-  <button data-t="hist" onclick="go('hist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>History</span></button>
   <button data-t="team" onclick="go('team')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><span>Team</span></button>
   <button data-t="analytics" onclick="go('analytics')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Analytics</span></button>
+  <button data-t="hist" onclick="go('hist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>History</span></button>
   <button data-t="cfg" onclick="go('cfg')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>Settings</span></button>
 </nav>
 
 <!-- ══ Main Content ══ -->
 <main id="main">
   <header id="topbar">
-    <svg viewBox="0 0 28 28" width="24" height="24" style="flex-shrink:0"><defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C084FC"/><stop offset="50%" stop-color="#F472B6"/><stop offset="100%" stop-color="#FB923C"/></linearGradient></defs><circle cx="14" cy="14" r="12" fill="none" stroke="url(#ag)" stroke-width="1.5" opacity=".5"/><path d="M14 7l-5 14h2.8l1-3h4.4l1 3H21L14 7zm-1.2 9L14 11.5l1.2 4.5h-2.4z" fill="url(#ag)"/></svg>
-    <h1>AuraPost</h1>
-    <div class="pill off" id="hPill"><span class="dot"></span><span id="hLabel">offline</span></div>
+    <button class="topbar-plus" onclick="showCreatePostModal()">+</button>
+    <div class="topbar-center">
+      <svg viewBox="0 0 28 28" width="22" height="22"><defs><linearGradient id="ag" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C084FC"/><stop offset="50%" stop-color="#F472B6"/><stop offset="100%" stop-color="#FB923C"/></linearGradient></defs><circle cx="14" cy="14" r="12" fill="none" stroke="url(#ag)" stroke-width="1.5" opacity=".5"/><path d="M14 7l-5 14h2.8l1-3h4.4l1 3H21L14 7zm-1.2 9L14 11.5l1.2 4.5h-2.4z" fill="url(#ag)"/></svg>
+      <h1>AuraPost</h1>
+    </div>
+    <div class="topbar-right"><div class="pill off" id="hPill"><span class="dot"></span></div></div>
   </header>
 
   <!-- ═══ DASHBOARD ═══ -->
@@ -372,51 +380,27 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <h3 style="color:var(--warn)">Setup Required</h3>
       <p style="font-size:13px;color:var(--t2);line-height:1.6">Add your API keys in <a href="#" onclick="go('cfg');return false">Settings</a> before posting.</p>
     </div>
-    <div class="dash-grid">
-      <div>
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0">
-            <h3 style="margin:0">Upcoming Timeline</h3>
-            <button class="btn btn-p" style="font-size:12px;padding:5px 14px" onclick="showCreatePostModal()">+ New Post</button>
-          </div>
-          <div id="tlFeed"></div>
-          <div id="tlEmpty" class="empty hidden"><div class="ei">&#128197;</div><p>No upcoming posts. Upload photos or generate videos to get started.</p></div>
-        </div>
+    <div class="card">
+      <h3>Post Controls</h3>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Photo Posts</span>
+        <span class="ctrl-val" id="pillPhotoFreq">off</span>
+        <div class="tog" id="togPhotoDash" onclick="togglePhotoDash()"></div>
+        <span style="font-size:12px;color:var(--t3);width:24px" id="togPhotoDashLbl">off</span>
       </div>
-      <div>
-        <div class="card">
-          <h3>Post Controls</h3>
-          <div class="ctrl-row">
-            <span class="ctrl-label">Photo Posts</span>
-            <span class="ctrl-val" id="pillPhotoFreq">off</span>
-            <div class="tog" id="togPhotoDash" onclick="togglePhotoDash()"></div>
-            <span style="font-size:12px;color:var(--t3);width:24px" id="togPhotoDashLbl">off</span>
-          </div>
-          <div class="ctrl-row">
-            <span class="ctrl-label">Video Posts</span>
-            <span class="ctrl-val" id="pillVideoFreq">off</span>
-            <div class="tog" id="togVideoDash2" onclick="toggleVideoDash()"></div>
-            <span style="font-size:12px;color:var(--t3);width:24px" id="togVideoDash2Lbl">off</span>
-          </div>
-          <div class="ctrl-row">
-            <span class="ctrl-label">Model-Driven</span>
-            <span class="ctrl-val" id="pillLastPost">never</span>
-            <div class="tog" id="togModelDriven" onclick="toggleModelDriven()"></div>
-            <span style="font-size:12px;color:var(--t3);width:24px" id="togModelDrivenLbl">off</span>
-          </div>
-        </div>
-        <div class="card">
-          <h3>Quick Actions</h3>
-          <div class="btns" style="flex-direction:column">
-            <button class="btn btn-p" id="postBtn" onclick="postNow()" style="justify-content:center">Post Next Now</button>
-            <button class="btn btn-s" onclick="preview()" style="justify-content:center">Preview Caption</button>
-            <button class="btn btn-s" onclick="openPanel('photoPanel')" style="justify-content:center">Upload Photos</button>
-            <button class="btn btn-s" onclick="openPanel('videoPanel')" style="justify-content:center">Video Pipeline</button>
-          </div>
-          <div id="prevBox" class="preview hidden"></div>
-        </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Video Posts</span>
+        <span class="ctrl-val" id="pillVideoFreq">off</span>
+        <div class="tog" id="togVideoDash2" onclick="toggleVideoDash()"></div>
+        <span style="font-size:12px;color:var(--t3);width:24px" id="togVideoDash2Lbl">off</span>
       </div>
     </div>
+    <div class="card">
+      <h3>Timeline</h3>
+      <div id="tlFeed"></div>
+      <div id="tlEmpty" class="empty hidden"><div class="ei">&#128197;</div><p>No upcoming posts.</p></div>
+    </div>
+    <div id="prevBox" class="preview hidden"></div>
   </section>
 
   <div id="photoPanel" class="panel">
@@ -828,12 +812,12 @@ async function loadDash() {
     $('sP').textContent = posted;
     $('sS').textContent = cronNice(st.scheduler.cron);
     $('sL').textContent = ago(st.scheduler.lastRun);
-    const p = $('hPill'), l = $('hLabel');
-    if (st.scheduler.enabled) { p.className = 'pill on'; l.textContent = st.scheduler.posting ? 'posting\u2026' : 'active'; }
-    else { p.className = 'pill off'; l.textContent = 'disabled'; }
+    const p = $('hPill');
+    if (st.scheduler.enabled) { p.className = 'pill on'; }
+    else { p.className = 'pill off'; }
     $('warnCard').style.display = st.configured ? 'none' : '';
     $('warnCard').classList.toggle('hidden', st.configured);
-    $('postBtn').disabled = !st.configured;
+    if ($('postBtn')) $('postBtn').disabled = !st.configured;
     const cfg = await api('/config');
     const photoOn = !!cfg.enabled;
     $('togPhotoDash').classList.toggle('on', photoOn);
@@ -841,13 +825,10 @@ async function loadDash() {
     const vidOn2 = !!cfg.videoEnabled;
     $('togVideoDash2').classList.toggle('on', vidOn2);
     $('togVideoDash2Lbl').textContent = vidOn2 ? 'on' : 'off';
-    const mdOn = cfg.modelDriven === true || cfg.modelDriven === 'true';
-    $('togModelDriven').classList.toggle('on', mdOn);
-    $('togModelDrivenLbl').textContent = mdOn ? 'on' : 'off';
+    // model-driven toggle removed from UI
     $('pillPhotoFreq').textContent = photoOn ? cronNice(cfg.cronSchedule) : 'off';
     $('pillVideoFreq').textContent = vidOn2 ? cronNice(cfg.videoCronSchedule) : 'off';
-    const lastPosted = queue.filter(p => p.status === 'posted').sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''))[0];
-    $('pillLastPost').textContent = lastPosted ? ago(lastPosted.posted_at) : 'never';
+    // pillLastPost removed from UI
     const upcoming = queue.filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
       .sort((a, b) => (a.scheduled_at || '').localeCompare(b.scheduled_at || ''));
     renderTimeline(upcoming.slice(0, 20), 'tlFeed', 'tlEmpty', false);
@@ -861,8 +842,12 @@ function renderTimeline(items, containerId, emptyId, draggable) {
     var schedStr = p.scheduled_at ? fmtSchedule(p.scheduled_at) : 'unscheduled';
     var typeBadge = '<span class="tl-badge ' + p.type + '">' + p.type + '</span>';
     var statusBadge = '<span class="tl-status ' + p.status + '">' + p.status + '</span>';
-    var cap = p.caption || p.full_caption || p.file_name || '\u2013';
-    if (cap.length > 80) cap = cap.substring(0, 80) + '\u2026';
+    // Build simplified caption: influencer · game · platform
+    var parts = [];
+    if (p.influencer_name) parts.push(p.influencer_name);
+    if (p.game_title) parts.push(p.game_title);
+    parts.push(p.platform || 'instagram');
+    var cap = parts.join(' \u00B7 ');
     var thumb = '';
     if (p.thumb && p.type === 'photo') thumb = '<div class="tl-thumb" onclick="event.stopPropagation();previewImage(\'/media/incoming/' + encodeURIComponent(p.file_name) + '\')"><img src="' + p.thumb + '" alt=""></div>';
     else if (p.thumb && p.type === 'video') thumb = '<div class="tl-thumb video-thumb" onclick="event.stopPropagation();playVideo(' + p.id + ',\'' + esc(p.file_name || '') + '\',\'' + esc(p.file_path || '') + '\')"><img src="' + p.thumb + '" alt=""></div>';
@@ -876,10 +861,7 @@ function renderTimeline(items, containerId, emptyId, draggable) {
       '<div class="tl-body">' +
         '<div class="tl-cap">' + esc(cap) + '</div>' +
         '<div class="tl-meta">' +
-          (p.game_title ? '\u{1F3AE} ' + esc(p.game_title) + ' \u00B7 ' : '') +
-          (p.influencer_name ? '\u{1F464} ' + esc(p.influencer_name) + ' \u00B7 ' : '') +
-          (p.score ? '\u2B50 ' + p.score + '/10 \u00B7 ' : '') +
-          '#' + p.id +
+          esc(schedStr) +
         '</div>' +
       '</div>' +
       '<div class="tl-overflow">' +
