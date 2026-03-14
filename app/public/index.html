@@ -394,6 +394,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <div class="tog" id="togVideoDash2" onclick="toggleVideoDash()"></div>
         <span style="font-size:12px;color:var(--t3);width:24px" id="togVideoDash2Lbl">off</span>
       </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Model-Driven</span>
+        <span class="ctrl-val" id="pillLastPost">never</span>
+        <div class="tog" id="togModelDriven" onclick="toggleModelDriven()"></div>
+        <span style="font-size:12px;color:var(--t3);width:24px" id="togModelDrivenLbl">off</span>
+      </div>
     </div>
     <div class="card">
       <h3>Timeline</h3>
@@ -825,10 +831,13 @@ async function loadDash() {
     const vidOn2 = !!cfg.videoEnabled;
     $('togVideoDash2').classList.toggle('on', vidOn2);
     $('togVideoDash2Lbl').textContent = vidOn2 ? 'on' : 'off';
-    // model-driven toggle removed from UI
+    const mdOn = cfg.modelDriven === true || cfg.modelDriven === 'true';
+    $('togModelDriven').classList.toggle('on', mdOn);
+    $('togModelDrivenLbl').textContent = mdOn ? 'on' : 'off';
     $('pillPhotoFreq').textContent = photoOn ? cronNice(cfg.cronSchedule) : 'off';
     $('pillVideoFreq').textContent = vidOn2 ? cronNice(cfg.videoCronSchedule) : 'off';
-    // pillLastPost removed from UI
+    const lastPosted = queue.filter(p => p.status === 'posted').sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''))[0];
+    $('pillLastPost').textContent = lastPosted ? ago(lastPosted.posted_at) : 'never';
     const upcoming = queue.filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
       .sort((a, b) => (a.scheduled_at || '').localeCompare(b.scheduled_at || ''));
     renderTimeline(upcoming.slice(0, 20), 'tlFeed', 'tlEmpty', false);
