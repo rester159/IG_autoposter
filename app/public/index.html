@@ -1062,7 +1062,6 @@ function openCamera() {
   var input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.capture = 'environment';
   input.onchange = async function() {
     if (!input.files || !input.files.length) return;
     var fd = new FormData();
