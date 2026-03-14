@@ -40,7 +40,15 @@ async function postToInstagram(filePath, caption, config, opts = {}) {
     containerData.alt_text = opts.altText;
     console.log('[ig] alt_text:', opts.altText.slice(0, 60));
   }
-  const { data: ctr } = await axios.post(`${API}/${config.instagramAccountId}/media`, containerData);
+  let ctr;
+  try {
+    const res = await axios.post(`${API}/${config.instagramAccountId}/media`, containerData);
+    ctr = res.data;
+  } catch (axErr) {
+    const detail = axErr.response?.data?.error?.message || JSON.stringify(axErr.response?.data || {});
+    console.error('[ig] container creation failed:', detail);
+    throw new Error('Instagram container failed: ' + detail);
+  }
   const containerId = ctr.id;
   console.log('[ig] container', containerId);
 

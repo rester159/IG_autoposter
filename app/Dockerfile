@@ -1,7 +1,7 @@
 FROM node:20-alpine
 
 # sharp needs vips, better-sqlite3 needs build tools
-RUN apk add --no-cache vips-dev python3 make g++ ffmpeg
+RUN apk add --no-cache vips-dev python3 make g++ ffmpeg fontconfig ttf-dejavu
 
 WORKDIR /app
 COPY package.json ./

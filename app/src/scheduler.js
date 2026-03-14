@@ -224,6 +224,7 @@ async function runOnce() {
     lastErr = err.message;
     addHistory({ status: 'error', type: 'photo', error: err.message });
     console.error('[post] FAIL:', err.message);
+    if (err.response?.data) console.error('[post] response:', JSON.stringify(err.response.data));
     return fin({ ok: false, error: err.message });
   }
 }
