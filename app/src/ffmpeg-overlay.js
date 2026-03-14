@@ -42,7 +42,7 @@ async function overlayScore(videoPath, score, outputPath, opts = {}) {
           filter: 'drawtext',
           options: {
             text: scoreText,
-            fontfile: '/usr/share/fonts/ttf-dejavu/DejaVuSans-Bold.ttf',
+            fontfile: '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf',
             fontsize,
             fontcolor: 'white',
             borderw: 4,
