@@ -189,70 +189,69 @@ async function generateOne(opts = {}) {
       firstComment = script.firstComment || '';
     }
 
-    // 2 — Collect reference photos (2 influencer + 1 room + 1 game)
+    // 2 — Collect reference photos: game image + influencer picture + room
     const referencePhotos = [];
-    if (influencer.photos && influencer.photos.length) {
-      const photoDir = path.join('/data/team', influencer.id);
-      for (const p of influencer.photos.slice(0, 2)) {
-        const fp = path.join(photoDir, p);
-        if (fs.existsSync(fp)) referencePhotos.push(fp);
-      }
-    }
-    // Add room as reference for background consistency
-    if (influencer.room) {
-      const roomPath = path.join('/data/team', influencer.id, influencer.room);
-      if (fs.existsSync(roomPath)) referencePhotos.push(roomPath);
-    }
-    // Use verified box art or uploaded game image as reference
+    // Game image (verified box art or uploaded)
     const gameRefImage = verifiedBoxArtPath || gameImagePath;
     if (gameRefImage && fs.existsSync(gameRefImage)) {
       referencePhotos.push(gameRefImage);
     }
-    console.log('[video] reference photos:', referencePhotos.length, '(influencer + room + game)');
+    // Influencer profile picture (the one stored as 'picture' field)
+    if (influencer.picture) {
+      const picPath = path.join('/data/team', influencer.id, influencer.picture);
+      if (fs.existsSync(picPath)) referencePhotos.push(picPath);
+    }
+    // Room/background photo
+    if (influencer.room) {
+      const roomPath = path.join('/data/team', influencer.id, influencer.room);
+      if (fs.existsSync(roomPath)) referencePhotos.push(roomPath);
+    }
+    console.log('[video] reference photos:', referencePhotos.length, '(game + influencer pic + room)');
 
-    // 3 — Generate Part 1: INTRO (8 seconds)
-    console.log('[video] generating part 1 (intro)...');
-    const videoDur = cfg.videoDuration || 8;
-    console.log('[video] using duration:', videoDur + 's per part');
-    const video1 = await generateVideo(part1Prompt, cfg, { referencePhotos, duration: videoDur });
+    // 3 — Generate video with total duration auto-split into 8s segments
+    const totalDur = cfg.videoDuration || 8;
+    const segmentDur = 8; // each Veo segment is 8s
+    const numSegments = Math.max(1, Math.round(totalDur / segmentDur));
+    console.log('[video] total duration:', totalDur + 's →', numSegments, 'segment(s) of', segmentDur + 's each');
 
-    // 4 — Extend with Part 2: BULK REVIEW (adds 8 seconds → 16s total)
+    // Auto-split prompts into segments (use provided parts, or split the single prompt)
+    const prompts = [];
+    if (numSegments === 1) {
+      prompts.push(part1Prompt);
+    } else if (numSegments === 2) {
+      prompts.push(part1Prompt);
+      prompts.push(part2Prompt || part1Prompt);
+    } else {
+      prompts.push(part1Prompt);
+      prompts.push(part2Prompt || part1Prompt);
+      prompts.push(part3Prompt || part2Prompt || part1Prompt);
+    }
+
+    // Generate first segment
+    console.log('[video] generating segment 1/' + numSegments + '...');
+    const video1 = await generateVideo(prompts[0], cfg, { referencePhotos, duration: segmentDur });
     let finalVideo = video1;
     let currentUri = video1.videoUri;
 
-    if (part2Prompt && currentUri) {
-      console.log('[video] waiting 3 min before part 2 (rate limit cooldown)...');
-      await new Promise(r => setTimeout(r, 180000));
-      console.log('[video] extending with part 2 (bulk review)...');
-      try {
-        const video2 = await extendVideo(part2Prompt, currentUri, cfg);
-        // Remove part 1 file, we have the merged version
-        try { fs.unlinkSync(video1.filePath); } catch (e) {}
-        finalVideo = video2;
-        currentUri = video2.videoUri;
-        console.log('[video] 16-second video ready');
-      } catch (extErr) {
-        console.error('[video] part 2 extension failed:', extErr.message);
-        currentUri = null; // stop chaining
+    // Extend with remaining segments
+    for (let seg = 1; seg < prompts.length && seg < numSegments; seg++) {
+      if (!currentUri) {
+        console.log('[video] no Veo URI from previous segment, stopping at', seg * segmentDur + 's');
+        break;
       }
-    } else if (part2Prompt && !currentUri) {
-      console.log('[video] no Veo URI from part 1, skipping extensions');
-    }
-
-    // 5 — Extend with Part 3: SCORE + FINAL TAKE (adds 8 seconds → 24s total)
-    if (part3Prompt && currentUri && finalVideo !== video1) {
-      console.log('[video] waiting 3 min before part 3 (rate limit cooldown)...');
+      console.log('[video] waiting 3 min before segment', (seg + 1) + '/' + numSegments, '(rate limit cooldown)...');
       await new Promise(r => setTimeout(r, 180000));
-      console.log('[video] extending with part 3 (score + final take)...');
+      console.log('[video] extending with segment', (seg + 1) + '/' + numSegments + '...');
       try {
         const prevFile = finalVideo.filePath;
-        const video3 = await extendVideo(part3Prompt, currentUri, cfg);
-        // Remove the 16s intermediate file
+        const nextVid = await extendVideo(prompts[seg], currentUri, cfg);
         try { fs.unlinkSync(prevFile); } catch (e) {}
-        finalVideo = video3;
-        console.log('[video] ~24-second video ready');
+        finalVideo = nextVid;
+        currentUri = nextVid.videoUri;
+        console.log('[video]', ((seg + 1) * segmentDur) + '-second video ready');
       } catch (extErr) {
-        console.error('[video] part 3 extension failed, using 16s version:', extErr.message);
+        console.error('[video] segment', (seg + 1), 'failed:', extErr.message);
+        break;
       }
     }
 

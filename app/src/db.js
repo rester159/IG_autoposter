@@ -128,6 +128,7 @@ const migrations = [
   'ALTER TABLE games ADD COLUMN metacritic_url TEXT',
   'ALTER TABLE games ADD COLUMN box_art_url TEXT',
   'ALTER TABLE games ADD COLUMN rawg_id INTEGER',
+  'ALTER TABLE influencers ADD COLUMN accent TEXT DEFAULT \'\'',
 ];
 for (const sql of migrations) {
   try { db.exec(sql); } catch (e) {

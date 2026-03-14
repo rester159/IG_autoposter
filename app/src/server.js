@@ -432,6 +432,21 @@ app.get('/api/team/:id/photos/:filename', (req, res) => {
   res.sendFile(fp);
 });
 
+// Upload influencer profile picture or room photo
+app.post('/api/team/:id/upload-profile', teamUpload.single('photo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const id = req.params.id;
+  const field = req.body.field || 'picture'; // 'picture' or 'room'
+  if (!['picture', 'room'].includes(field)) return res.status(400).json({ error: 'Invalid field' });
+  const inf = team.getInfluencer(id);
+  if (!inf) return res.status(404).json({ error: 'Influencer not found' });
+  // Update the influencer's picture or room field
+  team.updateInfluencer(id, { [field]: req.file.filename });
+  // Also add to photos list so it's served correctly
+  team.addPhoto(id, req.file.filename);
+  res.json({ ok: true, filename: req.file.filename, field });
+});
+
 // ── Team AI Suggest ──────────────────────────────────────────────
 app.post('/api/team/:id/suggest-field', async (req, res) => {
   const { field } = req.body;

@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="screen-orientation" content="portrait">
 <title>AuraPost</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQXVyYVBvc3QiLCJzaG9ydF9uYW1lIjoiQXVyYVBvc3QiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQifQ==">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -331,6 +333,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   /* stats is flex, no grid override needed */
   .tl-time{display:none}
   .an-table{display:block;overflow-x:auto}
+}
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  #landscape-block{display:flex!important}
+  #main,#bottombar,#sidebar{display:none!important}
 }
 </style>
 </head>
@@ -1453,9 +1459,9 @@ async function loadTeam() {
     $('teamEmpty').classList.add('hidden');
     $('teamList').innerHTML = list.map(inf =>
       '<div class="hrow" style="cursor:pointer" onclick="showInfDetail(\'' + inf.id + '\')">' +
-      '<div class="icon">\u{1F3AD}</div><div class="body"><div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
-      '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div></div>' +
-      '<span class="badge ok">' + (inf.photos || []).length + ' photos</span></div>'
+      (inf.picture ? '<img src="/api/team/' + inf.id + '/photos/' + encodeURIComponent(inf.picture) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML=\'<div class=icon>\u{1F3AD}</div>\'">' : '<div class="icon">\u{1F3AD}</div>') +
+      '<div class="body"><div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
+      '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div></div></div>'
     ).join('');
   } catch (e) { console.error(e); }
 }
@@ -1481,26 +1487,19 @@ async function showInfDetail(id) {
   currentInfId = id;
   var inf = await api('/team/' + id); if (!inf || inf.error) { toast('Not found', 'err'); return; }
   $('infDetailName').textContent = inf.name;
-  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Boyfriend','Picture','Room'].forEach(f => {
+  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Accent','Boyfriend'].forEach(f => {
     var key = f.charAt(0).toLowerCase() + f.slice(1);
     var mapped = { introPhrase: 'intro_phrase', gameTastes: 'game_tastes', fashionStyle: 'fashion_style' };
     $('infDetail' + f).textContent = inf[mapped[key] || key] || '-';
   });
+  // Render picture and room as actual images
+  var picEl = $('infDetailPicture');
+  if (inf.picture) picEl.innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(inf.picture) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
+  else picEl.innerHTML = '<span style="color:var(--t3)">-</span>';
+  var roomEl = $('infDetailRoom');
+  if (inf.room) roomEl.innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(inf.room) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
+  else roomEl.innerHTML = '<span style="color:var(--t3)">-</span>';
   $('infDetail').classList.remove('hidden'); $('infForm').classList.add('hidden');
-  var pe = $('infPhotos');
-  if (inf.photos && inf.photos.length) {
-    pe.innerHTML = inf.photos.map(p =>
-      '<div class="img"><img src="/api/team/' + id + '/photos/' + p + '" alt="">' +
-      '<button class="x" onclick="event.stopPropagation();delInfPhoto(\'' + p + '\')">&times;</button>' +
-      '<div class="nm">' + esc(p) + '</div></div>'
-    ).join('');
-  } else pe.innerHTML = '<p style="color:var(--t3);font-size:13px">No photos yet</p>';
-  var dz2 = $('infDropZone'), fi2 = $('infFileIn');
-  dz2.onclick = () => fi2.click();
-  dz2.ondragover = e => { e.preventDefault(); dz2.classList.add('over'); };
-  dz2.ondragleave = () => dz2.classList.remove('over');
-  dz2.ondrop = e => { e.preventDefault(); dz2.classList.remove('over'); uploadInfPhotos(e.dataTransfer.files); };
-  fi2.onchange = () => { uploadInfPhotos(fi2.files); fi2.value = ''; };
 }
 async function uploadInfPhotos(files) {
   if (!files.length || !currentInfId) return;
@@ -1513,13 +1512,19 @@ async function delInfPhoto(fn) {
   if (!ok) return;
   await api('/team/' + currentInfId + '/photos/' + fn, { method: 'DELETE' }); toast('Removed'); showInfDetail(currentInfId);
 }
-function editInf() {
+async function editInf() {
   $('infEditId').value = currentInfId;
   $('infName').value = $('infDetailName').textContent;
-  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Boyfriend','Picture','Room'].forEach(f => {
+  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Accent','Boyfriend'].forEach(f => {
     var val = $('infDetail' + f).textContent;
     $('inf' + f).value = val === '-' ? '' : val;
   });
+  // Fetch fresh data for picture/room filenames
+  var inf = await api('/team/' + currentInfId);
+  $('infPicture').value = inf.picture || '';
+  $('infRoom').value = inf.room || '';
+  if (inf.picture) { var pp = $('infPicturePreview'); if(pp) pp.innerHTML = '<img src="/api/team/' + currentInfId + '/photos/' + encodeURIComponent(inf.picture) + '" style="max-width:100%;max-height:120px;border-radius:6px">'; }
+  if (inf.room) { var rp = $('infRoomPreview'); if(rp) rp.innerHTML = '<img src="/api/team/' + currentInfId + '/photos/' + encodeURIComponent(inf.room) + '" style="max-width:100%;max-height:120px;border-radius:6px">'; }
   $('infFormTitle').textContent = 'Edit ' + $('infDetailName').textContent;
   $('infForm').classList.remove('hidden');
 }
@@ -1682,5 +1687,11 @@ setInterval(function() {
   if (tab === 'dash') loadDash();
 }, 25000);
 </script>
+<div id="landscape-block" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
+  <div style="font-size:48px;margin-bottom:16px">📱</div>
+  <div style="font-size:18px;font-weight:600;color:var(--t1)">Please rotate your phone</div>
+  <div style="font-size:14px;color:var(--t3);margin-top:8px">AuraPost works best in portrait mode</div>
+</div>
+<script>if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("portrait").catch(()=>{})</script>
 </body>
 </html>

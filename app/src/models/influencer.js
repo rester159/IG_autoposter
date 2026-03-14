@@ -8,15 +8,15 @@ const stmts = {
   list: db.prepare('SELECT * FROM influencers ORDER BY created_at DESC'),
   get: db.prepare('SELECT * FROM influencers WHERE id = ?'),
   insert: db.prepare(`
-    INSERT INTO influencers (id, name, personality, quirks, expressions, outfit, picture, room, game_tastes, fashion_style, boyfriend, intro_phrase, photos, created_at)
-    VALUES (@id, @name, @personality, @quirks, @expressions, @outfit, @picture, @room, @game_tastes, @fashion_style, @boyfriend, @intro_phrase, @photos, @created_at)
+    INSERT INTO influencers (id, name, personality, quirks, expressions, outfit, picture, room, game_tastes, fashion_style, boyfriend, intro_phrase, accent, photos, created_at)
+    VALUES (@id, @name, @personality, @quirks, @expressions, @outfit, @picture, @room, @game_tastes, @fashion_style, @boyfriend, @intro_phrase, @accent, @photos, @created_at)
   `),
   update: db.prepare(`
     UPDATE influencers SET
       name = @name, personality = @personality, quirks = @quirks,
       expressions = @expressions, outfit = @outfit, picture = @picture,
       room = @room, game_tastes = @game_tastes, fashion_style = @fashion_style,
-      boyfriend = @boyfriend, intro_phrase = @intro_phrase, photos = @photos
+      boyfriend = @boyfriend, intro_phrase = @intro_phrase, accent = @accent, photos = @photos
     WHERE id = @id
   `),
   del: db.prepare('DELETE FROM influencers WHERE id = ?'),
@@ -47,6 +47,7 @@ function add(data) {
     fashion_style: data.fashion_style || '',
     boyfriend: data.boyfriend || '',
     intro_phrase: data.intro_phrase || '',
+    accent: data.accent || '',
     photos: JSON.stringify(data.photos || []),
     created_at: new Date().toISOString(),
   };
@@ -73,6 +74,7 @@ function update(id, data) {
     fashion_style: data.fashion_style ?? existing.fashion_style,
     boyfriend: data.boyfriend ?? existing.boyfriend,
     intro_phrase: data.intro_phrase ?? existing.intro_phrase,
+    accent: data.accent ?? existing.accent ?? '',
     photos: data.photos ? JSON.stringify(data.photos) : existing.photos,
   };
   stmts.update.run(merged);
