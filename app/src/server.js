@@ -433,6 +433,7 @@ app.get('/api/team/:id/photos/:filename', (req, res) => {
 });
 
 // Upload influencer profile picture or room photo
+// For 'picture' field: generates a multi-angle grid via Gemini and uses that
 app.post('/api/team/:id/upload-profile', teamUpload.single('photo'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   const id = req.params.id;
@@ -440,11 +441,60 @@ app.post('/api/team/:id/upload-profile', teamUpload.single('photo'), async (req,
   if (!['picture', 'room'].includes(field)) return res.status(400).json({ error: 'Invalid field' });
   const inf = team.getInfluencer(id);
   if (!inf) return res.status(404).json({ error: 'Influencer not found' });
-  // Update the influencer's picture or room field
-  team.updateInfluencer(id, { [field]: req.file.filename });
-  // Also add to photos list so it's served correctly
+
+  // Add original to photos list
   team.addPhoto(id, req.file.filename);
-  res.json({ ok: true, filename: req.file.filename, field });
+
+  // For 'picture' uploads: generate multi-angle grid via Gemini
+  let finalFilename = req.file.filename;
+  let gridGenerated = false;
+  if (field === 'picture') {
+    const cfg = loadConfig();
+    if (cfg.geminiApiKey) {
+      try {
+        console.log('[upload-profile] generating multi-angle grid for:', req.file.filename);
+        const imgBuf = fs.readFileSync(req.file.path);
+        const b64 = imgBuf.toString('base64');
+        const ext = path.extname(req.file.originalname).toLowerCase();
+        const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
+
+        const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
+        const geminiUrl = GEMINI_API + '/models/gemini-2.0-flash-exp:generateContent?key=' + cfg.geminiApiKey;
+        const gridRes = await axios.post(geminiUrl, {
+          contents: [{
+            parts: [
+              { inlineData: { mimeType: mime, data: b64 } },
+              { text: 'Create a character reference sheet showing this exact person from 4 angles arranged in a 2x2 grid: top-left = front facing, top-right = 3/4 view, bottom-left = side profile, bottom-right = back view. Keep their appearance, hair, clothing, and style perfectly consistent across all 4 views. Clean white background between the panels. No text or labels.' }
+            ]
+          }],
+          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] }
+        }, { timeout: 60000 });
+
+        // Extract generated image from response
+        const parts = gridRes.data.candidates?.[0]?.content?.parts || [];
+        const imgPart = parts.find(p => p.inlineData);
+        if (imgPart && imgPart.inlineData.data) {
+          const gridBuf = Buffer.from(imgPart.inlineData.data, 'base64');
+          const gridFilename = 'grid_' + Date.now() + '.png';
+          const gridPath = path.join(team.getPhotoDir(id), gridFilename);
+          fs.writeFileSync(gridPath, gridBuf);
+          team.addPhoto(id, gridFilename);
+          finalFilename = gridFilename;
+          gridGenerated = true;
+          console.log('[upload-profile] grid generated:', gridFilename);
+        } else {
+          console.log('[upload-profile] no image in Gemini response, using original');
+        }
+      } catch (e) {
+        console.error('[upload-profile] grid generation failed:', e.message);
+        // Fall back to original photo
+      }
+    }
+  }
+
+  // Update the influencer's field with final filename (grid or original)
+  team.updateInfluencer(id, { [field]: finalFilename });
+  res.json({ ok: true, filename: finalFilename, field, grid: gridGenerated });
 });
 
 // ── Team AI Suggest ──────────────────────────────────────────────
