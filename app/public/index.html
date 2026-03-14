@@ -25,7 +25,7 @@
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --safeb:env(safe-area-inset-bottom,0px);
 }
-html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:15px}
+html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:16px}
 body{overflow-x:hidden;min-height:100dvh;overscroll-behavior-x:none}
 input,select,textarea,button{font-family:inherit;color:inherit;font-size:inherit}
 a{color:var(--accent);text-decoration:none}
@@ -74,7 +74,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .bs-item svg{width:22px;height:22px;color:var(--t3)}
 
 /* ── Main ── */
-#main{padding:12px 12px calc(68px + var(--safeb));max-width:1200px;margin:0 auto}
+#main{padding:10px 10px calc(64px + var(--safeb));max-width:1200px;margin:0 auto}
 
 /* ── Top Bar ── */
 #topbar{display:flex;align-items:center;margin-bottom:14px;position:relative;height:36px}
@@ -98,10 +98,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 /* ── Cards ── */
 .card{
   background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid var(--glb);border-radius:var(--r2);padding:10px 12px;margin-bottom:8px;transition:border-color .2s;
+  border:1px solid var(--glb);border-radius:var(--r2);padding:8px 10px;margin-bottom:6px;transition:border-color .2s;
 }
 .card:hover{border-color:rgba(192,132,252,0.25)}
-.card h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:8px}
+.card h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:8px}
 
 /* ── Stats ── */
 .stats{display:flex;gap:4px;margin-bottom:10px}
@@ -113,7 +113,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .dash-grid{display:grid;gap:16px}
 
 /* ── Control Rows ── */
-.ctrl-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--bdr)}
+.ctrl-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--bdr)}
 .ctrl-row:last-child{border:none}
 .ctrl-label{flex:1;font-size:13px;font-weight:500}
 .ctrl-val{font-family:var(--mono);font-size:12px;color:var(--t3);margin-right:8px}
@@ -149,7 +149,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
 /* ── Timeline Items ── */
-.tl-item{display:flex;gap:6px;padding:3px 4px;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:3px;background:var(--glass);backdrop-filter:blur(4px);cursor:grab;transition:.2s;align-items:center}
+.tl-item{display:flex;gap:6px;padding:2px 3px;border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:3px;background:var(--glass);backdrop-filter:blur(4px);cursor:grab;transition:.2s;align-items:center}
 .tl-item:active{cursor:grabbing}
 .tl-item.dragging{opacity:.4;border-color:var(--accent);transform:scale(1.02) rotate(1deg)}
 .tl-item.drag-over{border-color:var(--info);background:rgba(103,232,249,.06)}
@@ -162,18 +162,18 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .video-player-ov .vp-info{color:var(--t2);font-size:12px;margin-top:12px;text-align:center;max-width:90vw}
 .tl-item .tl-thumb img{width:100%;height:100%;object-fit:cover}
 .tl-item .tl-body{flex:1;min-width:0;overflow:hidden}
-.tl-item .tl-body .tl-cap{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl-item .tl-body .tl-meta{font-size:12px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tl-badge{font-size:10px;font-weight:500;padding:1px 5px;border-radius:99px;flex-shrink:0}
+.tl-item .tl-body .tl-cap{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-item .tl-body .tl-meta{font-size:13px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl-badge{font-size:11px;font-weight:500;padding:1px 5px;border-radius:99px;flex-shrink:0}
 .tl-badge.photo{background:rgba(52,211,153,.12);color:var(--ok)}
 .tl-badge.video{background:rgba(103,232,249,.12);color:var(--info)}
-.tl-status{font-size:10px;padding:1px 5px;border-radius:99px}
+.tl-status{font-size:11px;padding:1px 5px;border-radius:99px}
 .tl-status.queued{background:rgba(251,191,36,.12);color:var(--warn)}
 .tl-status.ready{background:rgba(52,211,153,.12);color:var(--ok)}
 .tl-status.posting{background:rgba(103,232,249,.12);color:var(--info)}
 .tl-status.posted{background:rgba(52,211,153,.12);color:var(--ok)}
 .tl-status.failed{background:rgba(251,113,133,.12);color:var(--err)}
-.tl-time{font-family:var(--mono);font-size:12px;color:var(--t3);min-width:70px;flex-shrink:0}
+.tl-time{font-family:var(--mono);font-size:13px;color:var(--t3);min-width:70px;flex-shrink:0}
 
 /* ── Overflow Menu ── */
 .tl-overflow{position:relative}
@@ -477,7 +477,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg"><label>Background Setting</label><input id="vBg" placeholder="retro arcade with neon lights"></div>
       <div class="fg"><label>Influencer Outfit</label><input id="vOutfit" placeholder="e.g. Pac-Man yellow hoodie with ghost patches"><div class="hint">Leave blank to auto-generate based on the game</div></div>
       <div class="fg"><label>Game Image</label><select id="vGameImg"><option value="">Random from library</option></select><div class="hint">Pick a game image or leave random</div></div>
-      <div class="fg"><label>Video Duration <span id="vDurLabel" style="color:var(--accent);font-weight:600">8s</span> per part</label><input type="range" id="vDuration" min="5" max="8" step="1" value="8" oninput="$('vDurLabel').textContent=this.value+'s'" style="width:100%;accent-color:var(--accent)"><div class="hint">5–8 seconds per segment. 3 segments = total ~15–24s video</div></div>
+      <div class="fg"><label>Video Length <span id="vDurLabel" style="color:var(--accent);font-weight:600">8s</span> <span id="vDurCost" style="color:var(--t3);font-size:11px">~$0.35</span></label><input type="range" id="vDuration" min="8" max="24" step="8" value="8" oninput="updateDurLabel()" style="width:100%;accent-color:var(--accent)"><div class="hint">Total video length. Auto-splits into segments for Veo.</div></div>
       <div class="fg"><label>Custom Prompt Override <span style="color:var(--t3);font-weight:400">(optional)</span></label><textarea id="vCustomPrompt" rows="3" placeholder="Write your own Veo 3.1 prompt directly. Replaces Claude's generated script."></textarea></div>
       <div class="btns">
         <button class="btn btn-s" id="vPreviewBtn" onclick="previewScript()">Preview Script</button>
@@ -528,15 +528,16 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg"><label>Intro Phrase</label><input id="infIntroPhrase" placeholder="e.g. Hey gamers, it's Luna!"><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('intro_phrase','infIntroPhrase')">AI Suggest</button><div id="infIntroPhraseSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
       <div class="fg"><label>Game Tastes</label><textarea id="infGameTastes" rows="2" placeholder="e.g. Loves JRPGs and platformers"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('game_tastes','infGameTastes')">AI Suggest</button><div id="infGameTastesSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
       <div class="fg"><label>Fashion Style</label><textarea id="infFashionStyle" rows="2" placeholder="e.g. Y2K aesthetic, pastel colors"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('fashion_style','infFashionStyle')">AI Suggest</button><div id="infFashionStyleSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
+      <div class="fg"><label>Accent</label><input id="infAccent" placeholder="e.g. British, Southern US, Japanese"><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('accent','infAccent')">AI Suggest</button><div id="infAccentSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
       <div class="fg"><label>Boyfriend / Character Lore</label><textarea id="infBoyfriend" rows="2" placeholder="e.g. Dating a pro FPS player named Jake"></textarea><div style="display:flex;gap:6px;margin-top:4px"><button type="button" class="btn btn-s" style="font-size:10px;padding:3px 8px" onclick="suggestField('boyfriend','infBoyfriend')">AI Suggest</button><div id="infBoyfriendSuggestions" style="display:flex;gap:4px;flex-wrap:wrap"></div></div></div>
-      <div class="fg"><label>Profile Picture</label><div class="row2"><input id="infPicture" placeholder="filename (uploaded via photos)" readonly style="flex:1"><button class="btn btn-s" type="button" onclick="pickInfPicture()">Choose from Photos</button></div></div>
-      <div class="fg"><label>Room / Background</label><div class="row2"><input id="infRoom" placeholder="filename (uploaded via photos)" readonly style="flex:1"><button class="btn btn-s" type="button" onclick="pickInfRoom()">Choose from Photos</button></div></div>
+      <div class="fg"><label style="display:flex;align-items:center;justify-content:space-between">Influencer Picture <label class="btn btn-s" style="font-size:11px;padding:3px 8px;cursor:pointer;margin:0">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadInfProfilePic(this.files)"></label></label><input id="infPicture" placeholder="No picture uploaded" readonly style="flex:1"><div id="infPicturePreview" style="margin-top:4px"></div></div>
+      <div class="fg"><label style="display:flex;align-items:center;justify-content:space-between">Room / Background <label class="btn btn-s" style="font-size:11px;padding:3px 8px;cursor:pointer;margin:0">Upload<input type="file" accept="image/*" style="display:none" onchange="uploadInfRoomPic(this.files)"></label></label><input id="infRoom" placeholder="No room uploaded" readonly style="flex:1"><div id="infRoomPreview" style="margin-top:4px"></div></div>
       <div class="btns"><button class="btn btn-p" onclick="saveInf()">Save</button><button class="btn btn-s" onclick="cancelInf()">Cancel</button></div>
     </div>
     <div id="infDetail" class="card hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <h3 style="margin:0" id="infDetailName">-</h3>
-        <div><button class="btn btn-s" onclick="editInf()" style="margin-right:8px">Edit</button><button class="btn btn-d" onclick="deleteInf()">Delete</button></div>
+        <div><button class="btn btn-p" onclick="editInf()" style="margin-right:8px;background:var(--ok)">Edit</button><button class="btn btn-d" onclick="deleteInf()">Delete</button></div>
       </div>
       <div style="font-size:13px;color:var(--t2);margin-bottom:12px">
         <div><b style="color:var(--t1)">Personality:</b> <span id="infDetailPersonality">-</span></div>
@@ -546,13 +547,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <div style="margin-top:6px"><b style="color:var(--t1)">Intro Phrase:</b> <span id="infDetailIntroPhrase">-</span></div>
         <div style="margin-top:6px"><b style="color:var(--t1)">Game Tastes:</b> <span id="infDetailGameTastes">-</span></div>
         <div style="margin-top:6px"><b style="color:var(--t1)">Fashion Style:</b> <span id="infDetailFashionStyle">-</span></div>
+        <div style="margin-top:6px"><b style="color:var(--t1)">Accent:</b> <span id="infDetailAccent">-</span></div>
         <div style="margin-top:6px"><b style="color:var(--t1)">Lore:</b> <span id="infDetailBoyfriend">-</span></div>
-        <div style="margin-top:6px"><b style="color:var(--t1)">Picture:</b> <span id="infDetailPicture">-</span></div>
-        <div style="margin-top:6px"><b style="color:var(--t1)">Room:</b> <span id="infDetailRoom">-</span></div>
+        <div style="margin-top:8px"><b style="color:var(--t1)">Influencer Picture:</b><div id="infDetailPicture" style="margin-top:4px">-</div></div>
+        <div style="margin-top:8px"><b style="color:var(--t1)">Room / Background:</b><div id="infDetailRoom" style="margin-top:4px">-</div></div>
       </div>
-      <h3>Reference Photos</h3>
-      <div id="infPhotos" class="grid" style="margin-bottom:12px"></div>
-      <div class="drop" id="infDropZone" style="padding:20px"><div class="di" style="font-size:20px">&#128247;</div><p style="font-size:12px">Drop reference photos or click to upload</p><input type="file" id="infFileIn" multiple accept="image/*" style="display:none"></div>
+
     </div>
   </section>
 
@@ -1206,18 +1206,12 @@ async function loadVideo() {
     loadGameImages(imgs);
   } catch (e) { console.error(e); }
 }
-function getVideoBody() {
-  const body = {};
-  if ($('vInf').value) body.influencerId = $('vInf').value;
-  if ($('vBg').value) body.background = $('vBg').value;
-  if ($('vStyle').value) body.style = $('vStyle').value;
-  if ($('vTopic').value) body.topic = $('vTopic').value;
-  if ($('vGameImg').value) { body.gameImage = $('vGameImg').value; var sel = $('vGameImg'); var opt = sel.options[sel.selectedIndex]; if (opt && opt.dataset.gameId) body.gameId = opt.dataset.gameId; }
-  if ($('vOutfit').value) body.outfit = $('vOutfit').value;
-  if ($('vCustomPrompt').value.trim()) body.customPrompt = $('vCustomPrompt').value.trim();
-  if ($('vDuration') && $('vDuration').value !== '8') body.duration = Number($('vDuration').value);
-  return body;
-}
+function updateDurLabel() {
+  var v = Number($('vDuration').value);
+  var segs = Math.ceil(v / 8);
+  var cost = (segs * 0.35).toFixed(2);
+  $('vDurLabel').textContent = v + 's';
+  $('vDurCost').textContent = '~
 async function previewScript() {
   const btn = $('vPreviewBtn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing\u2026';
   try {
@@ -1469,7 +1463,7 @@ function showAddInf() {
   $('infEditId').value = ''; $('infName').value = ''; $('infPersonality').value = '';
   $('infQuirks').value = ''; $('infExpressions').value = ''; $('infOutfit').value = '';
   $('infIntroPhrase').value = ''; $('infGameTastes').value = ''; $('infFashionStyle').value = '';
-  $('infBoyfriend').value = ''; $('infPicture').value = ''; $('infRoom').value = '';
+  $('infBoyfriend').value = ''; $('infAccent').value = ''; $('infPicture').value = ''; $('infRoom').value = '';
   $('infFormTitle').textContent = 'Add Influencer';
   $('infForm').classList.remove('hidden'); $('infDetail').classList.add('hidden');
 }
@@ -1478,7 +1472,7 @@ async function saveInf() {
   var id = $('infEditId').value;
   var body = { name: $('infName').value, personality: $('infPersonality').value, quirks: $('infQuirks').value, expressions: $('infExpressions').value,
     outfit: $('infOutfit').value, intro_phrase: $('infIntroPhrase').value, game_tastes: $('infGameTastes').value, fashion_style: $('infFashionStyle').value,
-    boyfriend: $('infBoyfriend').value, picture: $('infPicture').value, room: $('infRoom').value };
+    boyfriend: $('infBoyfriend').value, accent: $('infAccent').value, picture: $('infPicture').value, room: $('infRoom').value };
   if (id) { await api('/team/' + id, { method: 'PUT', body: JSON.stringify(body) }); toast('Updated!'); showInfDetail(id); }
   else { var inf = await api('/team', { method: 'POST', body: JSON.stringify(body) }); toast('Added!'); showInfDetail(inf.id); }
   $('infForm').classList.add('hidden'); loadTeam();
@@ -1533,6 +1527,34 @@ async function deleteInf() {
   if (!ok) return;
   await api('/team/' + currentInfId, { method: 'DELETE' }); toast('Deleted'); currentInfId = null;
   $('infDetail').classList.add('hidden'); loadTeam();
+}
+async function uploadInfProfilePic(files) {
+  if (!files.length) return;
+  var id = $('infEditId').value;
+  if (!id) { toast('Save influencer first', 'err'); return; }
+  var fd = new FormData(); fd.append('photo', files[0]); fd.append('type', 'picture');
+  try {
+    var r = await fetch('/api/team/' + id + '/upload-profile', { method: 'POST', body: fd }).then(r => r.json());
+    if (r.ok) {
+      $('infPicture').value = r.filename;
+      $('infPicturePreview').innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(r.filename) + '?t=' + Date.now() + '" style="max-width:100%;max-height:120px;border-radius:6px">';
+      toast(r.grid ? 'Uploaded + grid generated!' : 'Uploaded!', 'ok');
+    } else toast(r.error || 'Failed', 'err');
+  } catch(e) { toast('Upload failed', 'err'); }
+}
+async function uploadInfRoomPic(files) {
+  if (!files.length) return;
+  var id = $('infEditId').value;
+  if (!id) { toast('Save influencer first', 'err'); return; }
+  var fd = new FormData(); fd.append('photo', files[0]); fd.append('type', 'room');
+  try {
+    var r = await fetch('/api/team/' + id + '/upload-profile', { method: 'POST', body: fd }).then(r => r.json());
+    if (r.ok) {
+      $('infRoom').value = r.filename;
+      $('infRoomPreview').innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(r.filename) + '?t=' + Date.now() + '" style="max-width:100%;max-height:120px;border-radius:6px">';
+      toast('Uploaded!', 'ok');
+    } else toast(r.error || 'Failed', 'err');
+  } catch(e) { toast('Upload failed', 'err'); }
 }
 function pickInfPicture() {
   var id = $('infEditId').value; if (!id) { toast('Save influencer first', 'err'); return; }
