@@ -508,12 +508,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <div class="fg"><label>Influencer</label><select id="vInf"><option value="">Loading&hellip;</option></select></div>
         <div class="fg"><label>Video Style / Mood</label><select id="vStyle"><option value="">Default (energetic review)</option><option value="hype">Hype / Excited</option><option value="chill">Chill / Relaxed</option><option value="funny">Funny / Comedic</option><option value="dramatic">Dramatic / Cinematic</option><option value="nostalgic">Nostalgic / Retro vibes</option><option value="asmr">ASMR / Whisper</option></select></div>
       </div>
-      <div class="fg"><label>Script / Topic</label><textarea id="vTopic" rows="2" placeholder="e.g. Reacting to seeing Pac-Man for the first time..."></textarea><div class="hint">Tell Claude what the influencer should talk about</div></div>
-      <div class="fg"><label>Background Setting</label><input id="vBg" placeholder="retro arcade with neon lights"></div>
-      <div class="fg"><label>Influencer Outfit</label><input id="vOutfit" placeholder="e.g. Pac-Man yellow hoodie with ghost patches"><div class="hint">Leave blank to auto-generate based on the game</div></div>
+      <div class="fg"><label>Script Template</label><select id="vScriptId"><option value="">No script (auto-generate)</option></select><div class="hint">Pick a saved script template or auto-generate</div></div>
+      <div class="fg"><label>Background</label><select id="vBgMode"><option value="influencer">Influencer room</option><option value="game-inspired">Game-inspired</option></select><div class="hint">Use influencer's room photo or a game-themed environment</div></div>
+      <div class="fg"><label>Outfit</label><select id="vOutfitMode"><option value="game-inspired">Game-inspired cosplay</option><option value="influencer">Influencer default</option></select><div class="hint">Auto-design cosplay or use influencer's default outfit</div></div>
       <div class="fg"><label>Game Image</label><select id="vGameImg"><option value="">Random from library</option></select><div class="hint">Pick a game image or leave random</div></div>
-      <div class="fg"><label>Video Length <span id="vDurLabel" style="color:var(--accent);font-weight:600">8s</span> <span id="vDurCost" style="color:var(--t3);font-size:11px">~$0.35</span></label><input type="range" id="vDuration" min="8" max="24" step="8" value="8" oninput="updateDurLabel()" style="width:100%;accent-color:var(--accent)"><div class="hint">Total video length. Auto-splits into segments for Veo.</div></div>
-      <div class="fg"><label>Custom Prompt Override <span style="color:var(--t3);font-weight:400">(optional)</span></label><textarea id="vCustomPrompt" rows="3" placeholder="Write your own Veo 3.1 prompt directly. Replaces Claude's generated script."></textarea></div>
+      <div class="fg"><label>Video Length <span id="vDurLabel" style="color:var(--accent);font-weight:600">24s</span> <span id="vDurCost" style="color:var(--t3);font-size:11px">~$1.05</span></label><input type="range" id="vDuration" min="8" max="64" step="8" value="24" oninput="updateDurLabel()" style="width:100%;accent-color:var(--accent)"><div class="hint">Total video length. Auto-splits into 8s segments for Veo.</div></div>
+
       <div class="btns">
         <button class="btn btn-s" id="vPreviewBtn" onclick="previewScript()">Preview Script</button>
         <button class="btn btn-p" id="vGenBtn" onclick="generateVideo()">Generate Video</button>
@@ -1030,35 +1030,23 @@ async function showCreatePostModal() {
   else if (r === 'photo') openPanel('photoPanel');
   else if (r === 'video') openPanel('videoPanel');
 }
-async function openCamera() {
-  try {
-    var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    setTimeout(function() { var v = $('camVid'); if (v) v.srcObject = stream; }, 100);
-    var r = await showModal({
-      title: 'Take Picture',
-      html: '<div style="text-align:center"><video id="camVid" autoplay playsinline style="width:100%;max-height:60vh;border-radius:8px;background:#000"></video>' +
-        '<canvas id="camCanvas" style="display:none"></canvas>' +
-        '<button class="btn btn-p" id="camCapture" onclick="capturePhoto()" style="margin-top:12px;font-size:14px">\uD83D\uDCF8 Capture</button></div>',
-      cancel: true, okText: 'Cancel'
-    });
-    stream.getTracks().forEach(function(t) { t.stop(); });
-    if (r === 'captured') { toast('Photo saved to game images', 'ok'); }
-  } catch (e) {
-    toast('Camera access denied: ' + e.message, 'err');
-  }
-}
-async function capturePhoto() {
-  var vid = $('camVid'), canvas = $('camCanvas');
-  canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
-  canvas.getContext('2d').drawImage(vid, 0, 0);
-  canvas.toBlob(async function(blob) {
+function openCamera() {
+  // Use file input with capture attribute — works over HTTP on mobile
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = async function() {
+    if (!input.files || !input.files.length) return;
     var fd = new FormData();
-    fd.append('images', blob, 'camera_' + Date.now() + '.jpg');
+    fd.append('images', input.files[0], 'camera_' + Date.now() + '.jpg');
     try {
       var r = await fetch('/api/game-images', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
-      if (r.ok) { closeModal('captured'); } else toast('Upload failed', 'err');
-    } catch (e) { toast('Upload error', 'err'); }
-  }, 'image/jpeg', 0.85);
+      if (r.ok) toast('Photo saved to game images', 'ok');
+      else toast('Upload failed', 'err');
+    } catch (e) { toast('Upload error: ' + e.message, 'err'); }
+  };
+  input.click();
 }
 async function pickGameImage() {
   try {
