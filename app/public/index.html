@@ -83,7 +83,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  min-height:132px;
+  min-height:150px;
   cursor:pointer;
   transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
 }
@@ -94,8 +94,8 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   box-shadow:0 10px 22px rgba(0,0,0,.18),0 0 0 1px rgba(192,132,252,.20) inset;
 }
 .create-icon{
-  width:58px;
-  height:58px;
+  width:92px;
+  height:92px;
   border-radius:16px;
   background:linear-gradient(145deg,rgba(192,132,252,.34),rgba(244,114,182,.20));
   border:1px solid rgba(192,132,252,.45);
@@ -103,7 +103,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   place-items:center;
   margin-bottom:10px;
 }
-.create-icon svg{width:30px;height:30px;color:#FFF6FF;display:block}
+.create-icon svg{width:56px;height:56px;color:#FFF6FF;display:block}
 .create-title{font-size:12px;font-weight:600;color:var(--t1);text-align:center;line-height:1.3}
 
 /* ── Main ── */
@@ -444,7 +444,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <div class="sb-logo"><svg viewBox="0 0 28 28" width="28" height="28" style="flex-shrink:0"><defs><linearGradient id="ag2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C084FC"/><stop offset="50%" stop-color="#F472B6"/><stop offset="100%" stop-color="#FB923C"/></linearGradient></defs><circle cx="14" cy="14" r="12" fill="none" stroke="url(#ag2)" stroke-width="1.5" opacity=".5"/><path d="M14 7l-5 14h2.8l1-3h4.4l1 3H21L14 7zm-1.2 9L14 11.5l1.2 4.5h-2.4z" fill="url(#ag2)"/></svg><span class="nav-label" style="font-family:var(--heading);font-size:15px;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent">AuraPost</span></div>
   <div class="sb-nav">
     <button class="on" data-t="dash" onclick="go('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="nav-label">Dashboard</span></button>
-    <button data-t="hist" onclick="go('hist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span class="nav-label">History</span></button>
     <button data-t="team" onclick="go('team')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><span class="nav-label">Team</span></button>
     <button data-t="analytics" onclick="go('analytics')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span class="nav-label">Analytics</span></button>
     <button data-t="cfg" onclick="go('cfg')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span class="nav-label">Settings</span></button>
@@ -456,7 +455,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <button class="on" data-t="dash" onclick="go('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Home</span></button>
   <button data-t="team" onclick="go('team')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg><span>Team</span></button>
   <button data-t="analytics" onclick="go('analytics')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Analytics</span></button>
-  <button data-t="hist" onclick="go('hist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>History</span></button>
   <button data-t="cfg" onclick="go('cfg')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>Settings</span></button>
 </nav>
 
@@ -501,6 +499,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <div class="tog" id="togModelDriven" onclick="toggleModelDriven()"></div>
       </div>
     </div>
+    <div class="card" id="draftsCard">
+      <h3>Drafts</h3>
+      <div id="homeDraftList" class="hint">No drafts yet.</div>
+    </div>
     <div class="card">
       <h3>Timeline</h3>
       <div id="tlFeed"></div>
@@ -512,13 +514,9 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <div id="photoPanel" class="panel">
     <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><h2>Photo Posts</h2><button class="panel-close" onclick="closePanel('photoPanel')">&times;</button></div>
     <div class="panel-body">
-    <div class="card">
-      <h3>Photo Drafts</h3>
-      <div class="fg"><label>Draft note</label><input id="pDraftNote" placeholder="Optional note for this photo draft"></div>
-      <div class="btns" style="margin-bottom:10px">
-        <button class="btn btn-s" onclick="savePhotoDraft()">Save Draft</button>
-      </div>
-      <div id="pDraftList" class="hint">No drafts yet.</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px">
+      <div class="fg" style="flex:1;margin:0"><label>Draft note</label><input id="pDraftNote" placeholder="Optional note for this photo draft"></div>
+      <button class="btn btn-s" onclick="savePhotoDraft()">Save Draft</button>
     </div>
     <div class="drop" id="dropZone">
       <div class="di">&#9729;</div>
@@ -543,13 +541,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <div id="videoPanel" class="panel">
     <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><h2>Video Post</h2><button class="panel-close" onclick="closePanel('videoPanel')">&times;</button></div>
     <div class="panel-body">
-    <div class="card">
-      <h3>Video Drafts</h3>
-      <div class="btns" style="margin-bottom:10px">
-        <button class="btn btn-s" onclick="saveVideoDraft()">Save Draft</button>
-      </div>
-      <div id="vDraftList" class="hint">No drafts yet.</div>
-    </div>
     <div class="stats">
       <div class="stat"><b id="vQ">&ndash;</b><small>videos queued</small></div>
       <div class="stat"><b id="vS">&ndash;</b><small>schedule</small></div>
@@ -597,6 +588,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <div class="hint">Take a photo, upload, or pick from game image library</div>
       </div>
       <div class="fg"><label>Video Length <span id="vDurLabel" style="color:var(--accent);font-weight:600">24s</span> <span id="vDurCost" style="color:var(--t3);font-size:11px">~$1.05</span></label><input type="range" id="vDuration" min="8" max="64" step="8" value="24" oninput="updateDurLabel()" style="width:100%;accent-color:var(--accent)"><div class="hint">Total video length. Auto-splits into 8s segments for Veo.</div></div>
+      <div class="fg"><label>Hashtag Count</label><input id="vHashtagCount" type="number" min="1" max="30" value="5"><div class="hint">Number of hashtags for reel caption (default 5)</div></div>
 
       <div class="btns">
         <button class="btn btn-s" id="vPreviewBtn" onclick="previewScript()">Preview Script</button>
@@ -604,6 +596,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <button class="btn btn-s" id="vPostBtn" onclick="postVideo()">Post Next Reel</button>
         <button class="btn btn-s" onclick="saveVideoDraft()">Save Draft</button>
       </div>
+      <div class="hint" style="margin-top:6px">Video posts are published as Instagram Reels and include generated hashtags in the caption.</div>
       <div id="vScriptBox" class="hidden" style="margin-top:14px">
         <label style="display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px">Generated Script (edit before generating)</label>
         <textarea id="vScriptEdit" rows="6" style="width:100%;padding:12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r);font-size:13px;font-family:var(--font);color:var(--t1);resize:vertical;line-height:1.6"></textarea>
@@ -618,11 +611,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     <div class="card"><h3>Video Queue</h3><div id="vqList"></div><div id="vqEmpty" class="empty hidden"><div class="ei">&#127916;</div><p>No videos queued. Generate one above!</p></div></div>
     </div>
   </div>
-
-  <!-- ═══ HISTORY ═══ -->
-  <section id="p-hist" class="section">
-    <div class="card"><h3>Post History</h3><div id="hList"></div><div id="hEmpty" class="empty hidden"><div class="ei">&#128203;</div><p>Nothing posted yet.</p></div></div>
-  </section>
 
   <!-- ═══ TEAM ═══ -->
   <section id="p-team" class="section">
@@ -702,11 +690,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <section id="p-cfg" class="section">
     <div class="vtabs">
       <div class="vtabs-nav" id="cfgNav">
-        <button class="on" onclick="cfgTab('api')">API Keys</button>
-        <button onclick="cfgTab('prompts')">Post Settings</button>
-        <button onclick="cfgTab('genres')">Genres</button>
-        <button onclick="cfgTab('sched')">Scheduler</button>
-        <button onclick="cfgTab('paths')">File Paths</button>
+        <button class="on" data-cfg="api" onclick="cfgTab('api', this)">API Keys</button>
+        <button data-cfg="prompts" onclick="cfgTab('prompts', this)">Post Settings</button>
+        <button data-cfg="genres" onclick="cfgTab('genres', this)">Genres</button>
+        <button data-cfg="sched" onclick="cfgTab('sched', this)">Scheduler</button>
+        <button data-cfg="paths" onclick="cfgTab('paths', this)">File Paths</button>
+        <button data-cfg="history" onclick="cfgTab('history', this)">History</button>
       </div>
       <div class="vtabs-body">
         <div class="vtab on" id="cfg-api">
@@ -784,6 +773,9 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
             <div class="fg"><label>Posted Folder</label><input id="cOut" placeholder="/data/posted"></div>
           </div>
         </div>
+        <div class="vtab" id="cfg-history">
+          <div class="card"><h3>Post History</h3><div id="hList"></div><div id="hEmpty" class="empty hidden"><div class="ei">&#128203;</div><p>Nothing posted yet.</p></div></div>
+        </div>
       </div>
     </div>
     <div class="btns" style="margin-top:14px"><button class="btn btn-p" onclick="saveCfg()">Save Settings</button></div>
@@ -853,31 +845,32 @@ function writeDrafts(items) { localStorage.setItem(DRAFTS_KEY, JSON.stringify(it
 function listDrafts(type) { return readDrafts().filter(d => d.type === type).sort((a, b) => b.createdAt - a.createdAt); }
 function removeDraft(id) {
   writeDrafts(readDrafts().filter(d => d.id !== id));
-  renderPhotoDrafts();
-  renderVideoDrafts();
+  renderDraftsHome();
 }
-function renderPhotoDrafts() {
-  const root = $('pDraftList');
-  if (!root) return;
-  const drafts = listDrafts('photo');
-  if (!drafts.length) { root.innerHTML = 'No drafts yet.'; return; }
-  root.innerHTML = drafts.map(function(d) {
-    const note = (d.data && d.data.note) ? d.data.note : 'Photo draft';
-    return '<div class="hrow"><div class="icon">📷</div><div class="body"><div class="cap" style="font-weight:600">' + esc(note) + '</div><div class="meta">' + ago(d.createdAt) + '</div></div>' +
-      '<button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="applyPhotoDraft(\'' + d.id + '\')">Load</button>' +
-      '<button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="removeDraft(\'' + d.id + '\')">Delete</button></div>';
-  }).join('');
+function openDraft(id) {
+  const d = readDrafts().find(x => x.id === id);
+  if (!d) return;
+  if (d.type === 'photo') {
+    openPanel('photoPanel');
+    applyPhotoDraft(id);
+  } else if (d.type === 'video') {
+    openPanel('videoPanel');
+    applyVideoDraft(id);
+  }
 }
-function renderVideoDrafts() {
-  const root = $('vDraftList');
+function renderDraftsHome() {
+  const root = $('homeDraftList');
   if (!root) return;
-  const drafts = listDrafts('video');
-  if (!drafts.length) { root.innerHTML = 'No drafts yet.'; return; }
-  root.innerHTML = drafts.map(function(d) {
-    const inf = d.data && d.data.influencerName ? d.data.influencerName : 'Video draft';
-    const style = d.data && d.data.style ? (' - ' + d.data.style) : '';
-    return '<div class="hrow"><div class="icon">🎬</div><div class="body"><div class="cap" style="font-weight:600">' + esc(inf + style) + '</div><div class="meta">' + ago(d.createdAt) + '</div></div>' +
-      '<button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="applyVideoDraft(\'' + d.id + '\')">Load</button>' +
+  const all = readDrafts().sort((a, b) => b.createdAt - a.createdAt);
+  if (!all.length) { root.className = 'hint'; root.innerHTML = 'No drafts yet.'; return; }
+  root.className = '';
+  root.innerHTML = all.map(function(d) {
+    const icon = d.type === 'photo' ? '📷' : '🎬';
+    const label = d.type === 'photo'
+      ? ((d.data && d.data.note) ? d.data.note : 'Photo draft')
+      : ((d.data && d.data.influencerName) ? d.data.influencerName + (d.data.style ? ' - ' + d.data.style : '') : 'Video draft');
+    return '<div class="hrow"><div class="icon">' + icon + '</div><div class="body"><div class="cap" style="font-weight:600">' + esc(label) + '</div><div class="meta">' + ago(d.createdAt) + ' · ' + (d.type === 'photo' ? 'Photo' : 'Video') + '</div></div>' +
+      '<button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="openDraft(\'' + d.id + '\')">Open</button>' +
       '<button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="removeDraft(\'' + d.id + '\')">Delete</button></div>';
   }).join('');
 }
@@ -891,7 +884,7 @@ function savePhotoDraft() {
     data: { note: note || 'Photo draft' },
   });
   writeDrafts(all);
-  renderPhotoDrafts();
+  renderDraftsHome();
   toast('Photo draft saved', 'ok');
 }
 function applyPhotoDraft(id) {
@@ -916,12 +909,13 @@ function saveVideoDraft() {
       bgMode: $('vBgMode').value || 'influencer',
       outfitMode: $('vOutfitMode').value || 'game-inspired',
       duration: Number($('vDuration').value) || 24,
+      hashtagCount: Number($('vHashtagCount').value) || 5,
       gameImage: $('vGameImg').value || '',
       gameId: $('vGameImgGameId').value || '',
     },
   });
   writeDrafts(all);
-  renderVideoDrafts();
+  renderDraftsHome();
   toast('Video draft saved', 'ok');
 }
 function applyVideoDraft(id) {
@@ -933,6 +927,7 @@ function applyVideoDraft(id) {
   $('vBgMode').value = d.data.bgMode || 'influencer';
   $('vOutfitMode').value = d.data.outfitMode || 'game-inspired';
   $('vDuration').value = d.data.duration || 24;
+  $('vHashtagCount').value = d.data.hashtagCount || 5;
   if (d.data.gameImage) setGameImg(d.data.gameImage, d.data.gameId || null);
   else clearGameImg();
   updateDurLabel();
@@ -945,7 +940,7 @@ function showModal(opts) {
     const root = $('modal-root');
     root.innerHTML = '<div class="modal-ov" onclick="closeModal(null)"></div><div class="modal-card"></div>';
     const card = root.querySelector('.modal-card');
-    let html = '<h2>' + esc(opts.title || '') + '</h2>';
+    let html = opts.title ? ('<h2>' + esc(opts.title) + '</h2>') : '';
     if (opts.message) html += '<p style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.6">' + esc(opts.message) + '</p>';
     if (opts.fields) {
       opts.fields.forEach(f => {
@@ -1028,19 +1023,19 @@ function go(t) {
   // Update bottom bar
   document.querySelectorAll('#bottombar button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   // Show section
-  ['dash','hist','team','analytics','cfg'].forEach(s => {
+  ['dash','team','analytics','cfg'].forEach(s => {
     const el = $('p-' + s);
     if (el) { el.classList.toggle('active', s === t); el.classList.toggle('section', true); }
   });
-  ({ dash: loadDash, hist: loadH, team: loadTeam, analytics: loadAnalytics, cfg: loadCfg })[t]();
+  ({ dash: loadDash, team: loadTeam, analytics: loadAnalytics, cfg: loadCfg })[t]();
 }
 function openSheet(){}
 function closeSheet(){}
 function openPanel(id){
   $(id).classList.add('open');
   document.body.style.overflow='hidden';
-  if(id==='photoPanel'){ renderPhotoDrafts(); loadQ(); }
-  else if(id==='videoPanel'){ renderVideoDrafts(); loadVideo(); }
+  if(id==='photoPanel'){ loadQ(); }
+  else if(id==='videoPanel'){ loadVideo(); }
 }
 function closePanel(id){$(id).classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.panel.open').forEach(function(p){p.classList.remove('open')});document.body.style.overflow='';}});
@@ -1090,6 +1085,7 @@ function renderDashFromCache() {
   if (Array.isArray(c.timeline) && c.timeline.length) {
     renderTimeline(c.timeline, 'tlFeed', 'tlEmpty', true);
   }
+  renderDraftsHome();
 }
 
 function mergeTimelineBuckets(queuedList, readyList, postingList) {
@@ -1102,13 +1098,14 @@ async function loadDash() {
   try {
     // Render last-known timeline immediately for snappy UX while network calls run.
     renderDashFromCache();
+    renderDraftsHome();
 
     const [st, cfg, queuedList, readyList, postingList] = await Promise.all([
       api('/status'),
       api('/config'),
-      api('/unified-queue?status=queued'),
-      api('/unified-queue?status=ready'),
-      api('/unified-queue?status=posting')
+      api('/unified-queue?status=queued&lite=1&limit=40'),
+      api('/unified-queue?status=ready&lite=1&limit=40'),
+      api('/unified-queue?status=posting&lite=1&limit=20')
     ]);
 
     const queue = mergeTimelineBuckets(queuedList, readyList, postingList);
@@ -1142,7 +1139,7 @@ async function loadDash() {
     });
 
     // Slower posted fetch runs after first paint to update posted metrics/fallback timeline.
-    api('/unified-queue?status=posted').then(function(postedList) {
+    api('/unified-queue?status=posted&lite=1&limit=100').then(function(postedList) {
       var posted = postedList.length;
       $('sP').textContent = posted;
       var lastPosted = postedList
@@ -1299,13 +1296,13 @@ async function showCreatePostModal() {
   var photoIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.2"/><circle cx="9" cy="10" r="1.4"/><path d="m5.8 16.8 4.1-4.1 3.2 3.2 2-2 3.1 2.9"/></svg>';
   var videoIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.2" width="12.8" height="13.6" rx="2.2"/><path d="m16.4 10 4-2.2v8.4l-4-2.2"/><path d="M8.7 10.2v3.6l3.1-1.8-3.1-1.8Z"/></svg>';
   var r = await showModal({
-    title: 'Create',
+    title: '',
     html: '<div class="create-grid">' +
       '<button type="button" class="create-card" onclick="closeModal(\'camera\')"><span class="create-icon">' + cameraIcon + '</span><span class="create-title">Add photo</span></button>' +
       '<button type="button" class="create-card" onclick="closeModal(\'photo\')"><span class="create-icon">' + photoIcon + '</span><span class="create-title">Create a photo post</span></button>' +
       '<button type="button" class="create-card" onclick="closeModal(\'video\')"><span class="create-icon">' + videoIcon + '</span><span class="create-title">Create a video post</span></button>' +
       '</div>',
-    cancel: true, okText: 'Cancel'
+    cancel: false, okText: 'Close'
   });
   if (r === 'camera') openCamera();
   else if (r === 'photo') openPhotoCapture();
@@ -1790,7 +1787,6 @@ async function loadVideo() {
     }
     // Update duration label
     updateDurLabel();
-    renderVideoDrafts();
   } catch (e) { console.error(e); }
 }
 function updateDurLabel() {
@@ -1809,6 +1805,7 @@ function getVideoBody() {
   if ($('vScriptId').value) body.scriptId = $('vScriptId').value;
   if ($('vGameImg').value) { body.gameImage = $('vGameImg').value; if ($('vGameImgGameId').value) body.gameId = $('vGameImgGameId').value; }
   body.duration = Number($('vDuration').value) || 24;
+  body.hashtagCount = Number($('vHashtagCount').value) || 5;
   return body;
 }
 async function previewScript() {
@@ -2046,11 +2043,13 @@ async function verifyIg() {
   try { const r = await api('/verify-ig', { method: 'POST' }); toast(r.valid ? 'Connected! (' + (r.info?.name || r.info?.id) + ')' : 'Invalid: ' + r.error, r.valid ? 'ok' : 'err'); }
   catch { toast('Failed', 'err'); }
 }
-function cfgTab(name) {
+function cfgTab(name, btn) {
   document.querySelectorAll('#cfgNav button').forEach(b => b.classList.remove('on'));
   document.querySelectorAll('.vtabs-body .vtab').forEach(t => t.classList.remove('on'));
-  event.target.classList.add('on');
+  var activeBtn = btn || document.querySelector('#cfgNav button[data-cfg="' + name + '"]');
+  if (activeBtn) activeBtn.classList.add('on');
   var el = $('cfg-' + name); if (el) el.classList.add('on');
+  if (name === 'history') loadH();
 }
 
 /* ═══ SCRIPT TEMPLATES ═══ */
@@ -2539,13 +2538,15 @@ var __tabMap = {
   dash: 'dash',
   team: 'team',
   analytics: 'analytics',
-  history: 'hist',
-  hist: 'hist',
   settings: 'cfg',
   cfg: 'cfg'
 };
 var __initialTab = __tabMap[(__tabParam || '').toLowerCase()] || 'dash';
 go(__initialTab);
+if ((__tabParam || '').toLowerCase() === 'history' || (__tabParam || '').toLowerCase() === 'hist') {
+  go('cfg');
+  cfgTab('history');
+}
 setInterval(function() {
   if (tab === 'dash') loadDash();
 }, 25000);

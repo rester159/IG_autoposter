@@ -212,8 +212,11 @@ app.get('/api/unified-queue', async (req, res) => {
   try {
     const filters = {};
     if (req.query.status) filters.status = req.query.status;
+    const lite = req.query.lite === '1' || req.query.lite === 'true';
+    const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : null;
     const cfg = loadConfig();
     let posts = queue.getQueue(filters);
+    if (limit) posts = posts.slice(0, limit);
 
     // If model-driven mode, sort by ml_score desc for queued/ready items
     if (cfg.modelDriven === true || cfg.modelDriven === 'true') {
@@ -229,15 +232,16 @@ app.get('/api/unified-queue', async (req, res) => {
       });
     }
 
-    // Enrich with thumbnails for photos
-    const enriched = [];
-    for (const p of posts) {
+    if (lite) return res.json(posts);
+
+    // Enrich with thumbnails for photos (parallelized to avoid slow timeline loads)
+    const enriched = await Promise.all(posts.map(async (p) => {
       const item = { ...p };
       if (p.type === 'photo' && p.file_path && fs.existsSync(p.file_path)) {
         try { item.thumb = await thumbnail(p.file_path); } catch {}
       }
-      enriched.push(item);
-    }
+      return item;
+    }));
     res.json(enriched);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -783,6 +787,7 @@ app.post('/api/video/generate', async (req, res) => {
       gameId: req.body.gameId ? Number(req.body.gameId) : undefined,
       outfit: req.body.outfit,
       duration: req.body.duration ? Number(req.body.duration) : undefined,
+      hashtagCount: req.body.hashtagCount ? Number(req.body.hashtagCount) : undefined,
       bgMode: req.body.bgMode || 'influencer',
       outfitMode: req.body.outfitMode || 'game-inspired',
       scriptContent: scriptContent,
@@ -833,7 +838,7 @@ app.post('/api/video/preview-script', async (req, res) => {
       if (s) previewScriptContent = s.content;
     }
     const script = await generateVideoScript(cfg, influencer, gameImagePath, {
-      duration: cfg.videoDuration || 24,
+      duration: req.body.duration ? Number(req.body.duration) : (cfg.videoDuration || 24),
       topic: req.body.topic,
       style: req.body.style,
       game: gameRecord || {},
@@ -845,6 +850,7 @@ app.post('/api/video/preview-script', async (req, res) => {
     res.json({
       ok: true, script: script.full,
       part1: script.part1, part2: script.part2, part3: script.part3,
+      parts: script.parts || [],
       score: script.score, firstComment: script.firstComment,
       influencer: influencer.name,
     });

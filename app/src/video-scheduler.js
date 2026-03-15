@@ -18,6 +18,18 @@ let lastRun = null;
 let lastErr = null;
 let generating = false;  // track Veo generation separately
 
+// Rough local token estimator so we can reject oversized prompts
+// before calling Veo. This avoids spending Veo calls on prompts that
+// are likely to fail due to context limits.
+function estimateTokens(text) {
+  return Math.ceil((text || '').length / 4);
+}
+function getPromptBudget(cfg) {
+  const n = Number(cfg.videoPromptMaxTokens);
+  if (Number.isFinite(n) && n > 0) return n;
+  return 3500;
+}
+
 // ── status ────────────────────────────────────────────────────────
 function status() {
   const cfg = loadConfig();
@@ -165,17 +177,25 @@ async function generateOne(opts = {}) {
       '| boxArt:', verifiedBoxArtPath ? 'verified' : 'uploaded');
 
     // 1 — Get the Veo prompt(s) + score + first comment
-    let part1Prompt, part2Prompt, part3Prompt, score = null, firstComment = '';
+    let part1Prompt, score = null, firstComment = '';
+    let scriptParts = [];
     if (opts.customPrompt) {
-      // Custom prompt: use as single part, no extension
+      // Custom prompt: still honor requested duration by creating one prompt per 8s segment.
       part1Prompt = opts.customPrompt;
-      part2Prompt = null;
-      part3Prompt = null;
-      console.log('[video] using custom prompt (single part)');
+      const customDur = Number(opts.duration) || cfg.videoDuration || 24;
+      const customParts = Math.max(1, Math.floor(customDur / 8));
+      for (let i = 0; i < customParts; i++) {
+        scriptParts.push(
+          opts.customPrompt + (customParts > 1
+            ? `\n\nContinuation: this is part ${i + 1} of ${customParts}; keep pacing and continuity natural from previous segment.`
+            : '')
+        );
+      }
+      console.log('[video] using custom prompt with', customParts, 'segment prompt(s)');
     } else {
       const script = await generateVideoScript(cfg, influencer, gameImagePath, {
         background: opts.background || cfg.videoBackground,
-        duration: cfg.videoDuration || 24,
+        duration: Number(opts.duration) || cfg.videoDuration || 24,
         topic: opts.topic,
         style: opts.style,
         outfit: opts.outfit,
@@ -185,9 +205,11 @@ async function generateOne(opts = {}) {
         outfitMode: opts.outfitMode || 'game-inspired',
         scriptContent: opts.scriptContent || null,
       });
-      part1Prompt = script.part1;
-      part2Prompt = script.part2;
-      part3Prompt = script.part3;
+      scriptParts = Array.isArray(script.parts) ? script.parts.filter(Boolean) : [];
+      if (!scriptParts.length) {
+        scriptParts = [script.part1, script.part2, script.part3].filter(Boolean);
+      }
+      part1Prompt = scriptParts[0] || script.part1;
       score = script.score;
       firstComment = script.firstComment || '';
     }
@@ -220,23 +242,33 @@ async function generateOne(opts = {}) {
     console.log('[video] reference photos:', referencePhotos.length, '(game + influencer pic + room/default bg)');
 
     // 3 — Generate video with total duration auto-split into 8s segments
-    const totalDur = cfg.videoDuration || 24;
+    const totalDur = Number(opts.duration) || cfg.videoDuration || 24;
     const segmentDur = 8; // each Veo segment is 8s
-    const numSegments = Math.max(1, Math.round(totalDur / segmentDur));
+    const numSegments = Math.max(1, Math.floor(totalDur / segmentDur));
     console.log('[video] total duration:', totalDur + 's →', numSegments, 'segment(s) of', segmentDur + 's each');
 
-    // Auto-split prompts into segments (use provided parts, or split the single prompt)
+    // Build prompt list from script parts (one per segment).
     const prompts = [];
-    if (numSegments === 1) {
-      prompts.push(part1Prompt);
-    } else if (numSegments === 2) {
-      prompts.push(part1Prompt);
-      prompts.push(part2Prompt || part1Prompt);
-    } else {
-      prompts.push(part1Prompt);
-      prompts.push(part2Prompt || part1Prompt);
-      prompts.push(part3Prompt || part2Prompt || part1Prompt);
+    if (!scriptParts.length) scriptParts = [part1Prompt].filter(Boolean);
+    for (let i = 0; i < numSegments; i++) {
+      prompts.push(scriptParts[i] || scriptParts[scriptParts.length - 1] || part1Prompt);
     }
+
+    // Preflight token budget check BEFORE calling Veo.
+    const tokenBudget = getPromptBudget(cfg);
+    const promptDiagnostics = prompts.map((p, idx) => ({
+      segment: idx + 1,
+      chars: (p || '').length,
+      estTokens: estimateTokens(p),
+    }));
+    const over = promptDiagnostics.find(d => d.estTokens > tokenBudget);
+    if (over) {
+      throw new Error(
+        `Prompt too long before Veo call (segment ${over.segment}: ~${over.estTokens} tokens, budget ${tokenBudget}). ` +
+        `Shorten prompt/style details or reduce duration.`
+      );
+    }
+    console.log('[video] prompt preflight:', JSON.stringify(promptDiagnostics));
 
     // Generate first segment
     console.log('[video] generating segment 1/' + numSegments + '...');
@@ -289,6 +321,7 @@ async function generateOne(opts = {}) {
       const gameConsole = gameRecord?.console || '';
       const scoreLabel = displayScore ? displayScore + '/10' : (score ? score + '/10' : 'not given');
 
+      const hashtagCount = Number(opts.hashtagCount) || cfg.videoHashtagCount || cfg.hashtagCount || 5;
       const res = await axios.post(geminiUrl, {
         contents: [{
           parts: [{
@@ -296,7 +329,7 @@ async function generateOne(opts = {}) {
               `(personality: ${influencer.personality || 'energetic gamer'}) reviewing ${gameTitle}` +
               `${gameConsole ? ' for ' + gameConsole : ''}. ` +
               `Score: ${scoreLabel}. ` +
-              `Be fun, authentic, and brief (1-2 sentences). Then add ${cfg.hashtagCount || 20} relevant hashtags.\n\n` +
+              `Be fun, authentic, and brief (1-2 sentences). Then add ${hashtagCount} relevant hashtags.\n\n` +
               `Format:\nCAPTION: <caption>\nHASHTAGS: #tag1 #tag2 ...`,
           }],
         }],
@@ -345,6 +378,7 @@ async function generateOne(opts = {}) {
         score,
         displayScore,
         firstComment,
+        promptDiagnostics,
         gameId: gameRecord?.id || null,
         gameTitle: gameRecord?.title || null,
         metacriticScore: gameRecord?.metacritic_score || null,
@@ -360,6 +394,7 @@ async function generateOne(opts = {}) {
       score,
       displayScore,
       firstComment,
+      promptDiagnostics,
       postId: postRow.id,
     };
 
@@ -412,11 +447,12 @@ async function postNextVideo() {
         const axios = require('axios');
         const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
         const geminiUrl = `${GEMINI_API}/models/gemini-2.5-flash:generateContent?key=${cfg.geminiApiKey}`;
-        const res = await axios.post(geminiUrl, {
+      const hashtagCount = cfg.videoHashtagCount || cfg.hashtagCount || 5;
+      const res = await axios.post(geminiUrl, {
           contents: [{
             parts: [{
               text: `Write a captivating Instagram Reels caption for a retro game review video. ` +
-                `Be fun, energetic, authentic. 1-2 sentences. Then add ${cfg.hashtagCount || 20} hashtags.\n\n` +
+                `Be fun, energetic, authentic. 1-2 sentences. Then add ${hashtagCount} hashtags.\n\n` +
                 `Format:\nCAPTION: <caption>\nHASHTAGS: #tag1 #tag2 ...`,
             }],
           }],

@@ -6,12 +6,12 @@ const sharp = require('sharp');
 const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
 
 /**
- * Generate a structured 3-part Veo video prompt for a game review.
+ * Generate a structured multi-part Veo video prompt for a game review.
  *
  * Uses full game metadata + expanded influencer fields to create a
  * technical, personality-driven review with intro, bulk review, and final score.
  *
- * Returns { part1, part2, part3, score, firstComment, full }.
+ * Returns { parts, part1, part2, part3, score, firstComment, full }.
  */
 async function generateVideoScript(config, influencer, gameImagePath, opts = {}) {
   if (!config.geminiApiKey) throw new Error('Gemini API key not configured');
@@ -124,6 +124,33 @@ Lead Musician: ${game.lead_musician || 'Unknown'}${displayScore ? '\nScore: ' + 
   const scoreInstruction = displayScore
     ? `The game scores ${displayScore} out of 10. The influencer MUST state this exact score.`
     : 'The influencer announces their own score from 1 to 10.';
+  const segmentDuration = 8;
+  const totalDuration = Math.max(segmentDuration, Number(opts.duration) || 24);
+  const numParts = Math.max(1, Math.floor(totalDuration / segmentDuration));
+  const partSpecLines = [];
+  for (let i = 1; i <= numParts; i++) {
+    if (i === 1) {
+      partSpecLines.push(
+        `PART ${i} — INTRO (${segmentDuration} seconds, 16-24 words):`,
+        `Use intro phrase ("${influencer.intro_phrase || `Hey everyone, it's ${influencer.name}!`}"), then clearly state the reviewed game and platform.`
+      );
+    } else if (i === numParts) {
+      partSpecLines.push(
+        `PART ${i} — FINAL TAKE + SCORE (${segmentDuration} seconds, 16-24 words):`,
+        'Start with "one more thing!", deliver a final technical observation, then clearly say the score.',
+        scoreInstruction,
+        'End in a pose/position close to PART 1 to help looping.'
+      );
+    } else {
+      partSpecLines.push(
+        `PART ${i} — REVIEW CORE (${segmentDuration} seconds, 16-24 words):`,
+        'Deliver concrete technical strengths/weaknesses (mechanics, visuals, audio, pacing). Keep detail high and concise.'
+      );
+    }
+    partSpecLines.push('Use a different camera angle or movement than the previous part.', '');
+  }
+  const outputPartLines = [];
+  for (let i = 1; i <= numParts; i++) outputPartLines.push(`PART${i}: <prompt for part ${i}, 16-24 spoken words>`);
 
   // Text instruction
   parts.push({
@@ -149,7 +176,7 @@ ${bgMode === 'game-inspired' ? 'BACKGROUND: Design a creative environment INSPIR
 ${scriptContent ? 'SCRIPT TEMPLATE / CREATIVE DIRECTION:\n' + scriptContent + '\n' : (opts.topic ? 'SCRIPT / TOPIC: ' + opts.topic : '')}
 ${styleGuide ? 'STYLE: ' + styleGuide : ''}
 
-TASK: Write THREE video prompts for Veo 3.1 that together form a ~24-second vertical 9:16 video WITH AUDIO. This is a structured game review. Each part MUST be 16-24 spoken words (ideal target: 20). Use precise, technical language.
+TASK: Write ${numParts} video prompts for Veo 3.1 that together form a ~${totalDuration}-second vertical 9:16 video WITH AUDIO. This is a structured game review. Each part MUST be 16-24 spoken words (ideal target: 20). Use precise, technical language.
 
 CRITICAL TIMING + DELIVERY CONSTRAINTS:
 - Speaking pace must be steady and natural across all parts (about 2.2-2.8 words/second, no sudden acceleration/deceleration).
@@ -159,28 +186,12 @@ CRITICAL TIMING + DELIVERY CONSTRAINTS:
 - Keep sentence count short (1-2 short sentences per part) to avoid clipping.
 
 CONTINUITY + EDITING RULES:
-- Treat PART1, PART2, PART3 as one continuous performance split into 8-second chunks.
+- Treat all PARTs as one continuous performance split into 8-second chunks.
 - Use smooth temporal continuity between parts; avoid abrupt jump-cuts in motion, pose, or speech energy.
-- End PART1 and PART2 with a natural micro-pause that can bridge into the next segment.
-- Keep vocal tone and loudness consistent across all three parts.
+- End each non-final PART with a natural micro-pause that can bridge into the next segment.
+- Keep vocal tone and loudness consistent across all parts.
 
-PART 1 — INTRO (8 seconds, 16-24 words):
-The influencer uses their intro phrase ("${influencer.intro_phrase || `Hey everyone, it's ${influencer.name}!`}"), shows a signature expression, then states "I am reviewing ${game.title || 'this game'} for ${game.console || 'retro console'}."
-Establish the outfit, setting, and camera angle (medium close-up, slight low angle).
-
-PART 2 — BULK REVIEW (8 seconds, 16-24 words):
-The influencer delivers a precise critique: highlight 2 technical strengths and 2 weaknesses.
-Use terms like "well-crafted", "mechanically sound", "visually striking", "lacks polish", "uneven pacing".
-Their personality and game tastes should inform the opinions.
-${influencer.boyfriend ? 'They can reference ' + influencer.boyfriend + ' for humor.' : ''}
-Use a DIFFERENT camera angle (switch to wide shot or dolly around).
-
-PART 3 — ONE MORE THING + SCORE (8 seconds, 16-24 words):
-The influencer says "one more thing!" with a dramatic pause, shares a final technical observation or standout detail.
-${scoreInstruction}
-IMPORTANT: Describe the influencer SAYING the score number clearly and holding up fingers or a sign.
-The score overlay will be added via ffmpeg — just have the influencer express the score verbally.
-End in a similar pose/position as the opening for Instagram loop.
+${partSpecLines.join('\n')}
 
 TONE RULES:
 - Use precise, technical vocabulary: "well-crafted", "mechanically refined", "visually cohesive", "sonically rich"
@@ -202,9 +213,7 @@ ALSO generate a FIRST COMMENT for Instagram.
 The first comment should be personality-driven, add extra technical thoughts about the game, engage followers.
 
 Respond in EXACTLY this format (nothing else):
-PART1: <intro 8-second prompt, 16-24 spoken words>
-PART2: <bulk review 8-second prompt, 16-24 spoken words>
-PART3: <score + final take 8-second prompt, 16-24 spoken words>
+${outputPartLines.join('\n')}
 SCORE: <number, e.g. 8.5>
 FIRST_COMMENT: <Instagram first comment text, 2-4 sentences>`,
   });
@@ -217,16 +226,20 @@ FIRST_COMMENT: <Instagram first comment text, 2-4 sentences>`,
 
   const text = res.data.candidates[0].content.parts[0].text.trim();
 
-  // Parse three parts + score + first comment
-  const p1m = text.match(/PART1:\s*([\s\S]*?)(?=PART2:|$)/i);
-  const p2m = text.match(/PART2:\s*([\s\S]*?)(?=PART3:|$)/i);
-  const p3m = text.match(/PART3:\s*([\s\S]*?)(?=SCORE:|$)/i);
+  // Parse parts + score + first comment
+  const parsedParts = [];
+  for (let i = 1; i <= numParts; i++) {
+    const nextTag = i < numParts ? `PART${i + 1}:` : 'SCORE:';
+    const re = new RegExp(`PART${i}:\\s*([\\s\\S]*?)(?=${nextTag}|$)`, 'i');
+    const m = text.match(re);
+    parsedParts.push(m ? m[1].trim() : '');
+  }
   const sm = text.match(/SCORE:\s*([\d.]+)/i);
   const fcm = text.match(/FIRST_COMMENT:\s*([\s\S]*?)$/i);
-
-  const part1 = p1m ? p1m[1].trim() : text.trim();
-  const part2 = p2m ? p2m[1].trim() : '';
-  const part3 = p3m ? p3m[1].trim() : '';
+  if (!parsedParts[0]) parsedParts[0] = text.trim();
+  const part1 = parsedParts[0] || '';
+  const part2 = parsedParts[1] || '';
+  const part3 = parsedParts[2] || '';
 
   // Prefer metacritic-derived score; fall back to Gemini's score
   let score;
@@ -239,13 +252,11 @@ FIRST_COMMENT: <Instagram first comment text, 2-4 sentences>`,
   }
   const firstComment = fcm ? fcm[1].trim() : '';
 
-  console.log('[script] part1:', part1.slice(0, 100) + '...');
-  console.log('[script] part2:', part2.slice(0, 100) + '...');
-  console.log('[script] part3:', part3.slice(0, 100) + '...');
+  console.log('[script] parts:', parsedParts.length, '| p1:', (part1 || '').slice(0, 100) + '...');
   console.log('[script] score:', score);
   console.log('[script] firstComment:', firstComment.slice(0, 80) + '...');
 
-  return { part1, part2, part3, score, firstComment, full: text };
+  return { parts: parsedParts, part1, part2, part3, score, firstComment, full: text };
 }
 
 module.exports = { generateVideoScript };
