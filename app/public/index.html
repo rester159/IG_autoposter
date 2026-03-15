@@ -1954,6 +1954,32 @@ async function suggestScriptField(field) {
 /* ═══ TEAM ═══ */
 let currentInfId = null;
 let teamCache = [];
+async function fetchTeamListSafe() {
+  var endpoints = [
+    '/api/team',
+    '/api/team?ts=' + Date.now(),
+    window.location.origin + '/api/team?ts=' + Date.now()
+  ];
+  var lastErr = null;
+  for (var i = 0; i < endpoints.length; i++) {
+    try {
+      var res = await fetch(endpoints[i], {
+        method: 'GET',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json' }
+      });
+      var text = await res.text();
+      if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 120));
+      var data = text ? JSON.parse(text) : [];
+      if (Array.isArray(data)) return data;
+      if (data && Array.isArray(data.items)) return data.items;
+      throw new Error('Unexpected team payload');
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('Unable to load team');
+}
 function initTeamListEvents() {
   var listEl = $('teamList');
   if (!listEl || listEl.__boundClick) return;
@@ -1979,8 +2005,7 @@ async function loadTeam() {
   listEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Loading influencers...</div>';
   emptyEl.classList.add('hidden');
   try {
-    const listRaw = await api('/team');
-    const list = Array.isArray(listRaw) ? listRaw : [];
+    const list = await fetchTeamListSafe();
     teamCache = list;
     initTeamListEvents();
     $('infForm').classList.add('hidden'); $('infDetail').classList.add('hidden');
@@ -2030,7 +2055,7 @@ async function loadTeam() {
   } catch (e) {
     console.error(e);
     emptyEl.classList.add('hidden');
-    listEl.innerHTML = '<div style="font-size:12px;color:var(--err);padding:6px 0">Failed to load influencers. Pull to refresh or reopen Team.</div>';
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--err);padding:6px 0">Failed to load influencers. ' + esc(e && e.message ? e.message : 'Unknown error') + '</div>';
   }
 }
 function renderInfDetail(inf, id) {
