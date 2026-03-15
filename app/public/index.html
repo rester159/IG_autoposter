@@ -2018,10 +2018,30 @@ async function loadTeam() {
       row.className = 'hrow team-row';
       row.style.cursor = 'pointer';
       row.setAttribute('data-inf-id', String(inf.id || ''));
-      var fallback = document.createElement('div');
-      fallback.className = 'icon';
-      fallback.textContent = '\uD83C\uDFAD';
-      row.appendChild(fallback);
+      function makeFallbackIcon() {
+        var icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.textContent = '\uD83C\uDFAD';
+        return icon;
+      }
+
+      if (inf.picture) {
+        var img = document.createElement('img');
+        img.src = '/api/team/' + encodeURIComponent(inf.id) + '/photos/' + encodeURIComponent(inf.picture);
+        img.alt = '';
+        img.style.width = '30px';
+        img.style.height = '30px';
+        img.style.borderRadius = '50%';
+        img.style.objectFit = 'cover';
+        img.style.flexShrink = '0';
+        img.style.border = '1px solid var(--bdr)';
+        img.onerror = function() {
+          if (img.parentNode) img.parentNode.replaceChild(makeFallbackIcon(), img);
+        };
+        row.appendChild(img);
+      } else {
+        row.appendChild(makeFallbackIcon());
+      }
 
       var body = document.createElement('div');
       body.className = 'body';
