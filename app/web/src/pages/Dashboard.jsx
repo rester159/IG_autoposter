@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getUnifiedQueue, status, postNow } from '../api';
+import Queue from './Queue';
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -96,12 +97,14 @@ export default function Dashboard() {
           <button className="btn btn-outline" onClick={() => load().catch((e) => setError(e.message))}>
             Refresh
           </button>
-          <Link to="/queue" className="btn btn-outline">View Queue</Link>
         </div>
       )}
+      <div className="card" style={{ marginTop: 12 }}>
+        <h3>Timeline</h3>
+        <Queue embedded />
+      </div>
       <p className="nav-hint">
-        <Link to="/queue">Queue</Link> · <Link to="/settings">Settings</Link> ·{' '}
-        <Link to="/history">History</Link>
+        <Link to="/settings">Settings</Link> · <Link to="/history">History</Link>
       </p>
     </div>
   );

@@ -2117,7 +2117,19 @@ function applySuggestion(inputId, value) {
 }
 
 /* ═══ BOOT ═══ */
-loadDash();
+var __tabParam = new URLSearchParams(window.location.search).get('tab');
+var __tabMap = {
+  home: 'dash',
+  dash: 'dash',
+  team: 'team',
+  analytics: 'analytics',
+  history: 'hist',
+  hist: 'hist',
+  settings: 'cfg',
+  cfg: 'cfg'
+};
+var __initialTab = __tabMap[(__tabParam || '').toLowerCase()] || 'dash';
+go(__initialTab);
 setInterval(function() {
   if (tab === 'dash') loadDash();
 }, 25000);

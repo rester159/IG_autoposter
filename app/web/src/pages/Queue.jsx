@@ -13,7 +13,7 @@ import {
   deleteQueueItem,
 } from '../api';
 
-export default function Queue() {
+export default function Queue({ embedded = false }) {
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('all');
   const [loading, setLoading] = useState(true);
@@ -163,12 +163,18 @@ export default function Queue() {
 
   const formatDate = (s) => (s ? new Date(s).toLocaleString() : '—');
 
-  if (loading) return <div className="page page-loading">Loading queue…</div>;
+  if (loading) {
+    return embedded
+      ? <div className="page-loading">Loading timeline…</div>
+      : <div className="page page-loading">Loading queue…</div>;
+  }
 
   return (
-    <div className="page">
-      <h1>Queue</h1>
-      <p className="muted">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+    <div className={embedded ? '' : 'page'}>
+      {!embedded && <h1>Queue</h1>}
+      <p className="muted">
+        {items.length} item{items.length !== 1 ? 's' : ''}
+      </p>
       <div className="actions" style={{ marginBottom: 12 }}>
         {['all', 'queued', 'ready', 'posted'].map((s) => (
           <button
@@ -260,10 +266,12 @@ export default function Queue() {
           ))
         )}
       </div>
-      <p className="nav-hint">
-        <Link to="/">Dashboard</Link> · <Link to="/settings">Settings</Link> ·{' '}
-        <Link to="/history">History</Link>
-      </p>
+      {!embedded && (
+        <p className="nav-hint">
+          <Link to="/">Dashboard</Link> · <Link to="/settings">Settings</Link> ·{' '}
+          <Link to="/history">History</Link>
+        </p>
+      )}
     </div>
   );
 }
