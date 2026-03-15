@@ -1953,6 +1953,7 @@ async function suggestScriptField(field) {
 
 /* ═══ TEAM ═══ */
 let currentInfId = null;
+let teamCache = [];
 function initTeamListEvents() {
   var listEl = $('teamList');
   if (!listEl || listEl.__boundClick) return;
@@ -1974,6 +1975,7 @@ function initTeamListEvents() {
 async function loadTeam() {
   try {
     const list = await api('/team');
+    teamCache = Array.isArray(list) ? list : [];
     initTeamListEvents();
     $('infForm').classList.add('hidden'); $('infDetail').classList.add('hidden');
     if (!list.length) { $('teamList').innerHTML = ''; $('teamEmpty').classList.remove('hidden'); return; }
@@ -1987,6 +1989,25 @@ async function loadTeam() {
       '</div>';
     }).join('');
   } catch (e) { console.error(e); }
+}
+function renderInfDetail(inf, id) {
+  if (!inf) return;
+  currentInfId = id || inf.id;
+  $('infDetailName').textContent = inf.name || '-';
+  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Accent','Boyfriend'].forEach(function(f) {
+    var key = f.charAt(0).toLowerCase() + f.slice(1);
+    var mapped = { introPhrase: 'intro_phrase', gameTastes: 'game_tastes', fashionStyle: 'fashion_style' };
+    $('infDetail' + f).textContent = inf[mapped[key] || key] || '-';
+  });
+  var picEl = $('infDetailPicture');
+  if (inf.picture) picEl.innerHTML = '<img src="/api/team/' + encodeURIComponent(currentInfId) + '/photos/' + encodeURIComponent(inf.picture) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
+  else picEl.innerHTML = '<span style="color:var(--t3)">-</span>';
+  var roomEl = $('infDetailRoom');
+  if (inf.room) roomEl.innerHTML = '<img src="/api/team/' + encodeURIComponent(currentInfId) + '/photos/' + encodeURIComponent(inf.room) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
+  else roomEl.innerHTML = '<span style="color:var(--t3)">-</span>';
+  $('infDetail').classList.remove('hidden');
+  $('infForm').classList.add('hidden');
+  $('infDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 async function showAddInf() {
   $('infEditId').value = ''; $('infName').value = ''; $('infPersonality').value = '';
@@ -2018,21 +2039,18 @@ async function saveInf() {
 }
 async function showInfDetail(id) {
   currentInfId = id;
-  var inf = await api('/team/' + id); if (!inf || inf.error) { toast('Not found', 'err'); return; }
-  $('infDetailName').textContent = inf.name;
-  ['Personality','Quirks','Expressions','Outfit','IntroPhrase','GameTastes','FashionStyle','Accent','Boyfriend'].forEach(f => {
-    var key = f.charAt(0).toLowerCase() + f.slice(1);
-    var mapped = { introPhrase: 'intro_phrase', gameTastes: 'game_tastes', fashionStyle: 'fashion_style' };
-    $('infDetail' + f).textContent = inf[mapped[key] || key] || '-';
-  });
-  // Render picture and room as actual images
-  var picEl = $('infDetailPicture');
-  if (inf.picture) picEl.innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(inf.picture) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
-  else picEl.innerHTML = '<span style="color:var(--t3)">-</span>';
-  var roomEl = $('infDetailRoom');
-  if (inf.room) roomEl.innerHTML = '<img src="/api/team/' + id + '/photos/' + encodeURIComponent(inf.room) + '" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--bdr)" onerror="this.outerHTML=\'<span style=color:var(--t3)>-</span>\'">';
-  else roomEl.innerHTML = '<span style="color:var(--t3)">-</span>';
-  $('infDetail').classList.remove('hidden'); $('infForm').classList.add('hidden');
+  var cached = teamCache.find(function(inf) { return String(inf.id) === String(id); });
+  if (cached) renderInfDetail(cached, id);
+  try {
+    var inf = await api('/team/' + encodeURIComponent(id));
+    if (!inf || inf.error) {
+      if (!cached) toast('Not found', 'err');
+      return;
+    }
+    renderInfDetail(inf, id);
+  } catch (e) {
+    if (!cached) toast('Unable to open influencer', 'err');
+  }
 }
 async function uploadInfPhotos(files) {
   if (!files.length || !currentInfId) return;
