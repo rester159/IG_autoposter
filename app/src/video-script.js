@@ -113,12 +113,12 @@ Lead Musician: ${game.lead_musician || 'Unknown'}${displayScore ? '\nScore: ' + 
 
   const style = opts.style || '';
   const styleGuide = {
-    hype: 'The mood is HIGH ENERGY — fast cuts, loud voice, extreme excitement, lots of movement.',
+    hype: 'The mood is HIGH ENERGY but controlled — confident voice, dynamic gestures, no rushed speech or rapid speed shifts.',
     chill: 'The mood is relaxed and chill — soft lighting, calm voice, laid-back vibes, smooth camera.',
-    funny: 'The mood is comedic — exaggerated expressions, funny reactions, unexpected moments, humor.',
-    dramatic: 'The mood is cinematic and dramatic — epic lighting, intense music, serious tone, slow motion moments.',
-    nostalgic: 'The mood is nostalgic — warm color grading, soft focus, dreamy atmosphere, wistful tone.',
-    asmr: 'The mood is ASMR — very quiet whispered voice, close-up shots, gentle sounds, intimate feeling.',
+    funny: 'The mood is comedic — playful reactions and humor while maintaining clear, steady speaking pace.',
+    dramatic: 'The mood is cinematic and dramatic — intense atmosphere and deliberate delivery, no abrupt speech speed changes.',
+    nostalgic: 'The mood is nostalgic — warm color grading, soft focus, dreamy atmosphere, wistful tone with even cadence.',
+    asmr: 'The mood is ASMR — very quiet whispered voice, close-up shots, gentle sounds, intimate feeling, consistent cadence.',
   }[style] || '';
 
   const scoreInstruction = displayScore
@@ -147,20 +147,33 @@ ${bgMode === 'game-inspired' ? 'BACKGROUND: Design a creative environment INSPIR
 ${scriptContent ? 'SCRIPT TEMPLATE / CREATIVE DIRECTION:\n' + scriptContent + '\n' : (opts.topic ? 'SCRIPT / TOPIC: ' + opts.topic : '')}
 ${styleGuide ? 'STYLE: ' + styleGuide : ''}
 
-TASK: Write THREE video prompts for Veo 3.1 that together form a ~24-second vertical 9:16 video WITH AUDIO. This is a structured game review. Each part MUST be 40-60 words. Use precise, technical language.
+TASK: Write THREE video prompts for Veo 3.1 that together form a ~24-second vertical 9:16 video WITH AUDIO. This is a structured game review. Each part MUST be 16-24 spoken words (ideal target: 20). Use precise, technical language.
 
-PART 1 — INTRO (8 seconds, 40-60 words):
+CRITICAL TIMING + DELIVERY CONSTRAINTS:
+- Speaking pace must be steady and natural across all parts (about 2.2-2.8 words/second, no sudden acceleration/deceleration).
+- The influencer must FINISH the final sentence within ~7.0 seconds of each 8-second part.
+- Reserve the final ~0.8-1.0 second of each part for a natural non-speaking beat (expression, nod, breathing room).
+- Never end mid-word or mid-sentence; each part must end on a complete thought.
+- Keep sentence count short (1-2 short sentences per part) to avoid clipping.
+
+CONTINUITY + EDITING RULES:
+- Treat PART1, PART2, PART3 as one continuous performance split into 8-second chunks.
+- Use smooth temporal continuity between parts; avoid abrupt jump-cuts in motion, pose, or speech energy.
+- End PART1 and PART2 with a natural micro-pause that can bridge into the next segment.
+- Keep vocal tone and loudness consistent across all three parts.
+
+PART 1 — INTRO (8 seconds, 16-24 words):
 The influencer uses their intro phrase ("${influencer.intro_phrase || `Hey everyone, it's ${influencer.name}!`}"), shows a signature expression, then states "I am reviewing ${game.title || 'this game'} for ${game.console || 'retro console'}."
 Establish the outfit, setting, and camera angle (medium close-up, slight low angle).
 
-PART 2 — BULK REVIEW (8 seconds, 40-60 words):
+PART 2 — BULK REVIEW (8 seconds, 16-24 words):
 The influencer delivers a precise critique: highlight 2 technical strengths and 2 weaknesses.
 Use terms like "well-crafted", "mechanically sound", "visually striking", "lacks polish", "uneven pacing".
 Their personality and game tastes should inform the opinions.
 ${influencer.boyfriend ? 'They can reference ' + influencer.boyfriend + ' for humor.' : ''}
 Use a DIFFERENT camera angle (switch to wide shot or dolly around).
 
-PART 3 — ONE MORE THING + SCORE (8 seconds, 40-60 words):
+PART 3 — ONE MORE THING + SCORE (8 seconds, 16-24 words):
 The influencer says "one more thing!" with a dramatic pause, shares a final technical observation or standout detail.
 ${scoreInstruction}
 IMPORTANT: Describe the influencer SAYING the score number clearly and holding up fingers or a sign.
@@ -180,16 +193,16 @@ VISUAL RULES:
 - First frame of Part 1 and last frame of Part 3 should be similar (for Instagram loop)
 - Reference the game visually — props, costume elements, background details
 - Include lighting, atmosphere, and sound design details
-- Each part MUST be 40-60 words — Veo works best with concise, vivid prompts
+- Each part MUST be 16-24 words and end with a complete sentence plus a brief non-speaking beat
 - Do NOT wrap in quotes or add any prefix
 
 ALSO generate a FIRST COMMENT for Instagram.
 The first comment should be personality-driven, add extra technical thoughts about the game, engage followers.
 
 Respond in EXACTLY this format (nothing else):
-PART1: <intro 8-second prompt, 40-60 words>
-PART2: <bulk review 8-second prompt, 40-60 words>
-PART3: <score + final take 8-second prompt, 40-60 words>
+PART1: <intro 8-second prompt, 16-24 spoken words>
+PART2: <bulk review 8-second prompt, 16-24 spoken words>
+PART3: <score + final take 8-second prompt, 16-24 spoken words>
 SCORE: <number, e.g. 8.5>
 FIRST_COMMENT: <Instagram first comment text, 2-4 sentences>`,
   });
