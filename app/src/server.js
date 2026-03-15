@@ -26,8 +26,19 @@ const app = express();
 
 app.use(express.json());
 
-// ── static dashboard ──────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// ── static hosting ──────────────────────────────────────────────
+const publicPath = path.join(__dirname, '..', 'public');
+const webDistPath = path.join(__dirname, '..', 'web', 'dist');
+const hasWebDist = fs.existsSync(webDistPath);
+
+// Legacy UI at /legacy (always from public)
+app.use('/legacy', express.static(publicPath));
+app.get('/legacy', (_req, res) => res.redirect('/legacy/'));
+
+// React app at root when built
+if (hasWebDist) {
+  app.use(express.static(webDistPath));
+}
 // Serve default bg image and other data files
 app.use('/data', express.static('/data'));
 
@@ -264,13 +275,21 @@ app.put('/api/unified-queue/:id/schedule', (req, res) => {
 
 // Edit caption/hashtags on a post
 app.put('/api/unified-queue/:id/caption', (req, res) => {
+  const id = Number(req.params.id);
+  const existing = postModel.get(id);
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+
   const updates = {};
   if (req.body.caption !== undefined) updates.caption = req.body.caption;
   if (req.body.hashtags !== undefined) updates.hashtags = req.body.hashtags;
   if (req.body.first_comment !== undefined) updates.first_comment = req.body.first_comment;
-  updates.full_caption = `${req.body.caption || ''}\n\n${req.body.hashtags || ''}`.trim();
-  const post = postModel.update(Number(req.params.id), updates);
-  post ? res.json({ ok: true, ...post }) : res.status(404).json({ error: 'Not found' });
+
+  const mergedCaption = req.body.caption !== undefined ? req.body.caption : (existing.caption || '');
+  const mergedHashtags = req.body.hashtags !== undefined ? req.body.hashtags : (existing.hashtags || '');
+  updates.full_caption = `${mergedCaption}\n\n${mergedHashtags}`.trim();
+
+  const post = postModel.update(id, updates);
+  res.json({ ok: true, ...post });
 });
 
 // Regenerate caption or hashtags via Gemini
@@ -327,7 +346,7 @@ app.post('/api/config/upload-bg', bgUpload.single('photo'), (req, res) => {
     const oldPath = path.join('/data', cfg.videoBackgroundImage);
     try { fs.unlinkSync(oldPath); } catch (e) {}
   }
-  configModel.set('videoBackgroundImage', req.file.filename);
+  saveConfig({ videoBackgroundImage: req.file.filename });
   res.json({ ok: true, filename: req.file.filename });
 });
 
@@ -1026,8 +1045,16 @@ app.post('/api/games/:id/enrich', async (req, res) => {
   }
 });
 
-// SPA fallback
-app.get('*', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'index.html')));
+// SPA fallback: React dist index.html when built, else legacy
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/legacy')) {
+    return res.sendFile(path.join(publicPath, 'index.html'));
+  }
+  const indexFile = hasWebDist
+    ? path.join(webDistPath, 'index.html')
+    : path.join(publicPath, 'index.html');
+  res.sendFile(indexFile);
+});
 
 function mask(s) { return s ? '••••' + s.slice(-6) : ''; }
 

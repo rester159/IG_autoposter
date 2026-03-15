@@ -1785,9 +1785,9 @@ async function addScriptTemplate() {
     title: 'Define Script',
     html: '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Title <button class="ai-star" onclick="suggestScriptField(\'title\')" title="AI suggest">\u2728</button></label><input id="mdScriptTitle" placeholder="e.g. Epic Boss Battle Review"></div>' +
       '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Content <button class="ai-star" onclick="suggestScriptField(\'content\')" title="AI suggest">\u2728</button></label><textarea id="mdScriptContent" rows="4" placeholder="Creative direction for the video script..."></textarea></div>',
-    ok: 'Save', cancel: true
+    okText: 'Save', cancel: true
   });
-  if (r !== 'ok') return;
+  if (!r) return;
   var title = $('mdScriptTitle').value.trim();
   var content = $('mdScriptContent').value.trim();
   if (!title) { toast('Title required', 'err'); return; }
@@ -1804,9 +1804,9 @@ async function editScriptTemplate(id) {
     title: 'Edit Script',
     html: '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Title <button class="ai-star" onclick="suggestScriptField(\'title\')" title="AI suggest">\u2728</button></label><input id="mdScriptTitle" value="' + esc(s.title) + '"></div>' +
       '<div class="fg"><label style="display:flex;align-items:center;gap:4px">Content <button class="ai-star" onclick="suggestScriptField(\'content\')" title="AI suggest">\u2728</button></label><textarea id="mdScriptContent" rows="4">' + esc(s.content || '') + '</textarea></div>',
-    ok: 'Save', cancel: true
+    okText: 'Save', cancel: true
   });
-  if (r !== 'ok') return;
+  if (!r) return;
   var title = $('mdScriptTitle').value.trim();
   var content = $('mdScriptContent').value.trim();
   if (!title) { toast('Title required', 'err'); return; }
@@ -1816,8 +1816,8 @@ async function editScriptTemplate(id) {
   } catch (e) { toast('Error: ' + e.message, 'err'); }
 }
 async function deleteScriptTemplate(id) {
-  var r = await showModal({ title: 'Delete Script?', message: 'This cannot be undone.', ok: 'Delete', cancel: true });
-  if (r !== 'ok') return;
+  var r = await showModal({ title: 'Delete Script?', message: 'This cannot be undone.', okText: 'Delete', danger: true, cancel: true });
+  if (!r) return;
   try {
     await api('/video-scripts/' + id, { method: 'DELETE' });
     toast('Deleted', 'ok'); loadScriptTemplates();
@@ -1945,7 +1945,7 @@ async function uploadInfProfilePic(files) {
   if (!files.length) return;
   var id = $('infEditId').value;
   if (!id) { toast('Save influencer first', 'err'); return; }
-  var fd = new FormData(); fd.append('photo', files[0]); fd.append('type', 'picture');
+  var fd = new FormData(); fd.append('photo', files[0]); fd.append('field', 'picture');
   try {
     var r = await fetch('/api/team/' + id + '/upload-profile', { method: 'POST', body: fd }).then(r => r.json());
     if (r.ok) {
@@ -1959,7 +1959,7 @@ async function uploadInfRoomPic(files) {
   if (!files.length) return;
   var id = $('infEditId').value;
   if (!id) { toast('Save influencer first', 'err'); return; }
-  var fd = new FormData(); fd.append('photo', files[0]); fd.append('type', 'room');
+  var fd = new FormData(); fd.append('photo', files[0]); fd.append('field', 'room');
   try {
     var r = await fetch('/api/team/' + id + '/upload-profile', { method: 'POST', body: fd }).then(r => r.json());
     if (r.ok) {
@@ -2064,7 +2064,7 @@ async function loadAnView(view) {
       var maxMl = 0; metrics.forEach(m => { if (m.ml_score && m.ml_score > maxMl) maxMl = m.ml_score; });
       for (var mi = 0; mi < metrics.length; mi++) {
         var m = metrics[mi], star = (m.ml_score && m.ml_score === maxMl && maxMl > 0) ? ' \u2B50' : '';
-        mhtml += '<tr><td>' + m.id + '</td><td>' + (m.type || '-') + '</td><td>' + esc(m.game_title || '-') + '</td><td>' + esc(m.console_name || '-') + '</td><td>' + esc(m.influencer_name || '-') + '</td><td>' + (m.ig_likes || 0) + '</td><td>' + (m.ig_comments_count || 0) + '</td><td>' + (m.ig_shares || 0) + '</td><td>' + (m.ig_reach || 0) + '</td><td>' + (m.ig_saves || 0) + '</td><td>' + (m.ml_score ? m.ml_score.toFixed(1) + star : '-') + '</td><td>' + ago(m.posted_at) + '</td></tr>';
+        mhtml += '<tr><td>' + m.id + '</td><td>' + (m.type || '-') + '</td><td>' + esc(m.game_title || '-') + '</td><td>' + esc(m.game_console || '-') + '</td><td>' + esc(m.influencer_name || '-') + '</td><td>' + (m.ig_likes || 0) + '</td><td>' + (m.ig_comments_count || 0) + '</td><td>' + (m.ig_shares || 0) + '</td><td>' + (m.ig_reach || 0) + '</td><td>' + (m.ig_saves || 0) + '</td><td>' + (m.ml_score ? m.ml_score.toFixed(1) + star : '-') + '</td><td>' + ago(m.posted_at) + '</td></tr>';
       }
       mhtml += '</tbody></table>'; table.innerHTML = mhtml; return;
     }
