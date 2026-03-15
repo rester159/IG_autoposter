@@ -1974,20 +1974,69 @@ function initTeamListEvents() {
 
 async function loadTeam() {
   try {
-    const list = await api('/team');
-    teamCache = Array.isArray(list) ? list : [];
+    const listRaw = await api('/team');
+    const list = Array.isArray(listRaw) ? listRaw : [];
+    teamCache = list;
     initTeamListEvents();
     $('infForm').classList.add('hidden'); $('infDetail').classList.add('hidden');
     if (!list.length) { $('teamList').innerHTML = ''; $('teamEmpty').classList.remove('hidden'); return; }
     $('teamEmpty').classList.add('hidden');
-    $('teamList').innerHTML = list.map(function(inf) {
-      return '<div class="hrow team-row" style="cursor:pointer" data-inf-id="' + esc(inf.id) + '">' +
-      (inf.picture ? '<img src="/api/team/' + inf.id + '/photos/' + encodeURIComponent(inf.picture) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML=\'<div class=icon>\u{1F3AD}</div>\'">' : '<div class="icon">\u{1F3AD}</div>') +
-      '<div class="body"><div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
-      '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div></div>' +
-      '<button type="button" class="btn btn-s team-view-btn" style="font-size:11px;padding:4px 10px;margin-left:8px">View</button>' +
-      '</div>';
-    }).join('');
+    var listEl = $('teamList');
+    listEl.innerHTML = '';
+    var frag = document.createDocumentFragment();
+    list.forEach(function(inf) {
+      var row = document.createElement('div');
+      row.className = 'hrow team-row';
+      row.style.cursor = 'pointer';
+      row.setAttribute('data-inf-id', String(inf.id || ''));
+
+      if (inf.picture) {
+        var img = document.createElement('img');
+        img.src = '/api/team/' + encodeURIComponent(inf.id) + '/photos/' + encodeURIComponent(inf.picture);
+        img.style.width = '36px';
+        img.style.height = '36px';
+        img.style.borderRadius = '50%';
+        img.style.objectFit = 'cover';
+        img.style.flexShrink = '0';
+        img.onerror = function() {
+          var icon = document.createElement('div');
+          icon.className = 'icon';
+          icon.textContent = '\uD83C\uDFAD';
+          row.replaceChild(icon, img);
+        };
+        row.appendChild(img);
+      } else {
+        var fallback = document.createElement('div');
+        fallback.className = 'icon';
+        fallback.textContent = '\uD83C\uDFAD';
+        row.appendChild(fallback);
+      }
+
+      var body = document.createElement('div');
+      body.className = 'body';
+      var cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.style.fontWeight = '600';
+      cap.textContent = inf.name || '(unnamed)';
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = (inf.personality || '').substring(0, 60);
+      body.appendChild(cap);
+      body.appendChild(meta);
+      row.appendChild(body);
+
+      var viewBtn = document.createElement('button');
+      viewBtn.type = 'button';
+      viewBtn.className = 'btn btn-s team-view-btn';
+      viewBtn.style.fontSize = '11px';
+      viewBtn.style.padding = '4px 10px';
+      viewBtn.style.marginLeft = '8px';
+      viewBtn.textContent = 'View';
+      row.appendChild(viewBtn);
+
+      frag.appendChild(row);
+    });
+    listEl.appendChild(frag);
   } catch (e) { console.error(e); }
 }
 function renderInfDetail(inf, id) {
