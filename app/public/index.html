@@ -1953,26 +1953,40 @@ async function suggestScriptField(field) {
 
 /* ═══ TEAM ═══ */
 let currentInfId = null;
+function initTeamListEvents() {
+  var listEl = $('teamList');
+  if (!listEl || listEl.__boundClick) return;
+  listEl.__boundClick = true;
+  listEl.addEventListener('click', function(e) {
+    var row = e.target.closest('.team-row');
+    if (!row || !listEl.contains(row)) return;
+    var id = row.getAttribute('data-inf-id');
+    if (!id) return;
+    // Allow dedicated view button taps without relying on inline event globals.
+    if (e.target.closest('.team-view-btn')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    showInfDetail(id);
+  });
+}
+
 async function loadTeam() {
   try {
     const list = await api('/team');
+    initTeamListEvents();
     $('infForm').classList.add('hidden'); $('infDetail').classList.add('hidden');
     if (!list.length) { $('teamList').innerHTML = ''; $('teamEmpty').classList.remove('hidden'); return; }
     $('teamEmpty').classList.add('hidden');
     $('teamList').innerHTML = list.map(function(inf) {
-      var encodedId = encodeURIComponent(inf.id);
-      return '<div class="hrow team-row" style="cursor:pointer" data-inf-id="' + esc(inf.id) + '" onclick="showInfDetailByEncoded(\'' + encodedId + '\')">' +
+      return '<div class="hrow team-row" style="cursor:pointer" data-inf-id="' + esc(inf.id) + '">' +
       (inf.picture ? '<img src="/api/team/' + inf.id + '/photos/' + encodeURIComponent(inf.picture) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML=\'<div class=icon>\u{1F3AD}</div>\'">' : '<div class="icon">\u{1F3AD}</div>') +
       '<div class="body"><div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
       '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div></div>' +
-      '<button type="button" class="btn btn-s" style="font-size:11px;padding:4px 10px;margin-left:8px" onclick="event.stopPropagation();showInfDetailByEncoded(\'' + encodedId + '\')">View</button>' +
+      '<button type="button" class="btn btn-s team-view-btn" style="font-size:11px;padding:4px 10px;margin-left:8px">View</button>' +
       '</div>';
     }).join('');
   } catch (e) { console.error(e); }
-}
-function showInfDetailByEncoded(encodedId) {
-  if (!encodedId) return;
-  showInfDetail(decodeURIComponent(encodedId));
 }
 async function showAddInf() {
   $('infEditId').value = ''; $('infName').value = ''; $('infPersonality').value = '';
