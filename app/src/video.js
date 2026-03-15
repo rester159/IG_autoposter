@@ -6,6 +6,32 @@ const { ensureDir } = require('./config');
 
 const VEO_API = 'https://generativelanguage.googleapis.com/v1beta';
 
+function retryAfterMs(err, fallbackMs) {
+  const h = err?.response?.headers || {};
+  const val = h['retry-after'] || h['Retry-After'];
+  if (!val) return fallbackMs;
+  const sec = Number(val);
+  if (Number.isFinite(sec) && sec > 0) return sec * 1000;
+  const dt = Date.parse(val);
+  if (!Number.isNaN(dt)) return Math.max(1000, dt - Date.now());
+  return fallbackMs;
+}
+
+async function requestWith429Retry(fn, label, opts = {}) {
+  const maxRetries = opts.maxRetries ?? 4;
+  const baseDelayMs = opts.baseDelayMs ?? 10000;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (err?.response?.status !== 429 || attempt === maxRetries) throw err;
+      const waitMs = retryAfterMs(err, baseDelayMs * Math.pow(2, attempt));
+      console.warn(`[${label}] 429 rate-limited, retrying in ${Math.ceil(waitMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`);
+      await sleep(waitMs);
+    }
+  }
+}
+
 /**
  * Generate a video via Veo 3.1 predictLongRunning.
  *
@@ -68,10 +94,11 @@ async function generateVideo(prompt, config, opts = {}) {
   console.log('[veo] submitting job, prompt length:', prompt.length, '| refs:', refPhotos.length, '| duration:', parameters.durationSeconds + 's');
 
   // 1 ── submit long-running generation
-  const { data: op } = await axios.post(url, {
-    instances: [instance],
-    parameters,
-  });
+  const { data: op } = await requestWith429Retry(
+    () => axios.post(url, { instances: [instance], parameters }),
+    'veo-submit',
+    { maxRetries: 5, baseDelayMs: 12000 }
+  );
 
   const opName = op.name;
   if (!opName) throw new Error('Veo did not return an operation name: ' + JSON.stringify(op));
@@ -83,7 +110,11 @@ async function generateVideo(prompt, config, opts = {}) {
 
   for (let i = 0; i < 120; i++) {
     await sleep(5000);
-    const { data } = await axios.get(pollUrl);
+    const { data } = await requestWith429Retry(
+      () => axios.get(pollUrl),
+      'veo-poll',
+      { maxRetries: 6, baseDelayMs: 8000 }
+    );
 
     if (data.done) {
       if (data.error) throw new Error('Veo error: ' + JSON.stringify(data.error));
@@ -122,10 +153,14 @@ async function generateVideo(prompt, config, opts = {}) {
       downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'key=' + config.geminiApiKey;
     }
     console.log('[veo] downloading from URI...');
-    const resp = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      headers: { 'x-goog-api-key': config.geminiApiKey },
-    });
+    const resp = await requestWith429Retry(
+      () => axios.get(downloadUrl, {
+        responseType: 'arraybuffer',
+        headers: { 'x-goog-api-key': config.geminiApiKey },
+      }),
+      'veo-download',
+      { maxRetries: 4, baseDelayMs: 10000 }
+    );
     fs.writeFileSync(filePath, Buffer.from(resp.data));
   } else if (videoData.bytesBase64Encoded) {
     // Decode base64
@@ -173,10 +208,11 @@ async function extendVideo(prompt, videoUri, config, opts = {}) {
   // 1 ── submit
   let op;
   try {
-    const resp = await axios.post(url, {
-      instances: [instance],
-      parameters,
-    });
+    const resp = await requestWith429Retry(
+      () => axios.post(url, { instances: [instance], parameters }),
+      'veo-extend-submit',
+      { maxRetries: 5, baseDelayMs: 12000 }
+    );
     op = resp.data;
   } catch (submitErr) {
     const errData = submitErr.response?.data;
@@ -194,7 +230,11 @@ async function extendVideo(prompt, videoUri, config, opts = {}) {
 
   for (let i = 0; i < 120; i++) {
     await sleep(5000);
-    const { data } = await axios.get(pollUrl);
+    const { data } = await requestWith429Retry(
+      () => axios.get(pollUrl),
+      'veo-extend-poll',
+      { maxRetries: 6, baseDelayMs: 8000 }
+    );
     if (data.done) {
       if (data.error) throw new Error('Veo extend error: ' + JSON.stringify(data.error));
       result = data.response || data;
@@ -228,10 +268,14 @@ async function extendVideo(prompt, videoUri, config, opts = {}) {
       downloadUrl += (downloadUrl.includes('?') ? '&' : '?') + 'key=' + config.geminiApiKey;
     }
     console.log('[veo-extend] downloading merged video from URI...');
-    const resp = await axios.get(downloadUrl, {
-      responseType: 'arraybuffer',
-      headers: { 'x-goog-api-key': config.geminiApiKey },
-    });
+    const resp = await requestWith429Retry(
+      () => axios.get(downloadUrl, {
+        responseType: 'arraybuffer',
+        headers: { 'x-goog-api-key': config.geminiApiKey },
+      }),
+      'veo-extend-download',
+      { maxRetries: 4, baseDelayMs: 10000 }
+    );
     fs.writeFileSync(filePath, Buffer.from(resp.data));
   } else if (videoData.bytesBase64Encoded) {
     console.log('[veo-extend] decoding base64 merged video...');

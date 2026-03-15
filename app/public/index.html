@@ -75,9 +75,9 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .bs-item svg{width:22px;height:22px;color:var(--t3)}
 .create-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
 .create-card{
-  border:1px solid var(--bdr);
+  border:1px solid rgba(192,132,252,.20);
   border-radius:14px;
-  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  background:transparent;
   padding:14px 10px 12px;
   display:flex;
   flex-direction:column;
@@ -89,21 +89,21 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 }
 .create-card:hover,.create-card:active{
   transform:translateY(-1px);
-  border-color:rgba(192,132,252,.58);
-  background:linear-gradient(180deg,rgba(192,132,252,.12),rgba(244,114,182,.06));
-  box-shadow:0 10px 22px rgba(0,0,0,.18),0 0 0 1px rgba(192,132,252,.20) inset;
+  border-color:rgba(192,132,252,.45);
+  background:rgba(255,255,255,.02);
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
 }
 .create-icon{
   width:92px;
   height:92px;
   border-radius:16px;
-  background:linear-gradient(145deg,rgba(192,132,252,.34),rgba(244,114,182,.20));
-  border:1px solid rgba(192,132,252,.45);
+  background:transparent;
+  border:1px solid rgba(192,132,252,.22);
   display:grid;
   place-items:center;
   margin-bottom:10px;
 }
-.create-icon svg{width:56px;height:56px;color:#FFF6FF;display:block}
+.create-icon svg{width:56px;height:56px;color:#F5EFFF;display:block}
 .create-title{font-size:12px;font-weight:600;color:var(--t1);text-align:center;line-height:1.3}
 
 /* ── Main ── */

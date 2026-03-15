@@ -116,8 +116,8 @@ function hasAudioStream(videoPath) {
 
 /**
  * Normalize a video's runtime to targetSeconds.
- * - If slightly short, time-stretch A/V so content reaches exact target
- * - If long, trims to exact target
+ * - If slightly short, pad tail (freeze-frame + optional silence) to exact target
+ * - If long, trim tail to exact target
  */
 async function normalizeVideoDuration(videoPath, targetSeconds, outputPath, opts = {}) {
   if (!fs.existsSync(videoPath)) throw new Error('Video not found: ' + videoPath);
@@ -139,15 +139,23 @@ async function normalizeVideoDuration(videoPath, targetSeconds, outputPath, opts
   }
 
   const hasAudio = await hasAudioStream(videoPath);
-  const ratio = target / current; // >1 => extend runtime (slower), <1 => shorten runtime
-  const speedAudio = Math.max(0.5, Math.min(2.0, 1 / ratio)); // atempo range
 
   return new Promise((resolve, reject) => {
-    let cmd = ffmpeg(videoPath).videoFilters([`setpts=${ratio.toFixed(6)}*PTS`]);
-    if (hasAudio) cmd = cmd.audioFilters([`atempo=${speedAudio.toFixed(6)}`]);
+    let cmd = ffmpeg(videoPath);
+
+    if (diff > 0) {
+      // Keep natural speech speed; extend only the tail.
+      cmd = cmd.videoFilters([`tpad=stop_mode=clone:stop_duration=${diff.toFixed(3)}`]);
+      if (hasAudio) {
+        cmd = cmd.audioFilters([`apad=pad_dur=${diff.toFixed(3)}`]);
+      }
+      cmd = cmd.outputOptions(['-t', target.toFixed(3), '-movflags', '+faststart']);
+    } else {
+      // Trim small overages without changing playback speed.
+      cmd = cmd.outputOptions(['-t', target.toFixed(3), '-c', 'copy', '-movflags', '+faststart']);
+    }
 
     cmd
-      .outputOptions(['-t', target.toFixed(3), '-movflags', '+faststart'])
       .output(outputPath)
       .on('end', () => {
         if (useTemp) {

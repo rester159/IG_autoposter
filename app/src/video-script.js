@@ -5,6 +5,30 @@ const sharp = require('sharp');
 
 const GEMINI_API = 'https://generativelanguage.googleapis.com/v1beta';
 
+function retryAfterMs(err, fallbackMs) {
+  const h = err?.response?.headers || {};
+  const val = h['retry-after'] || h['Retry-After'];
+  if (!val) return fallbackMs;
+  const sec = Number(val);
+  if (Number.isFinite(sec) && sec > 0) return sec * 1000;
+  const dt = Date.parse(val);
+  if (!Number.isNaN(dt)) return Math.max(1000, dt - Date.now());
+  return fallbackMs;
+}
+
+async function postWith429Retry(url, body, maxRetries = 4, baseDelayMs = 8000) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await axios.post(url, body);
+    } catch (err) {
+      if (err?.response?.status !== 429 || attempt === maxRetries) throw err;
+      const waitMs = retryAfterMs(err, baseDelayMs * Math.pow(2, attempt));
+      console.warn(`[video-script] 429 rate-limited, retrying in ${Math.ceil(waitMs / 1000)}s (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, waitMs));
+    }
+  }
+}
+
 /**
  * Generate a structured multi-part Veo video prompt for a game review.
  *
@@ -220,9 +244,9 @@ FIRST_COMMENT: <Instagram first comment text, 2-4 sentences>`,
 
   const url = `${GEMINI_API}/models/gemini-2.5-flash:generateContent?key=${config.geminiApiKey}`;
 
-  const res = await axios.post(url, {
+  const res = await postWith429Retry(url, {
     contents: [{ parts }],
-  });
+  }, 5, 10000);
 
   const text = res.data.candidates[0].content.parts[0].text.trim();
 

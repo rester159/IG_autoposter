@@ -6,7 +6,7 @@ const { generateVideo, extendVideo, nextVideoInQueue, moveVideoToPosted, listVid
 const { generateVideoScript } = require('./video-script');
 const { postReel, postComment } = require('./instagram-reels');
 const { generateCaption } = require('./caption');
-const { overlayScore, normalizeVideoDuration } = require('./ffmpeg-overlay');
+const { overlayScore, normalizeVideoDuration, getVideoDuration } = require('./ffmpeg-overlay');
 const team = require('./team');
 const gameModel = require('./models/game');
 const { extractGameMetadata } = require('./game-metadata');
@@ -306,8 +306,15 @@ async function generateOne(opts = {}) {
         if (durFix.changed) {
           console.log('[video] duration normalized:', `${durFix.before.toFixed(2)}s -> ${durFix.after.toFixed(2)}s`);
         }
+        const measured = await getVideoDuration(finalVideo.filePath);
+        const delta = Math.abs(measured - targetDuration);
+        if (delta > 0.30) {
+          throw new Error(`Duration verification failed after normalization: got ${measured.toFixed(2)}s, expected ${targetDuration.toFixed(2)}s`);
+        }
+        console.log('[video] duration verified:', `${measured.toFixed(2)}s target ${targetDuration.toFixed(2)}s`);
       } catch (e) {
-        console.error('[video] duration normalization failed (continuing):', e.message);
+        console.error('[video] duration normalization failed:', e.message);
+        throw e;
       }
     }
 
