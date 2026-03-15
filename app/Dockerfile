@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package.json ./
 RUN npm install --production
 COPY . .
+RUN if [ -f web/package.json ]; then cd web && npm ci && npm run build; fi
 
 RUN mkdir -p /data/incoming /data/posted /data/incoming_video /data/posted_video /data/game_images /data/team
 
