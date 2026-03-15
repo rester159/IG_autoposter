@@ -38,3 +38,13 @@ export const postQueueItemNow = (id) => apiClient.post(`/api/unified-queue/${id}
 export const schedulePost = (id, scheduledAt) =>
   apiClient.put(`/api/unified-queue/${id}/schedule`, { scheduled_at: scheduledAt });
 export const deleteQueueItem = (id) => apiClient.delete(`/api/unified-queue/${id}`);
+export const getQueueItem = (id) => apiClient.get(`/api/unified-queue/${id}`);
+export const updateQueueCaption = (id, body) =>
+  apiClient.put(`/api/unified-queue/${id}/caption`, body);
+export const regenerateQueueField = (id, field) =>
+  apiClient.post(`/api/unified-queue/${id}/regenerate`, { field });
+export const reorderUnifiedQueue = (items) =>
+  apiClient.put('/api/unified-queue/reorder', { items });
+export const getTeam = () => apiClient.get('/api/team');
+export const changeQueueInfluencer = (id, influencerId) =>
+  apiClient.put(`/api/unified-queue/${id}/influencer`, { influencerId });

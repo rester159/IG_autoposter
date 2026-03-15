@@ -82,6 +82,29 @@ body {
   max-width: 100vw;
 }
 
+.legacy-frame-shell {
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100%;
+  background: var(--bg);
+}
+
+.legacy-frame {
+  width: 100%;
+  height: calc(100dvh - var(--header-height) - var(--nav-height) - env(safe-area-inset-bottom));
+  min-height: 360px;
+  border: 0;
+  display: block;
+}
+
+.legacy-note {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--t2);
+  border-bottom: 1px solid var(--bdr);
+  background: var(--bg-elevated);
+}
+
 /* ========== APP SHELL ========== */
 .app {
   display: flex;
@@ -540,6 +563,9 @@ main {
   main {
     padding-bottom: var(--space-6);
   }
+  .legacy-frame {
+    height: calc(100dvh - var(--header-height));
+  }
 }
 /* Mobile: nav in bottom bar only */
 @media (max-width: 768px) {
@@ -567,6 +593,9 @@ main {
     z-index: 50;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+  .nav-bottom .legacy-link {
+    display: none;
   }
   .nav a {
     font-size: var(--text-sm);

@@ -29,6 +29,15 @@ const DEFAULT_CONFIG = {
   photoFrequency: '1d',
   videoFrequency: '1d',
   videoBackgroundImage: '',
+  uiReactShellEnabled: true,
+  uiReactDashboardEnabled: false,
+  uiReactQueueEnabled: false,
+  uiReactTeamEnabled: false,
+  uiReactVideoEnabled: false,
+  uiReactGameLibraryEnabled: false,
+  uiReactAnalyticsEnabled: false,
+  uiReactSettingsEnabled: false,
+  uiReactHistoryEnabled: false,
 };
 
 const stmts = {
