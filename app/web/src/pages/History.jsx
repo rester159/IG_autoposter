@@ -14,18 +14,27 @@ export default function History() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="page-loading">Loading history...</div>;
-  if (error) return <div className="page-error">Error: {error}</div>;
-
   const formatDate = (s) => (s ? new Date(s).toLocaleString() : '—');
+
+  if (loading) return <div className="page page-loading">Loading history…</div>;
+  if (error) return (
+    <div className="page">
+      <div className="page-error">
+        <strong>Error</strong> {error}
+      </div>
+    </div>
+  );
 
   return (
     <div className="page">
       <h1>History</h1>
-      <p className="muted">{items?.length ?? 0} recent posts</p>
+      <p className="muted">{items?.length ?? 0} recent post{items?.length !== 1 ? 's' : ''}</p>
       <div className="history-list">
         {!items?.length ? (
-          <p>No history yet.</p>
+          <div className="empty-state">
+            <p>No history yet.</p>
+            <p>Posted content will appear here.</p>
+          </div>
         ) : (
           items.map((it, i) => (
             <div key={i} className="history-item">
@@ -34,7 +43,11 @@ export default function History() {
                 {it.media_id && <span className="muted">ID: {it.media_id}</span>}
               </div>
               {it.filename && <p>{it.filename}</p>}
-              {it.caption && <p className="caption">{it.caption.slice(0, 120)}…</p>}
+              {it.caption && (
+                <p className="caption" title={it.caption}>
+                  {it.caption.slice(0, 80)}{it.caption.length > 80 ? '…' : ''}
+                </p>
+              )}
             </div>
           ))
         )}

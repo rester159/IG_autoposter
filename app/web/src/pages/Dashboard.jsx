@@ -17,6 +17,7 @@ export default function Dashboard() {
 
   const handlePostNow = async () => {
     setPosting(true);
+    setError(null);
     try {
       await postNow();
       const fresh = await status();
@@ -28,12 +29,20 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <div className="page-loading">Loading...</div>;
-  if (error) return <div className="page-error">Error: {error}</div>;
+  if (loading) return <div className="page page-loading">Loading…</div>;
+  if (error) return (
+    <div className="page">
+      <div className="page-error">
+        <strong>Error</strong>
+        {error}
+      </div>
+    </div>
+  );
 
   return (
     <div className="page">
       <h1>Dashboard</h1>
+      <p className="muted">Overview of your posting status</p>
       <div className="cards">
         <div className="card">
           <h3>Queue</h3>
@@ -43,7 +52,9 @@ export default function Dashboard() {
         <div className="card">
           <h3>Scheduler</h3>
           <p className="big">{data?.scheduler?.enabled ? 'Enabled' : 'Disabled'}</p>
-          <p className="muted">Last run: {data?.scheduler?.lastRun ? new Date(data.scheduler.lastRun).toLocaleString() : '—'}</p>
+          <p className="muted">
+            Last run: {data?.scheduler?.lastRun ? new Date(data.scheduler.lastRun).toLocaleString() : '—'}
+          </p>
         </div>
         <div className="card">
           <h3>Configured</h3>
@@ -52,16 +63,19 @@ export default function Dashboard() {
         </div>
       </div>
       {data?.queue > 0 && (
-        <button
-          className="btn btn-primary"
-          onClick={handlePostNow}
-          disabled={posting}
-        >
-          {posting ? 'Posting…' : 'Post Next Now'}
-        </button>
+        <div className="action-row">
+          <button
+            className="btn btn-primary"
+            onClick={handlePostNow}
+            disabled={posting}
+          >
+            {posting ? 'Posting…' : 'Post Next Now'}
+          </button>
+          <Link to="/queue" className="btn btn-outline">View Queue</Link>
+        </div>
       )}
       <p className="nav-hint">
-        <Link to="/queue">View Queue</Link> · <Link to="/settings">Settings</Link> ·{' '}
+        <Link to="/queue">Queue</Link> · <Link to="/settings">Settings</Link> ·{' '}
         <Link to="/history">History</Link>
       </p>
     </div>

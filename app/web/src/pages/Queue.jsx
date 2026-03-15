@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   getUnifiedQueue,
   postQueueItemNow,
-  schedulePost,
   deleteQueueItem,
 } from '../api';
 
@@ -25,6 +24,7 @@ export default function Queue() {
 
   const handlePostNow = async (id) => {
     setPostingId(id);
+    setError(null);
     try {
       await postQueueItemNow(id);
       await load();
@@ -32,15 +32,6 @@ export default function Queue() {
       setError(e.message);
     } finally {
       setPostingId(null);
-    }
-  };
-
-  const handleReschedule = async (id, dateStr) => {
-    try {
-      await schedulePost(id, dateStr);
-      await load();
-    } catch (e) {
-      setError(e.message);
     }
   };
 
@@ -54,21 +45,30 @@ export default function Queue() {
     }
   };
 
-  if (loading) return <div className="page-loading">Loading queue...</div>;
-  if (error) return <div className="page-error">Error: {error}</div>;
-
   const formatDate = (s) => (s ? new Date(s).toLocaleString() : '—');
+
+  if (loading) return <div className="page page-loading">Loading queue…</div>;
 
   return (
     <div className="page">
-      <h1>Queue Timeline</h1>
-      <p className="muted">{items.length} items</p>
+      <h1>Queue</h1>
+      <p className="muted">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+      {error && (
+        <div className="page-error">
+          <strong>Error</strong> {error}
+        </div>
+      )}
       <div className="queue-list">
         {items.length === 0 ? (
-          <p>Queue is empty. Add posts via <Link to="/legacy/">legacy UI</Link>.</p>
+          <div className="empty-state">
+            <p>Queue is empty.</p>
+            <p>
+              Add posts via the <a href="/legacy/">legacy UI</a>.
+            </p>
+          </div>
         ) : (
           items.map((it) => (
-            <div key={it.id} className={`queue-item ${it.status}`}>
+            <div key={it.id} className={`queue-item queue-item--${it.status || 'pending'}`}>
               <div className="queue-thumb">
                 {it.thumb ? (
                   <img src={it.thumb} alt="" />
@@ -78,30 +78,30 @@ export default function Queue() {
               </div>
               <div className="queue-info">
                 <div className="row">
-                  <span className="badge">{it.status}</span>
+                  <span className={`badge status-${it.status || 'pending'}`}>
+                    {it.status || 'pending'}
+                  </span>
                   <span className="type">{it.type || 'photo'}</span>
                 </div>
                 <p className="scheduled">{formatDate(it.scheduled_at)}</p>
-                {it.caption && <p className="caption">{it.caption.slice(0, 80)}…</p>}
+                {it.caption && (
+                  <p className="caption" title={it.caption}>{it.caption.slice(0, 60)}{it.caption.length > 60 ? '…' : ''}</p>
+                )}
                 {it.status !== 'posted' && (
                   <div className="actions">
-                    {it.status !== 'posted' && (
-                      <>
-                        <button
-                          className="btn btn-sm"
-                          onClick={() => handlePostNow(it.id)}
-                          disabled={postingId === it.id}
-                        >
-                          {postingId === it.id ? '…' : 'Post Now'}
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => handleDelete(it.id)}
-                        >
-                          Remove
-                        </button>
-                      </>
-                    )}
+                    <button
+                      className="btn btn-sm btn-primary"
+                      onClick={() => handlePostNow(it.id)}
+                      disabled={postingId === it.id}
+                    >
+                      {postingId === it.id ? '…' : 'Post Now'}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => handleDelete(it.id)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 )}
               </div>
