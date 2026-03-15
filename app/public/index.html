@@ -1973,44 +1973,29 @@ function initTeamListEvents() {
 }
 
 async function loadTeam() {
+  var listEl = $('teamList');
+  var emptyEl = $('teamEmpty');
+  if (!listEl || !emptyEl) return;
+  listEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Loading influencers...</div>';
+  emptyEl.classList.add('hidden');
   try {
     const listRaw = await api('/team');
     const list = Array.isArray(listRaw) ? listRaw : [];
     teamCache = list;
     initTeamListEvents();
     $('infForm').classList.add('hidden'); $('infDetail').classList.add('hidden');
-    if (!list.length) { $('teamList').innerHTML = ''; $('teamEmpty').classList.remove('hidden'); return; }
-    $('teamEmpty').classList.add('hidden');
-    var listEl = $('teamList');
+    if (!list.length) { listEl.innerHTML = ''; emptyEl.classList.remove('hidden'); return; }
+    emptyEl.classList.add('hidden');
     listEl.innerHTML = '';
-    var frag = document.createDocumentFragment();
     list.forEach(function(inf) {
       var row = document.createElement('div');
       row.className = 'hrow team-row';
       row.style.cursor = 'pointer';
       row.setAttribute('data-inf-id', String(inf.id || ''));
-
-      if (inf.picture) {
-        var img = document.createElement('img');
-        img.src = '/api/team/' + encodeURIComponent(inf.id) + '/photos/' + encodeURIComponent(inf.picture);
-        img.style.width = '36px';
-        img.style.height = '36px';
-        img.style.borderRadius = '50%';
-        img.style.objectFit = 'cover';
-        img.style.flexShrink = '0';
-        img.onerror = function() {
-          var icon = document.createElement('div');
-          icon.className = 'icon';
-          icon.textContent = '\uD83C\uDFAD';
-          row.replaceChild(icon, img);
-        };
-        row.appendChild(img);
-      } else {
-        var fallback = document.createElement('div');
-        fallback.className = 'icon';
-        fallback.textContent = '\uD83C\uDFAD';
-        row.appendChild(fallback);
-      }
+      var fallback = document.createElement('div');
+      fallback.className = 'icon';
+      fallback.textContent = '\uD83C\uDFAD';
+      row.appendChild(fallback);
 
       var body = document.createElement('div');
       body.className = 'body';
@@ -2032,12 +2017,21 @@ async function loadTeam() {
       viewBtn.style.padding = '4px 10px';
       viewBtn.style.marginLeft = '8px';
       viewBtn.textContent = 'View';
+      viewBtn.onclick = function(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        showInfDetail(inf.id);
+      };
       row.appendChild(viewBtn);
 
-      frag.appendChild(row);
+      row.onclick = function() { showInfDetail(inf.id); };
+      listEl.appendChild(row);
     });
-    listEl.appendChild(frag);
-  } catch (e) { console.error(e); }
+  } catch (e) {
+    console.error(e);
+    emptyEl.classList.add('hidden');
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--err);padding:6px 0">Failed to load influencers. Pull to refresh or reopen Team.</div>';
+  }
 }
 function renderInfDetail(inf, id) {
   if (!inf) return;
