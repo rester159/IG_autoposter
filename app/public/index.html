@@ -26,7 +26,7 @@
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --safeb:env(safe-area-inset-bottom,0px);
 }
-html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:16px}
+html{background:var(--bg);color:var(--t1);font-family:var(--font);-webkit-font-smoothing:antialiased;font-size:17px}
 body{overflow-x:hidden;min-height:100dvh;overscroll-behavior-x:none}
 input,select,textarea,button{font-family:inherit;color:inherit;font-size:inherit}
 a{color:var(--accent);text-decoration:none}
@@ -48,7 +48,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 #bottombar button{
   display:flex;flex-direction:column;align-items:center;gap:3px;
   background:none;border:none;color:var(--t3);padding:6px 10px;cursor:pointer;
-  font-size:10px;font-weight:500;transition:.15s;position:relative;
+  font-size:11px;font-weight:500;transition:.15s;position:relative;
 }
 #bottombar button svg{width:22px;height:22px}
 #bottombar button.on{color:var(--accent)}
@@ -77,7 +77,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .create-card{
   border:1px solid var(--bdr);
   border-radius:14px;
-  background:linear-gradient(180deg,var(--bg3),var(--bg2));
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
   padding:14px 10px 12px;
   display:flex;
   flex-direction:column;
@@ -89,20 +89,21 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 }
 .create-card:hover,.create-card:active{
   transform:translateY(-1px);
-  border-color:rgba(192,132,252,.65);
-  box-shadow:0 10px 22px rgba(0,0,0,.28),0 0 0 1px rgba(192,132,252,.22) inset;
+  border-color:rgba(192,132,252,.58);
+  background:linear-gradient(180deg,rgba(192,132,252,.12),rgba(244,114,182,.06));
+  box-shadow:0 10px 22px rgba(0,0,0,.18),0 0 0 1px rgba(192,132,252,.20) inset;
 }
 .create-icon{
   width:58px;
   height:58px;
   border-radius:16px;
-  background:linear-gradient(145deg,rgba(192,132,252,.24),rgba(244,114,182,.12));
-  border:1px solid rgba(192,132,252,.32);
+  background:linear-gradient(145deg,rgba(192,132,252,.34),rgba(244,114,182,.20));
+  border:1px solid rgba(192,132,252,.45);
   display:grid;
   place-items:center;
   margin-bottom:10px;
 }
-.create-icon svg{width:30px;height:30px;color:#E8DBFF;display:block}
+.create-icon svg{width:30px;height:30px;color:#FFF6FF;display:block}
 .create-title{font-size:12px;font-weight:600;color:var(--t1);text-align:center;line-height:1.3}
 
 /* ── Main ── */
@@ -177,13 +178,13 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   border:1px solid var(--glb);border-radius:var(--r2);padding:8px 10px;margin-bottom:6px;transition:border-color .2s;
 }
 .card:hover{border-color:rgba(192,132,252,0.25)}
-.card h3{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:8px}
+.card h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:8px}
 
 /* ── Stats ── */
 .stats{display:flex;gap:4px;margin-bottom:10px}
 .stat{flex:1;min-width:0;background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:4px 6px;text-align:center}
-.stat b{font-family:var(--heading);font-size:14px;font-weight:600;display:block}
-.stat small{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:0;display:block}
+.stat b{font-family:var(--heading);font-size:15px;font-weight:600;display:block}
+.stat small{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.3px;margin-top:0;display:block}
 
 /* ── Dashboard Grid ── */
 .dash-grid{display:grid;gap:16px}
@@ -202,7 +203,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .tog-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 
 /* ── Buttons ── */
-.btn{padding:6px 12px;border-radius:var(--r);border:none;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px}
+.btn{padding:6px 12px;border-radius:var(--r);border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:5px}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn-p{background:var(--grad);color:#fff;box-shadow:0 2px 8px rgba(192,132,252,.25)}
 .btn-p:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 16px rgba(192,132,252,.35)}
@@ -214,14 +215,14 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 
 /* ── Forms ── */
 .fg{margin-bottom:10px}
-.fg label{display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px}
+.fg label{display:block;font-size:13px;font-weight:500;color:var(--t2);margin-bottom:5px}
 .fg input,.fg select,.fg textarea{
   width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--bdr);
-  border-radius:var(--r);font-size:13px;outline:none;transition:.2s;color:var(--t1);
+  border-radius:var(--r);font-size:14px;outline:none;transition:.2s;color:var(--t1);
 }
 .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,0.12)}
 .fg textarea{resize:vertical;min-height:72px;font-family:var(--font);line-height:1.6}
-.fg .hint{font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:3px}
+.fg .hint{font-size:11px;color:var(--t3);font-family:var(--mono);margin-top:3px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 
 /* ── Timeline Items ── */
@@ -257,7 +258,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .overflow-btn:hover{background:var(--bg3);color:var(--t1)}
 .overflow-menu{position:absolute;right:0;top:100%;z-index:50;min-width:160px;background:var(--bg4);border:1px solid var(--bdr);border-radius:var(--r);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none}
 .tl-overflow.open .overflow-menu{display:block;animation:fadeIn .15s ease}
-.overflow-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:none;border:none;color:var(--t2);font-size:13px;border-radius:6px;cursor:pointer;text-align:left}
+.overflow-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;background:none;border:none;color:var(--t2);font-size:14px;border-radius:6px;cursor:pointer;text-align:left}
 .overflow-menu button:hover{background:var(--bg3);color:var(--t1)}
 .overflow-menu .danger{color:var(--err)}
 .overflow-menu .danger:hover{background:rgba(251,113,133,.1)}
@@ -511,6 +512,14 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <div id="photoPanel" class="panel">
     <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><h2>Photo Posts</h2><button class="panel-close" onclick="closePanel('photoPanel')">&times;</button></div>
     <div class="panel-body">
+    <div class="card">
+      <h3>Photo Drafts</h3>
+      <div class="fg"><label>Draft note</label><input id="pDraftNote" placeholder="Optional note for this photo draft"></div>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="btn btn-s" onclick="savePhotoDraft()">Save Draft</button>
+      </div>
+      <div id="pDraftList" class="hint">No drafts yet.</div>
+    </div>
     <div class="drop" id="dropZone">
       <div class="di">&#9729;</div>
       <p>Drop images here or click to upload</p>
@@ -534,6 +543,13 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <div id="videoPanel" class="panel">
     <div class="panel-head"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="m23 7-7 5 7 5z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg><h2>Video Post</h2><button class="panel-close" onclick="closePanel('videoPanel')">&times;</button></div>
     <div class="panel-body">
+    <div class="card">
+      <h3>Video Drafts</h3>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="btn btn-s" onclick="saveVideoDraft()">Save Draft</button>
+      </div>
+      <div id="vDraftList" class="hint">No drafts yet.</div>
+    </div>
     <div class="stats">
       <div class="stat"><b id="vQ">&ndash;</b><small>videos queued</small></div>
       <div class="stat"><b id="vS">&ndash;</b><small>schedule</small></div>
@@ -586,6 +602,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <button class="btn btn-s" id="vPreviewBtn" onclick="previewScript()">Preview Script</button>
         <button class="btn btn-p" id="vGenBtn" onclick="generateVideo()">Generate Video</button>
         <button class="btn btn-s" id="vPostBtn" onclick="postVideo()">Post Next Reel</button>
+        <button class="btn btn-s" onclick="saveVideoDraft()">Save Draft</button>
       </div>
       <div id="vScriptBox" class="hidden" style="margin-top:14px">
         <label style="display:block;font-size:12px;font-weight:500;color:var(--t2);margin-bottom:5px">Generated Script (edit before generating)</label>
@@ -824,6 +841,104 @@ function toast(m, t) {
   setTimeout(() => d.remove(), 4200);
 }
 
+const DRAFTS_KEY = 'aurapost_drafts_v1';
+function readDrafts() {
+  try {
+    const raw = localStorage.getItem(DRAFTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (_e) { return []; }
+}
+function writeDrafts(items) { localStorage.setItem(DRAFTS_KEY, JSON.stringify(items)); }
+function listDrafts(type) { return readDrafts().filter(d => d.type === type).sort((a, b) => b.createdAt - a.createdAt); }
+function removeDraft(id) {
+  writeDrafts(readDrafts().filter(d => d.id !== id));
+  renderPhotoDrafts();
+  renderVideoDrafts();
+}
+function renderPhotoDrafts() {
+  const root = $('pDraftList');
+  if (!root) return;
+  const drafts = listDrafts('photo');
+  if (!drafts.length) { root.innerHTML = 'No drafts yet.'; return; }
+  root.innerHTML = drafts.map(function(d) {
+    const note = (d.data && d.data.note) ? d.data.note : 'Photo draft';
+    return '<div class="hrow"><div class="icon">📷</div><div class="body"><div class="cap" style="font-weight:600">' + esc(note) + '</div><div class="meta">' + ago(d.createdAt) + '</div></div>' +
+      '<button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="applyPhotoDraft(\'' + d.id + '\')">Load</button>' +
+      '<button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="removeDraft(\'' + d.id + '\')">Delete</button></div>';
+  }).join('');
+}
+function renderVideoDrafts() {
+  const root = $('vDraftList');
+  if (!root) return;
+  const drafts = listDrafts('video');
+  if (!drafts.length) { root.innerHTML = 'No drafts yet.'; return; }
+  root.innerHTML = drafts.map(function(d) {
+    const inf = d.data && d.data.influencerName ? d.data.influencerName : 'Video draft';
+    const style = d.data && d.data.style ? (' - ' + d.data.style) : '';
+    return '<div class="hrow"><div class="icon">🎬</div><div class="body"><div class="cap" style="font-weight:600">' + esc(inf + style) + '</div><div class="meta">' + ago(d.createdAt) + '</div></div>' +
+      '<button class="btn btn-s" style="font-size:11px;padding:4px 10px" onclick="applyVideoDraft(\'' + d.id + '\')">Load</button>' +
+      '<button class="btn btn-d" style="font-size:11px;padding:4px 10px" onclick="removeDraft(\'' + d.id + '\')">Delete</button></div>';
+  }).join('');
+}
+function savePhotoDraft() {
+  const note = (($('pDraftNote') && $('pDraftNote').value) || '').trim();
+  const all = readDrafts();
+  all.push({
+    id: 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    type: 'photo',
+    createdAt: Date.now(),
+    data: { note: note || 'Photo draft' },
+  });
+  writeDrafts(all);
+  renderPhotoDrafts();
+  toast('Photo draft saved', 'ok');
+}
+function applyPhotoDraft(id) {
+  const d = readDrafts().find(x => x.id === id);
+  if (!d || !d.data) return;
+  if ($('pDraftNote')) $('pDraftNote').value = d.data.note || '';
+  toast('Photo draft loaded', 'ok');
+}
+function saveVideoDraft() {
+  const infSel = $('vInf');
+  const infName = infSel && infSel.selectedOptions && infSel.selectedOptions[0] ? infSel.selectedOptions[0].textContent : 'Video draft';
+  const all = readDrafts();
+  all.push({
+    id: 'draft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    type: 'video',
+    createdAt: Date.now(),
+    data: {
+      influencerId: $('vInf').value || '',
+      influencerName: infName || 'Video draft',
+      style: $('vStyle').value || '',
+      scriptId: $('vScriptId').value || '',
+      bgMode: $('vBgMode').value || 'influencer',
+      outfitMode: $('vOutfitMode').value || 'game-inspired',
+      duration: Number($('vDuration').value) || 24,
+      gameImage: $('vGameImg').value || '',
+      gameId: $('vGameImgGameId').value || '',
+    },
+  });
+  writeDrafts(all);
+  renderVideoDrafts();
+  toast('Video draft saved', 'ok');
+}
+function applyVideoDraft(id) {
+  const d = readDrafts().find(x => x.id === id);
+  if (!d || !d.data) return;
+  $('vInf').value = d.data.influencerId || '';
+  $('vStyle').value = d.data.style || '';
+  $('vScriptId').value = d.data.scriptId || '';
+  $('vBgMode').value = d.data.bgMode || 'influencer';
+  $('vOutfitMode').value = d.data.outfitMode || 'game-inspired';
+  $('vDuration').value = d.data.duration || 24;
+  if (d.data.gameImage) setGameImg(d.data.gameImage, d.data.gameId || null);
+  else clearGameImg();
+  updateDurLabel();
+  toast('Video draft loaded', 'ok');
+}
+
 /* ═══ MODAL SYSTEM ═══ */
 function showModal(opts) {
   return new Promise(resolve => {
@@ -863,10 +978,11 @@ function showModal(opts) {
 }
 function playVideo(postId, fileName, filePath) {
   // Extract actual filename from file_path (posted videos get renamed with timestamp prefix)
-  var actualName = filePath ? filePath.split('/').pop() : fileName;
+  var fp = filePath || '';
+  var actualName = fp ? fp.split('/').pop() : fileName;
   var url = '';
-  if (filePath.includes('/posted_video/')) url = '/media/posted_video/' + encodeURIComponent(actualName);
-  else if (filePath.includes('/incoming_video/')) url = '/media/incoming_video/' + encodeURIComponent(actualName);
+  if (fp.includes('/posted_video/')) url = '/media/posted_video/' + encodeURIComponent(actualName);
+  else if (fp.includes('/incoming_video/')) url = '/media/incoming_video/' + encodeURIComponent(actualName);
   else url = '/media/incoming_video/' + encodeURIComponent(fileName);
 
   var ov = document.createElement('div');
@@ -920,7 +1036,12 @@ function go(t) {
 }
 function openSheet(){}
 function closeSheet(){}
-function openPanel(id){$(id).classList.add('open');document.body.style.overflow='hidden';if(id==='photoPanel')loadQ();else if(id==='videoPanel')loadVideo();}
+function openPanel(id){
+  $(id).classList.add('open');
+  document.body.style.overflow='hidden';
+  if(id==='photoPanel'){ renderPhotoDrafts(); loadQ(); }
+  else if(id==='videoPanel'){ renderVideoDrafts(); loadVideo(); }
+}
 function closePanel(id){$(id).classList.remove('open');document.body.style.overflow='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.panel.open').forEach(function(p){p.classList.remove('open')});document.body.style.overflow='';}});
 function toggleOverflow(btn) {
@@ -967,7 +1088,7 @@ function renderDashFromCache() {
   if (typeof c.posted === 'number') $('sP').textContent = c.posted;
   if (c.lastPostedAgo) $('pillLastPost').textContent = c.lastPostedAgo;
   if (Array.isArray(c.timeline) && c.timeline.length) {
-    renderTimeline(c.timeline, 'tlFeed', 'tlEmpty', false);
+    renderTimeline(c.timeline, 'tlFeed', 'tlEmpty', true);
   }
 }
 
@@ -1011,7 +1132,7 @@ async function loadDash() {
     $('pillVideoFreq').textContent = vidOn2 ? freqToLabel(cfg.videoFrequency || '1d') : 'off';
 
     // Fast path timeline from active queue statuses only.
-    renderTimeline(queue.slice(0, 20), 'tlFeed', 'tlEmpty', false);
+    renderTimeline(queue.slice(0, 20), 'tlFeed', 'tlEmpty', true);
     setDashCache({
       queued: queued,
       ready: ready,
@@ -1040,7 +1161,7 @@ async function loadDash() {
             return bt.localeCompare(at);
           })
           .slice(0, 20);
-        renderTimeline(fallbackTimeline, 'tlFeed', 'tlEmpty', false);
+        renderTimeline(fallbackTimeline, 'tlFeed', 'tlEmpty', true);
         setDashCache({
           queued: queued,
           ready: ready,
@@ -1100,7 +1221,6 @@ function renderTimeline(items, containerId, emptyId, draggable) {
         '<div class="overflow-menu">' +
           '<button onclick="showPostDetail(' + p.id + ')">\uD83D\uDC41 Show Post</button>' +
           '<button onclick="editPostSchedule(' + p.id + ')">\uD83D\uDCC5 Schedule</button>' +
-          '<button onclick="editPostCaption(' + p.id + ')">\u270F\uFE0F Edit Caption</button>' +
           (p.type === 'photo' && canPost ? '<button onclick="publishAsVideo(' + p.id + ')">\uD83C\uDFAC Publish as Video</button>' : '') +
           (canPost ? '<button onclick="postOneNow(' + p.id + ')">\uD83D\uDE80 Post Now</button>' : '') +
           '<button class="danger" onclick="removePost(' + p.id + ')">\uD83D\uDDD1 Remove</button>' +
@@ -1325,11 +1445,16 @@ async function showPostDetail(id) {
     title: (post.type === 'photo' ? '\uD83D\uDCF8' : '\uD83C\uDFAC') + ' Post #' + id,
     html: imgHtml +
       '<div class="fg" style="margin-bottom:8px"><label>Caption <button type="button" class="ai-star" onclick="regenPostField(' + id + ',\'caption\')" title="Regenerate">\u2728</button></label><textarea id="pdCaption" rows="3" style="width:100%">' + esc(post.caption || '') + '</textarea></div>' +
-      '<div class="fg"><label>Hashtags <button type="button" class="ai-star" onclick="regenPostField(' + id + ',\'hashtags\')" title="Regenerate">\u2728</button></label><textarea id="pdHashtags" rows="2" style="width:100%">' + esc(post.hashtags || '') + '</textarea></div>',
+      '<div class="fg"><label>Hashtags <button type="button" class="ai-star" onclick="regenPostField(' + id + ',\'hashtags\')" title="Regenerate">\u2728</button></label><textarea id="pdHashtags" rows="2" style="width:100%">' + esc(post.hashtags || '') + '</textarea></div>' +
+      '<div class="btns" style="margin-top:8px"><button class="btn btn-p" onclick="postFromDetail(' + id + ')">Post Now</button></div>',
     okText: 'Save', cancelText: 'Close',
   }).then(function(r) {
     if (r) savePostDetail(id);
   });
+}
+async function postFromDetail(id) {
+  closeModal(null);
+  await postOneNow(id);
 }
 async function savePostDetail(id) {
   var cap = $('pdCaption').value;
@@ -1634,10 +1759,13 @@ async function saveVideoSched() {
 }
 async function loadVideo() {
   try {
-    const [st, teamList, cfg] = await Promise.all([api('/video/status'), api('/team'), api('/config')]);
-    $('vQ').textContent = st.queue; $('vS').textContent = cronNice(st.scheduler.cron);
-    $('vL').textContent = ago(st.scheduler.lastRun);
-    $('vGen').textContent = st.scheduler.generating ? 'generating\u2026' : (st.scheduler.posting ? 'posting\u2026' : 'idle');
+    const [stRes, teamRes, cfgRes] = await Promise.allSettled([api('/video/status'), api('/team'), api('/config')]);
+    const st = stRes.status === 'fulfilled' ? stRes.value : { queue: 0, scheduler: {} };
+    const teamList = teamRes.status === 'fulfilled' && Array.isArray(teamRes.value) ? teamRes.value : [];
+    const cfg = cfgRes.status === 'fulfilled' ? cfgRes.value : {};
+    $('vQ').textContent = st.queue || 0; $('vS').textContent = cronNice(st.scheduler && st.scheduler.cron);
+    $('vL').textContent = ago(st.scheduler && st.scheduler.lastRun);
+    $('vGen').textContent = st.scheduler && st.scheduler.generating ? 'generating\u2026' : (st.scheduler && st.scheduler.posting ? 'posting\u2026' : 'idle');
     // Load influencer dropdown
     const sel = $('vInf');
     sel.innerHTML = '<option value="">Random</option>' + teamList.map(i => '<option value="' + i.id + '">' + esc(i.name) + '</option>').join('');
@@ -1655,12 +1783,14 @@ async function loadVideo() {
     else {
       $('vqEmpty').classList.add('hidden');
       $('vqList').innerHTML = vq.map(v =>
-        '<div class="hrow"><div class="icon">\u{1F3AC}</div><div class="body"><div class="cap" style="font-weight:600">' + esc(v.name) + '</div><div class="meta">' + v.sizeMB + ' MB \u00B7 ' + ago(v.mtime) + '</div></div>' +
-        '<button class="btn btn-s" style="font-size:11px;padding:5px 12px" onclick="delVideoQ(\'' + esc(v.name) + '\')">&times;</button></div>'
+        '<div class="hrow"><div class="icon">\u{1F3AC}</div><div class="body"><div class="cap" style="font-weight:600">' + esc(v.title || v.name) + '</div><div class="meta">' + v.sizeMB + ' MB \u00B7 ' + ago(v.mtime) + '</div></div>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:5px 10px" onclick="playVideo(0,\'' + esc(v.name) + '\',\'/incoming_video/' + esc(v.name) + '\')">Play</button>' +
+        '<button class="btn btn-s" style="font-size:11px;padding:5px 10px" onclick="delVideoQ(\'' + esc(v.name) + '\')">&times;</button></div>'
       ).join('');
     }
     // Update duration label
     updateDurLabel();
+    renderVideoDrafts();
   } catch (e) { console.error(e); }
 }
 function updateDurLabel() {
@@ -1699,9 +1829,13 @@ async function generateFromScript() {
   try {
     const body = getVideoBody(); body.customPrompt = script;
     const r = await api('/video/generate', { method: 'POST', body: JSON.stringify(body) });
-    if (r.ok) { box.textContent = '\u2705 Generated! ' + r.filename + ' (' + r.influencer + ')' + (r.score ? '\nScore: ' + r.score + '/10' : '') + '\n\nCaption: ' + (r.caption || '') + (r.firstComment ? '\n\nFirst Comment: ' + r.firstComment : ''); toast('Video generated!', 'ok'); $('vScriptBox').classList.add('hidden'); }
+    if (r.ok || r.filename || r.postId) { box.textContent = '\u2705 Generated! ' + (r.filename || 'Saved to queue') + ' (' + (r.influencer || 'Auto') + ')' + (r.score ? '\nScore: ' + r.score + '/10' : '') + '\n\nCaption: ' + (r.caption || '') + (r.firstComment ? '\n\nFirst Comment: ' + r.firstComment : ''); toast('Video generated!', 'ok'); $('vScriptBox').classList.add('hidden'); }
     else { box.textContent = '\u274C ' + (r.error || 'Failed'); toast(r.error || 'Failed', 'err'); }
-  } catch (e) { box.textContent = '\u274C ' + e.message; toast('Error', 'err'); }
+  } catch (e) {
+    box.textContent = '\u26A0 Request interrupted (' + e.message + '). Checking queue...';
+    await loadVideo();
+    toast('Generation request interrupted. If video appears below, it succeeded.', 'warn');
+  }
   btn.disabled = false; btn.textContent = 'Generate Video'; loadVideo();
 }
 async function generateVideo() {
@@ -1710,9 +1844,13 @@ async function generateVideo() {
   box.innerHTML = '<span class="spin"></span> Writing script + generating video\u2026 2-5 minutes.';
   try {
     const r = await api('/video/generate', { method: 'POST', body: JSON.stringify(getVideoBody()) });
-    if (r.ok) { box.textContent = '\u2705 Generated! ' + r.filename + ' (' + r.influencer + ')' + (r.score ? '\nScore: ' + r.score + '/10' : '') + '\n\nPrompt: ' + (r.prompt || '') + '\n\nCaption: ' + (r.caption || '') + (r.firstComment ? '\n\nFirst Comment: ' + r.firstComment : ''); toast('Video generated!', 'ok'); }
+    if (r.ok || r.filename || r.postId) { box.textContent = '\u2705 Generated! ' + (r.filename || 'Saved to queue') + ' (' + (r.influencer || 'Auto') + ')' + (r.score ? '\nScore: ' + r.score + '/10' : '') + '\n\nPrompt: ' + (r.prompt || '') + '\n\nCaption: ' + (r.caption || '') + (r.firstComment ? '\n\nFirst Comment: ' + r.firstComment : ''); toast('Video generated!', 'ok'); }
     else { box.textContent = '\u274C ' + (r.error || 'Failed'); toast(r.error || 'Failed', 'err'); }
-  } catch (e) { box.textContent = '\u274C ' + e.message; toast('Error', 'err'); }
+  } catch (e) {
+    box.textContent = '\u26A0 Request interrupted (' + e.message + '). Checking queue...';
+    await loadVideo();
+    toast('Generation request interrupted. If video appears below, it succeeded.', 'warn');
+  }
   btn.disabled = false; btn.textContent = 'Generate Video'; loadVideo();
 }
 async function postVideo() {

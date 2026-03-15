@@ -2,14 +2,14 @@ const db = require('../db');
 
 const stmts = {
   list: db.prepare(`
-    SELECT p.*, i.name as influencer_name, g.title as game_title
+    SELECT p.*, i.name as influencer_name, g.title as game_title, g.console as game_console
     FROM posts p
     LEFT JOIN influencers i ON p.influencer_id = i.id
     LEFT JOIN games g ON p.game_id = g.id
     ORDER BY COALESCE(p.scheduled_at, p.created_at) ASC
   `),
   listByStatus: db.prepare(`
-    SELECT p.*, i.name as influencer_name, g.title as game_title
+    SELECT p.*, i.name as influencer_name, g.title as game_title, g.console as game_console
     FROM posts p
     LEFT JOIN influencers i ON p.influencer_id = i.id
     LEFT JOIN games g ON p.game_id = g.id
@@ -17,7 +17,7 @@ const stmts = {
     ORDER BY p.sort_order ASC, COALESCE(p.scheduled_at, p.created_at) ASC
   `),
   get: db.prepare(`
-    SELECT p.*, i.name as influencer_name, g.title as game_title
+    SELECT p.*, i.name as influencer_name, g.title as game_title, g.console as game_console
     FROM posts p
     LEFT JOIN influencers i ON p.influencer_id = i.id
     LEFT JOIN games g ON p.game_id = g.id

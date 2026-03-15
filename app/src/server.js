@@ -735,8 +735,21 @@ app.get('/api/video/queue', (_req, res) => {
   const cfg = loadConfig();
   const folder = cfg.videoIncomingFolder || '/data/incoming_video';
   const files = listVideoQueue(folder);
+  const videoPosts = postModel.list().filter(p => p.type === 'video' && p.file_name);
+  const videoMetaByFile = new Map(videoPosts.map(p => [p.file_name, p]));
+
+  const formatQueueTitle = (meta, fallbackName) => {
+    if (!meta) return fallbackName;
+    const influencer = (meta.influencer_name || '').trim();
+    const game = (meta.game_title || '').trim();
+    const consoleName = (meta.game_console || '').trim();
+    if (!influencer && !game && !consoleName) return fallbackName;
+    return '[' + (influencer || 'Unknown Influencer') + '] [' + (game || 'Unknown Game') + '] - [' + (consoleName || 'Unknown Console') + ']';
+  };
+
   res.json(files.map(f => ({
     ...f,
+    title: formatQueueTitle(videoMetaByFile.get(f.name), f.name),
     url: '/media/incoming_video/' + encodeURIComponent(f.name),
     sizeMB: (f.size / 1024 / 1024).toFixed(1),
   })));
