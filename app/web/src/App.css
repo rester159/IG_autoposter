@@ -92,6 +92,16 @@ body {
   overflow-x: hidden;
 }
 
+/* Keep a portrait-style app frame on touch devices, even in landscape. */
+@media (hover: none) and (pointer: coarse) {
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    border-left: 1px solid var(--bdr-subtle);
+    border-right: 1px solid var(--bdr-subtle);
+  }
+}
+
 /* Header — mobile compact, touch targets */
 .header {
   flex-shrink: 0;
@@ -143,6 +153,7 @@ body {
   font-weight: 500;
   border-radius: var(--radius-md);
   transition: color 0.15s, background 0.15s;
+  position: relative;
 }
 .nav a:hover {
   color: var(--t2);
@@ -168,12 +179,23 @@ body {
   color: var(--t3);
 }
 
+.nav-icon {
+  display: block;
+  line-height: 1;
+  font-size: 1.05rem;
+  margin-bottom: 2px;
+}
+.nav-label {
+  display: block;
+}
+
 /* Main content area */
 main {
   flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + var(--space-2));
 }
 
 /* ========== PAGE LAYOUT ========== */
@@ -500,52 +522,6 @@ main {
   to { transform: rotate(360deg); }
 }
 
-/* ========== PORTRAIT BLOCKER ========== */
-.portrait-blocker {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: var(--bg);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-6);
-  text-align: center;
-}
-.portrait-blocker.visible {
-  display: flex;
-}
-.portrait-blocker-icon {
-  width: 80px;
-  height: 80px;
-  margin-bottom: var(--space-6);
-  color: var(--accent);
-}
-.portrait-blocker h2 {
-  font-size: var(--text-xl);
-  font-weight: 600;
-  margin: 0 0 var(--space-3);
-  color: var(--t1);
-}
-.portrait-blocker p {
-  font-size: var(--text-base);
-  color: var(--t3);
-  margin: 0;
-  max-width: 280px;
-}
-
-@media (orientation: portrait) and (max-width: 768px) {
-  .portrait-blocker.visible {
-    display: flex;
-  }
-}
-@media (orientation: landscape) or (min-width: 769px) {
-  .portrait-blocker.portrait-only {
-    display: none !important;
-  }
-}
-
 /* Desktop: nav in header, no bottom bar */
 @media (min-width: 769px) {
   .header {
@@ -560,6 +536,9 @@ main {
   .page {
     max-width: 720px;
     margin: 0 auto;
+  }
+  main {
+    padding-bottom: var(--space-6);
   }
 }
 /* Mobile: nav in bottom bar only */
@@ -581,6 +560,13 @@ main {
   }
   .nav-bottom {
     display: flex !important;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   .nav a {
     font-size: var(--text-sm);
