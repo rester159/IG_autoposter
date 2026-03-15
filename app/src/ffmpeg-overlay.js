@@ -104,4 +104,78 @@ function getVideoDuration(videoPath) {
   });
 }
 
-module.exports = { overlayScore, getVideoDuration };
+function hasAudioStream(videoPath) {
+  return new Promise((resolve) => {
+    ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      if (err) return resolve(false);
+      const streams = metadata?.streams || [];
+      resolve(streams.some(s => s.codec_type === 'audio'));
+    });
+  });
+}
+
+/**
+ * Normalize a video's runtime to targetSeconds.
+ * - If slightly short, time-stretch A/V so content reaches exact target
+ * - If long, trims to exact target
+ */
+async function normalizeVideoDuration(videoPath, targetSeconds, outputPath, opts = {}) {
+  if (!fs.existsSync(videoPath)) throw new Error('Video not found: ' + videoPath);
+  const target = Number(targetSeconds);
+  if (!Number.isFinite(target) || target <= 0) return { path: videoPath, changed: false };
+
+  const current = await getVideoDuration(videoPath);
+  const diff = target - current;
+  if (Math.abs(diff) < 0.12) {
+    return { path: videoPath, changed: false, before: current, after: current };
+  }
+
+  const useTemp = !outputPath;
+  if (useTemp) {
+    const dir = path.dirname(videoPath);
+    const ext = path.extname(videoPath);
+    const base = path.basename(videoPath, ext);
+    outputPath = path.join(dir, `${base}_durfix${ext}`);
+  }
+
+  const hasAudio = await hasAudioStream(videoPath);
+  const ratio = target / current; // >1 => extend runtime (slower), <1 => shorten runtime
+  const speedAudio = Math.max(0.5, Math.min(2.0, 1 / ratio)); // atempo range
+
+  return new Promise((resolve, reject) => {
+    let cmd = ffmpeg(videoPath).videoFilters([`setpts=${ratio.toFixed(6)}*PTS`]);
+    if (hasAudio) cmd = cmd.audioFilters([`atempo=${speedAudio.toFixed(6)}`]);
+
+    cmd
+      .outputOptions(['-t', target.toFixed(3), '-movflags', '+faststart'])
+      .output(outputPath)
+      .on('end', () => {
+        if (useTemp) {
+          try {
+            fs.unlinkSync(videoPath);
+            fs.renameSync(outputPath, videoPath);
+            resolve({ path: videoPath, changed: true, before: current, after: target });
+          } catch (e) {
+            if (e.code === 'EXDEV') {
+              fs.copyFileSync(outputPath, videoPath);
+              fs.unlinkSync(outputPath);
+              resolve({ path: videoPath, changed: true, before: current, after: target });
+            } else {
+              resolve({ path: outputPath, changed: true, before: current, after: target });
+            }
+          }
+        } else {
+          resolve({ path: outputPath, changed: true, before: current, after: target });
+        }
+      })
+      .on('error', (err) => {
+        if (useTemp && fs.existsSync(outputPath)) {
+          try { fs.unlinkSync(outputPath); } catch {}
+        }
+        reject(err);
+      })
+      .run();
+  });
+}
+
+module.exports = { overlayScore, getVideoDuration, normalizeVideoDuration };

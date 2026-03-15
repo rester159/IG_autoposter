@@ -6,7 +6,7 @@ const { generateVideo, extendVideo, nextVideoInQueue, moveVideoToPosted, listVid
 const { generateVideoScript } = require('./video-script');
 const { postReel, postComment } = require('./instagram-reels');
 const { generateCaption } = require('./caption');
-const { overlayScore } = require('./ffmpeg-overlay');
+const { overlayScore, normalizeVideoDuration } = require('./ffmpeg-overlay');
 const team = require('./team');
 const gameModel = require('./models/game');
 const { extractGameMetadata } = require('./game-metadata');
@@ -253,6 +253,7 @@ async function generateOne(opts = {}) {
     for (let i = 0; i < numSegments; i++) {
       prompts.push(scriptParts[i] || scriptParts[scriptParts.length - 1] || part1Prompt);
     }
+    const targetDuration = totalDur;
 
     // Preflight token budget check BEFORE calling Veo.
     const tokenBudget = getPromptBudget(cfg);
@@ -298,7 +299,19 @@ async function generateOne(opts = {}) {
       }
     }
 
-    // 6 — ffmpeg score overlay (if score available)
+    // 6 — normalize runtime to requested duration to avoid Veo extension drift
+    if (finalVideo.filePath && fs.existsSync(finalVideo.filePath)) {
+      try {
+        const durFix = await normalizeVideoDuration(finalVideo.filePath, targetDuration);
+        if (durFix.changed) {
+          console.log('[video] duration normalized:', `${durFix.before.toFixed(2)}s -> ${durFix.after.toFixed(2)}s`);
+        }
+      } catch (e) {
+        console.error('[video] duration normalization failed (continuing):', e.message);
+      }
+    }
+
+    // 7 — ffmpeg score overlay (if score available)
     if (score && finalVideo.filePath && fs.existsSync(finalVideo.filePath)) {
       const scoreText = displayScore ? `${displayScore}/10` : `${score}/10`;
       console.log('[video] applying ffmpeg score overlay:', scoreText);
@@ -310,7 +323,7 @@ async function generateOne(opts = {}) {
       }
     }
 
-    // 7 — Generate a caption for the reel
+    // 8 — Generate a caption for the reel
     let caption = { caption: '', hashtags: '', full: '' };
     try {
       const axios = require('axios');
@@ -345,7 +358,7 @@ async function generateOne(opts = {}) {
       caption.full = `${influencer.name} reviews ${gameRecord?.title || 'a classic'}! 🎮🔥`;
     }
 
-    // 8 — Create a post in the unified queue
+    // 9 — Create a post in the unified queue
     const queue = require('./queue');
     const postRow = queue.addVideoPost({
       file_path: finalVideo.filePath,
