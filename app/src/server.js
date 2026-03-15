@@ -28,17 +28,10 @@ app.use(express.json());
 
 // ── static hosting ──────────────────────────────────────────────
 const publicPath = path.join(__dirname, '..', 'public');
-const webDistPath = path.join(__dirname, '..', 'web', 'dist');
-const hasWebDist = fs.existsSync(webDistPath);
-
-// Legacy UI at /legacy (always from public)
+// Serve original legacy UI at root and /legacy.
+app.use(express.static(publicPath));
 app.use('/legacy', express.static(publicPath));
-app.get('/legacy', (_req, res) => res.redirect('/legacy/'));
-
-// React app at root when built
-if (hasWebDist) {
-  app.use(express.static(webDistPath));
-}
+app.get('/legacy', (_req, res) => res.redirect('/'));
 // Serve default bg image and other data files
 app.use('/data', express.static('/data'));
 
@@ -1045,15 +1038,9 @@ app.post('/api/games/:id/enrich', async (req, res) => {
   }
 });
 
-// SPA fallback: React dist index.html when built, else legacy
+// App fallback: always serve legacy index.html.
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/legacy')) {
-    return res.sendFile(path.join(publicPath, 'index.html'));
-  }
-  const indexFile = hasWebDist
-    ? path.join(webDistPath, 'index.html')
-    : path.join(publicPath, 'index.html');
-  res.sendFile(indexFile);
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 function mask(s) { return s ? '••••' + s.slice(-6) : ''; }
