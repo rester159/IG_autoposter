@@ -75,10 +75,30 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .bs-item svg{width:22px;height:22px;color:var(--t3)}
 
 /* ── Main ── */
-#main{padding:10px 10px calc(64px + var(--safeb));max-width:1200px;margin:0 auto}
+#main{
+  padding:calc(56px + env(safe-area-inset-top,0px) + 10px) 10px calc(64px + var(--safeb));
+  max-width:1200px;
+  margin:0 auto;
+}
 
 /* ── Top Bar ── */
-#topbar{display:flex;align-items:center;margin-bottom:14px;position:relative;height:36px}
+#topbar{
+  display:flex;
+  align-items:center;
+  position:fixed;
+  top:0;
+  left:0;
+  right:0;
+  z-index:130;
+  height:calc(48px + env(safe-area-inset-top,0px));
+  padding-top:env(safe-area-inset-top,0px);
+  padding-left:max(10px,env(safe-area-inset-left,0px));
+  padding-right:max(10px,env(safe-area-inset-right,0px));
+  background:rgba(12,10,15,.88);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--bdr);
+}
 .topbar-logo{
   font-family:'Pacifico',cursive;
   font-size:26px;
@@ -112,10 +132,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .pill.on{background:none}.pill.on .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .pill.off{background:none}.pill.off .dot{background:var(--err);opacity:.6}
 
-.topbar-plus{position:absolute;left:0;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--grad);border:none;color:#fff;font-size:20px;font-weight:300;cursor:pointer;display:grid;place-items:center;line-height:1;box-shadow:0 2px 12px rgba(192,132,252,.3)}
+.topbar-plus{position:absolute;left:max(0px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:var(--grad);border:none;color:#fff;font-size:20px;font-weight:300;cursor:pointer;display:grid;place-items:center;line-height:1;box-shadow:0 2px 12px rgba(192,132,252,.3)}
 .topbar-plus:active{transform:translateY(-50%) scale(.92)}
 .topbar-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px}
-.topbar-right{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.topbar-right{position:absolute;right:max(0px,env(safe-area-inset-right,0px));top:50%;transform:translateY(-50%)}
 
 /* ── Sections ── */
 .section{display:none}.section.active{display:block;animation:fadeIn .2s ease}
@@ -338,7 +358,15 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   #sidebar button.on::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:0 3px 3px 0;background:var(--accent)}
   #sidebar button svg{width:22px;height:22px}
   .sb-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px}
-  #main{padding:16px 20px 28px;margin-left:64px}
+  #topbar{
+    left:64px;
+    right:0;
+    height:56px;
+    padding-top:0;
+    padding-left:20px;
+    padding-right:20px;
+  }
+  #main{padding:72px 20px 28px;margin-left:64px}
   .panel-head{padding:14px 20px}
   .panel-body{padding:14px 20px}
   .modal-card{border-radius:var(--r2);max-width:480px;animation:modalPop .25s cubic-bezier(.32,.72,0,1)}
@@ -356,7 +384,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   #sidebar button{width:auto;justify-content:flex-start;gap:12px;padding:0 12px;margin:0}
   .nav-label{display:none;font-size:13px;font-weight:500;white-space:nowrap}
   #sidebar:hover .nav-label{display:inline}
-  #main{margin-left:64px;padding:20px 28px 28px;max-width:1280px}
+  #main{margin-left:64px;padding:76px 28px 28px;max-width:1280px}
   .sb-logo{justify-content:flex-start;padding-left:14px}
   .panel-head{padding:16px 28px}
   .panel-body{padding:16px 28px;max-width:1000px}
@@ -374,7 +402,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 }
 @media screen and (orientation: landscape) and (max-height: 500px) {
   #landscape-block{display:flex!important}
-  #main,#bottombar,#sidebar{display:none!important}
+  #main,#bottombar,#sidebar,#topbar{display:none!important}
 }
 </style>
 </head>
@@ -906,9 +934,19 @@ async function loadDash() {
     $('pillVideoFreq').textContent = vidOn2 ? freqToLabel(cfg.videoFrequency || '1d') : 'off';
     const lastPosted = queue.filter(p => p.status === 'posted').sort((a, b) => (b.posted_at || '').localeCompare(a.posted_at || ''))[0];
     $('pillLastPost').textContent = lastPosted ? ago(lastPosted.posted_at) : 'never';
-    const upcoming = queue.filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
+    const upcoming = queue
+      .filter(p => p.status === 'queued' || p.status === 'ready' || p.status === 'posting')
       .sort((a, b) => (a.scheduled_at || '').localeCompare(b.scheduled_at || ''));
-    renderTimeline(upcoming.slice(0, 20), 'tlFeed', 'tlEmpty', false);
+    const fallbackTimeline = queue
+      .slice()
+      .sort((a, b) => {
+        const at = a.scheduled_at || a.posted_at || a.created_at || '';
+        const bt = b.scheduled_at || b.posted_at || b.created_at || '';
+        return bt.localeCompare(at);
+      });
+    // Keep timeline visible even when there are no upcoming items.
+    const timelineItems = upcoming.length ? upcoming : fallbackTimeline;
+    renderTimeline(timelineItems.slice(0, 20), 'tlFeed', 'tlEmpty', false);
   } catch (e) { console.error(e); }
 }
 
@@ -1845,11 +1883,17 @@ async function loadTeam() {
     if (!list.length) { $('teamList').innerHTML = ''; $('teamEmpty').classList.remove('hidden'); return; }
     $('teamEmpty').classList.add('hidden');
     $('teamList').innerHTML = list.map(inf =>
-      '<div class="hrow" style="cursor:pointer" onclick="showInfDetail(\'' + inf.id + '\')">' +
+      '<div class="hrow team-row" style="cursor:pointer" data-inf-id="' + esc(inf.id) + '">' +
       (inf.picture ? '<img src="/api/team/' + inf.id + '/photos/' + encodeURIComponent(inf.picture) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML=\'<div class=icon>\u{1F3AD}</div>\'">' : '<div class="icon">\u{1F3AD}</div>') +
       '<div class="body"><div class="cap" style="font-weight:600">' + esc(inf.name) + '</div>' +
       '<div class="meta">' + esc((inf.personality || '').substring(0, 60)) + '</div></div></div>'
     ).join('');
+    document.querySelectorAll('#teamList .team-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var id = row.getAttribute('data-inf-id');
+        if (id) showInfDetail(id);
+      });
+    });
   } catch (e) { console.error(e); }
 }
 async function showAddInf() {
