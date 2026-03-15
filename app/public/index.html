@@ -73,6 +73,37 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 }
 .bs-item:hover,.bs-item:active{background:var(--bg3);color:var(--t1)}
 .bs-item svg{width:22px;height:22px;color:var(--t3)}
+.create-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.create-card{
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  background:linear-gradient(180deg,var(--bg3),var(--bg2));
+  padding:14px 10px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:132px;
+  cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.create-card:hover,.create-card:active{
+  transform:translateY(-1px);
+  border-color:rgba(192,132,252,.65);
+  box-shadow:0 10px 22px rgba(0,0,0,.28),0 0 0 1px rgba(192,132,252,.22) inset;
+}
+.create-icon{
+  width:58px;
+  height:58px;
+  border-radius:16px;
+  background:linear-gradient(145deg,rgba(192,132,252,.24),rgba(244,114,182,.12));
+  border:1px solid rgba(192,132,252,.32);
+  display:grid;
+  place-items:center;
+  margin-bottom:10px;
+}
+.create-icon svg{width:30px;height:30px;color:#E8DBFF;display:block}
+.create-title{font-size:12px;font-weight:600;color:var(--t1);text-align:center;line-height:1.3}
 
 /* ── Main ── */
 #main{
@@ -1144,12 +1175,15 @@ async function toggleModelDriven() {
   loadDash();
 }
 async function showCreatePostModal() {
+  var cameraIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 8.5h15a1.5 1.5 0 0 1 1.5 1.5v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="M9 8.5 10.2 6h3.6L15 8.5"/><circle cx="12" cy="14" r="3.1"/></svg>';
+  var photoIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.2"/><circle cx="9" cy="10" r="1.4"/><path d="m5.8 16.8 4.1-4.1 3.2 3.2 2-2 3.1 2.9"/></svg>';
+  var videoIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.2" width="12.8" height="13.6" rx="2.2"/><path d="m16.4 10 4-2.2v8.4l-4-2.2"/><path d="M8.7 10.2v3.6l3.1-1.8-3.1-1.8Z"/></svg>';
   var r = await showModal({
     title: 'Create',
-    html: '<div style="display:flex;gap:16px;justify-content:center;margin-top:12px">' +
-      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'camera\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83D\uDCF7</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Take Picture</div></div>' +
-      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'photo\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83D\uDDBC\uFE0F</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Photo Post</div></div>' +
-      '<div style="text-align:center;cursor:pointer" onclick="closeModal(\'video\')"><div style="width:72px;height:72px;border-radius:12px;background:var(--bg3);border:1px solid var(--bdr);display:grid;place-items:center;font-size:28px">\uD83C\uDFAC</div><div style="font-size:11px;color:var(--t2);margin-top:6px">Video Post</div></div>' +
+    html: '<div class="create-grid">' +
+      '<button type="button" class="create-card" onclick="closeModal(\'camera\')"><span class="create-icon">' + cameraIcon + '</span><span class="create-title">Add photo</span></button>' +
+      '<button type="button" class="create-card" onclick="closeModal(\'photo\')"><span class="create-icon">' + photoIcon + '</span><span class="create-title">Create a photo post</span></button>' +
+      '<button type="button" class="create-card" onclick="closeModal(\'video\')"><span class="create-icon">' + videoIcon + '</span><span class="create-title">Create a video post</span></button>' +
       '</div>',
     cancel: true, okText: 'Cancel'
   });

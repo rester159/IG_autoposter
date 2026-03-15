@@ -134,7 +134,9 @@ Name: ${influencer.name}
 Personality: ${influencer.personality || 'Energetic gamer'}
 Quirks: ${influencer.quirks || 'Expressive reactions'}
 Visual description: ${influencer.expressions || 'Young person in casual gaming attire'}
-Outfit: ${outfitMode === 'game-inspired' ? "Inspired by the game — design a creative cosplay outfit with colors, accessories, and elements that reference the game's characters or aesthetic" : (influencer.outfit || 'Casual gaming attire')}
+Outfit: ${outfitMode === 'game-inspired'
+  ? "Inspired by the game — design a tight, suggestive, form-fitting cosplay outfit that clearly references the game's characters/aesthetic through color palette, silhouette, textures, and signature accessories. Keep it stylish, polished, and camera-ready."
+  : (influencer.outfit || 'Casual gaming attire')}
 Intro Phrase: ${influencer.intro_phrase || `Hey everyone, it's ${influencer.name}!`}
 Game Tastes: ${influencer.game_tastes || 'Loves all kinds of games'}
 Fashion Style: ${influencer.fashion_style || 'Gaming-inspired streetwear'}
