@@ -12,8 +12,14 @@ jobs:
       contents: read
       packages: write
 
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+
     steps:
       - uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -28,8 +34,8 @@ jobs:
           context: ./app
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Deploy to UNRAID
         uses: appleboy/ssh-action@v1
@@ -38,7 +44,7 @@ jobs:
           username: root
           key: ${{ secrets.UNRAID_SSH_KEY }}
           script: |
-            docker pull ghcr.io/${{ github.repository }}:latest
+            docker pull ${{ env.IMAGE_NAME }}:latest
             docker stop ig-autoposter || true
             docker rm ig-autoposter || true
             docker run -d \
@@ -52,4 +58,4 @@ jobs:
               -v /mnt/user/appdata/ig-autoposter/posted_video:/data/posted_video \
               -v /mnt/user/appdata/ig-autoposter/game_images:/data/game_images \
               -v /mnt/user/appdata/ig-autoposter/team:/data/team \
-              ghcr.io/${{ github.repository }}:latest
+              ${{ env.IMAGE_NAME }}:latest
