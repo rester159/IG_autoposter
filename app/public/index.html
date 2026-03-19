@@ -1062,7 +1062,7 @@ const DASH_CACHE_KEY = 'aurapost_dash_cache_v1';
 
 function getDashCache() {
   try {
-    var raw = sessionStorage.getItem(DASH_CACHE_KEY);
+    var raw = localStorage.getItem(DASH_CACHE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (_e) {
     return null;
@@ -1071,7 +1071,7 @@ function getDashCache() {
 
 function setDashCache(data) {
   try {
-    sessionStorage.setItem(DASH_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(DASH_CACHE_KEY, JSON.stringify(data));
   } catch (_e) {}
 }
 
@@ -1082,6 +1082,17 @@ function renderDashFromCache() {
   if (typeof c.ready === 'number') $('sReady').textContent = c.ready;
   if (typeof c.posted === 'number') $('sP').textContent = c.posted;
   if (c.lastPostedAgo) $('pillLastPost').textContent = c.lastPostedAgo;
+  if (typeof c.photoOn === 'boolean') {
+    $('togPhotoDash').classList.toggle('on', c.photoOn);
+    $('pillPhotoFreq').textContent = c.photoOn ? freqToLabel(c.photoFrequency || '1d') : 'off';
+  }
+  if (typeof c.videoOn === 'boolean') {
+    $('togVideoDash2').classList.toggle('on', c.videoOn);
+    $('pillVideoFreq').textContent = c.videoOn ? freqToLabel(c.videoFrequency || '1d') : 'off';
+  }
+  if (typeof c.modelDriven === 'boolean') {
+    $('togModelDriven').classList.toggle('on', c.modelDriven);
+  }
   if (Array.isArray(c.timeline) && c.timeline.length) {
     renderTimeline(c.timeline, 'tlFeed', 'tlEmpty', true);
   }
@@ -1135,7 +1146,12 @@ async function loadDash() {
       ready: ready,
       posted: Number($('sP').textContent) || 0,
       lastPostedAgo: $('pillLastPost').textContent || 'never',
-      timeline: queue.slice(0, 20)
+      timeline: queue.slice(0, 20),
+      photoOn: photoOn,
+      videoOn: vidOn2,
+      modelDriven: mdOn,
+      photoFrequency: cfg.photoFrequency || '1d',
+      videoFrequency: cfg.videoFrequency || '1d'
     });
 
     // Slower posted fetch runs after first paint to update posted metrics/fallback timeline.
@@ -1164,7 +1180,12 @@ async function loadDash() {
           ready: ready,
           posted: posted,
           lastPostedAgo: lastPostedAgo,
-          timeline: fallbackTimeline
+          timeline: fallbackTimeline,
+          photoOn: photoOn,
+          videoOn: vidOn2,
+          modelDriven: mdOn,
+          photoFrequency: cfg.photoFrequency || '1d',
+          videoFrequency: cfg.videoFrequency || '1d'
         });
       } else {
         setDashCache({
@@ -1172,7 +1193,12 @@ async function loadDash() {
           ready: ready,
           posted: posted,
           lastPostedAgo: lastPostedAgo,
-          timeline: queue.slice(0, 20)
+          timeline: queue.slice(0, 20),
+          photoOn: photoOn,
+          videoOn: vidOn2,
+          modelDriven: mdOn,
+          photoFrequency: cfg.photoFrequency || '1d',
+          videoFrequency: cfg.videoFrequency || '1d'
         });
       }
     }).catch(function(_e) {});
