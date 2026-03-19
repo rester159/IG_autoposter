@@ -1,0 +1,54 @@
+name: Deploy to UNRAID
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+
+      - name: Deploy to UNRAID
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.UNRAID_HOST }}
+          username: root
+          key: ${{ secrets.UNRAID_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}:latest
+            docker stop ig-autoposter || true
+            docker rm ig-autoposter || true
+            docker run -d \
+              --name ig-autoposter \
+              --restart unless-stopped \
+              -p 3099:3000 \
+              -v /mnt/user/appdata/ig-autoposter/data:/app/data \
+              -v /mnt/user/appdata/ig-autoposter/incoming:/data/incoming \
+              -v /mnt/user/appdata/ig-autoposter/posted:/data/posted \
+              -v /mnt/user/appdata/ig-autoposter/incoming_video:/data/incoming_video \
+              -v /mnt/user/appdata/ig-autoposter/posted_video:/data/posted_video \
+              -v /mnt/user/appdata/ig-autoposter/game_images:/data/game_images \
+              -v /mnt/user/appdata/ig-autoposter/team:/data/team \
+              ghcr.io/${{ github.repository }}:latest
