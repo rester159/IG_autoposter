@@ -11,6 +11,8 @@ RUN if [ -f web/package.json ]; then cd web && npm ci && npm run build; fi
 
 RUN mkdir -p /data/incoming /data/posted /data/incoming_video /data/posted_video /data/game_images /data/team
 
+RUN echo "{\"builtAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > /app/build-info.json
+
 ENV PORT=3000 NODE_ENV=production DATA_DIR=/data
 EXPOSE 3000
 
