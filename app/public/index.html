@@ -2579,12 +2579,12 @@ setInterval(function() {
 }, 25000);
 
 // Deploy watermark
-api('/build-info').then(function(b) {
+fetch('/api/build-info').then(function(r){return r.json()}).then(function(b) {
   if (b && b.builtAt) {
     var d = new Date(b.builtAt);
     $('buildStamp').textContent = d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
   }
-}).catch(function(){});
+}).catch(function(e){console.warn('watermark fetch failed',e)});
 </script>
 <div id="landscape-block" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
   <div style="font-size:48px;margin-bottom:16px">📱</div>
