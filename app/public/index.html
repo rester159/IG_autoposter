@@ -466,7 +466,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     <div class="topbar-center">
       <span class="topbar-logo">AuraPost</span>
     </div>
-    <div class="topbar-right"></div>
+    <div class="topbar-right"><span id="buildStamp" style="font-size:.6rem;opacity:.45;white-space:nowrap"></span></div>
   </header>
 
   <!-- ═══ DASHBOARD ═══ -->
@@ -2577,6 +2577,14 @@ if ((__tabParam || '').toLowerCase() === 'history' || (__tabParam || '').toLower
 setInterval(function() {
   if (tab === 'dash') loadDash();
 }, 25000);
+
+// Deploy watermark
+api('/build-info').then(function(b) {
+  if (b && b.builtAt) {
+    var d = new Date(b.builtAt);
+    $('buildStamp').textContent = d.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  }
+}).catch(function(){});
 </script>
 <div id="landscape-block" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px">
   <div style="font-size:48px;margin-bottom:16px">📱</div>
