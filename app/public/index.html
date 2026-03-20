@@ -1908,6 +1908,7 @@ async function loadGameImages(preloaded) {
 }
 (function() {
   const dz2 = $('gameDropZone'), fi2 = $('gameFileIn');
+  if (!dz2 || !fi2) return;
   dz2.onclick = () => fi2.click();
   dz2.ondragover = e => { e.preventDefault(); dz2.classList.add('over'); };
   dz2.ondragleave = () => dz2.classList.remove('over');
