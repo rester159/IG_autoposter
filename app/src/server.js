@@ -66,6 +66,13 @@ const upload = multer({
 
 // ═══════════════════════  API ROUTES  ═══════════════════════════════
 
+// build info (deploy timestamp watermark)
+const BUILD_INFO = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'build-info.json'), 'utf8')); }
+  catch { return { builtAt: null }; }
+})();
+app.get('/api/build-info', (_req, res) => res.json(BUILD_INFO));
+
 // dashboard summary
 app.get('/api/status', (_req, res) => {
   const cfg = loadConfig();
