@@ -20,6 +20,7 @@ const analytics = require('./models/analytics');
 const { syncAllInsights } = require('./instagram-insights');
 const { scoreQueue, getTopRecommended } = require('./ml-scoring');
 const { enrichGame } = require('./rawg');
+const accountModel = require('./models/account');
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -105,6 +106,7 @@ app.post('/api/upload', upload.array('images', 50), (req, res) => {
     const post = queue.addPhotoPost({
       file_path: f.path,
       file_name: f.filename,
+      account_id: req.body.account_id ? Number(req.body.account_id) : null,
     });
     posts.push({ filename: f.filename, postId: post.id, scheduled_at: post.scheduled_at });
 
@@ -219,10 +221,12 @@ app.get('/api/unified-queue', async (req, res) => {
   try {
     const filters = {};
     if (req.query.status) filters.status = req.query.status;
+    if (req.query.account_id) filters.account_id = Number(req.query.account_id);
     const lite = req.query.lite === '1' || req.query.lite === 'true';
     const limit = Number(req.query.limit) > 0 ? Number(req.query.limit) : null;
     const cfg = loadConfig();
     let posts = queue.getQueue(filters);
+    if (filters.account_id) posts = posts.filter(p => p.account_id === filters.account_id);
     if (limit) posts = posts.slice(0, limit);
 
     // If model-driven mode, sort by ml_score desc for queued/ready items
@@ -429,34 +433,92 @@ app.delete('/api/unified-queue/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// ═══════════════════════  ACCOUNTS ROUTES  ═══════════════════════
+
+app.get('/api/accounts', (_req, res) => {
+  res.json(accountModel.listMasked());
+});
+
+app.get('/api/accounts/:id', (req, res) => {
+  const acct = accountModel.getMasked(Number(req.params.id));
+  acct ? res.json(acct) : res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/accounts', (req, res) => {
+  const acct = accountModel.add(req.body);
+  res.json({ ok: true, account: accountModel.getMasked(acct.id) });
+});
+
+app.put('/api/accounts/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const existing = accountModel.get(id);
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+
+  const body = { ...req.body };
+  // Don't clobber token with masked placeholder
+  if (body.ig_token?.startsWith('••')) delete body.ig_token;
+
+  accountModel.update(id, body);
+
+  // Restart schedulers if enable state changed
+  if (body.enabled !== undefined || body.cron_schedule !== undefined) {
+    sched.restart();
+  }
+  if (body.video_enabled !== undefined || body.video_cron_schedule !== undefined) {
+    videoSched.restart();
+  }
+
+  res.json({ ok: true, account: accountModel.getMasked(id) });
+});
+
+app.delete('/api/accounts/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const existing = accountModel.get(id);
+  if (!existing) return res.status(404).json({ error: 'Not found' });
+  accountModel.del(id);
+  res.json({ ok: true });
+});
+
+app.post('/api/accounts/:id/verify', async (req, res) => {
+  const acct = accountModel.get(Number(req.params.id));
+  if (!acct) return res.status(404).json({ error: 'Not found' });
+  if (!acct.ig_token) return res.json({ valid: false, error: 'No token configured' });
+  res.json(await verifyToken(acct.ig_token));
+});
+
 // ═══════════════════════  ANALYTICS ROUTES  ══════════════════════
 
-app.get('/api/analytics/summary', (_req, res) => {
-  try { res.json(analytics.summary()); }
+function parseAccountIds(req) {
+  if (!req.query.account_ids) return null;
+  return req.query.account_ids.split(',').map(Number).filter(n => n > 0);
+}
+
+app.get('/api/analytics/summary', (req, res) => {
+  try { res.json(analytics.summary(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-game', (_req, res) => {
-  try { res.json(analytics.statsByGame()); }
+app.get('/api/analytics/by-game', (req, res) => {
+  try { res.json(analytics.statsByGame(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-genre', (_req, res) => {
-  try { res.json(analytics.statsByGenre()); }
+app.get('/api/analytics/by-genre', (req, res) => {
+  try { res.json(analytics.statsByGenre(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-console', (_req, res) => {
-  try { res.json(analytics.statsByConsole()); }
+app.get('/api/analytics/by-console', (req, res) => {
+  try { res.json(analytics.statsByConsole(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-influencer', (_req, res) => {
-  try { res.json(analytics.statsByInfluencer()); }
+app.get('/api/analytics/by-influencer', (req, res) => {
+  try { res.json(analytics.statsByInfluencer(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-platform', (_req, res) => {
-  try { res.json(analytics.statsByPlatform()); }
+app.get('/api/analytics/by-platform', (req, res) => {
+  try { res.json(analytics.statsByPlatform(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
-app.get('/api/analytics/by-format', (_req, res) => {
-  try { res.json(analytics.statsByFormat()); }
+app.get('/api/analytics/by-format', (req, res) => {
+  try { res.json(analytics.statsByFormat(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 app.get('/api/analytics/post/:id', (req, res) => {
@@ -465,13 +527,13 @@ app.get('/api/analytics/post/:id', (req, res) => {
 });
 
 // ── Instagram Insights ───────────────────────────────────────────
-app.get('/api/analytics/insights-summary', (_req, res) => {
-  try { res.json(analytics.insightsSummary()); }
+app.get('/api/analytics/insights-summary', (req, res) => {
+  try { res.json(analytics.insightsSummary(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/analytics/posts-metrics', (_req, res) => {
-  try { res.json(analytics.postsWithMetrics()); }
+app.get('/api/analytics/posts-metrics', (req, res) => {
+  try { res.json(analytics.postsWithMetrics(parseAccountIds(req))); }
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
