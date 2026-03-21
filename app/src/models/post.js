@@ -24,8 +24,8 @@ const stmts = {
     WHERE p.id = ?
   `),
   insert: db.prepare(`
-    INSERT INTO posts (type, format, status, platform, file_path, file_name, thumbnail, caption, hashtags, full_caption, first_comment, meta_tags, influencer_id, game_id, veo_prompt, veo_uri, score, scheduled_at, sort_order)
-    VALUES (@type, @format, @status, @platform, @file_path, @file_name, @thumbnail, @caption, @hashtags, @full_caption, @first_comment, @meta_tags, @influencer_id, @game_id, @veo_prompt, @veo_uri, @score, @scheduled_at, @sort_order)
+    INSERT INTO posts (type, format, status, platform, file_path, file_name, thumbnail, caption, hashtags, full_caption, first_comment, meta_tags, influencer_id, game_id, veo_prompt, veo_uri, score, scheduled_at, sort_order, account_id)
+    VALUES (@type, @format, @status, @platform, @file_path, @file_name, @thumbnail, @caption, @hashtags, @full_caption, @first_comment, @meta_tags, @influencer_id, @game_id, @veo_prompt, @veo_uri, @score, @scheduled_at, @sort_order, @account_id)
   `),
   update: db.prepare(`
     UPDATE posts SET
@@ -44,7 +44,8 @@ const stmts = {
       veo_uri = COALESCE(@veo_uri, veo_uri),
       score = COALESCE(@score, score),
       game_id = COALESCE(@game_id, game_id),
-      influencer_id = COALESCE(@influencer_id, influencer_id)
+      influencer_id = COALESCE(@influencer_id, influencer_id),
+      account_id = COALESCE(@account_id, account_id)
     WHERE id = @id
   `),
   del: db.prepare('DELETE FROM posts WHERE id = ?'),
@@ -54,6 +55,15 @@ const stmts = {
     LEFT JOIN influencers i ON p.influencer_id = i.id
     LEFT JOIN games g ON p.game_id = g.id
     WHERE p.status = 'ready' AND p.platform = ? AND p.scheduled_at <= datetime('now')
+    ORDER BY p.scheduled_at ASC
+    LIMIT 1
+  `),
+  nextReadyForAccount: db.prepare(`
+    SELECT p.*, i.name as influencer_name, g.title as game_title
+    FROM posts p
+    LEFT JOIN influencers i ON p.influencer_id = i.id
+    LEFT JOIN games g ON p.game_id = g.id
+    WHERE p.status = 'ready' AND p.platform = ? AND p.account_id = ? AND p.scheduled_at <= datetime('now')
     ORDER BY p.scheduled_at ASC
     LIMIT 1
   `),
@@ -120,6 +130,7 @@ function add(data) {
     score: data.score || null,
     scheduled_at: data.scheduled_at || null,
     sort_order: data.sort_order ?? (maxSort + 1),
+    account_id: data.account_id || null,
   };
   const info = stmts.insert.run(row);
   return { id: info.lastInsertRowid, ...row };
@@ -144,6 +155,7 @@ function update(id, data) {
     score: data.score ?? null,
     game_id: data.game_id || null,
     influencer_id: data.influencer_id || null,
+    account_id: data.account_id ?? null,
   });
   return get(id);
 }
@@ -152,7 +164,8 @@ function del(id) {
   return stmts.del.run(id).changes > 0;
 }
 
-function nextReady(platform = 'instagram') {
+function nextReady(platform = 'instagram', accountId) {
+  if (accountId) return stmts.nextReadyForAccount.get(platform, accountId) || null;
   return stmts.nextReady.get(platform) || null;
 }
 

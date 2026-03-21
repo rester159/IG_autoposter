@@ -5,63 +5,77 @@ const { generateCaption } = require('./caption');
 const { postToInstagram } = require('./instagram');
 const { postComment } = require('./instagram-reels');
 const postModel = require('./models/post');
+const accountModel = require('./models/account');
 const queue = require('./queue');
 
-let job = null;      // main posting cron
-let prepJob = null;  // prep cron (generates captions ahead of time)
-let posting = false; // mutex
+const jobs = {};      // { accountId: { main, prep } }
+let posting = false;  // mutex
 let lastRun = null;
 let lastErr = null;
 
 // ── status ────────────────────────────────────────────────────────
 function status() {
-  const cfg = loadConfig();
+  const accounts = accountModel.list();
   return {
-    enabled: cfg.enabled,
-    cron: cfg.cronSchedule,
     posting,
     lastRun,
     lastErr,
+    accounts: accounts.map(a => ({
+      id: a.id,
+      name: a.name,
+      enabled: !!a.enabled,
+      cron: a.cron_schedule,
+      hasJob: !!jobs[a.id],
+    })),
   };
 }
 
 // ── start / stop / restart ────────────────────────────────────────
 function start() {
   stop();
-  const cfg = loadConfig();
-  if (!cfg.enabled) return false;
-  if (!cron.validate(cfg.cronSchedule)) {
-    lastErr = 'Invalid cron: ' + cfg.cronSchedule;
-    return false;
+  const accounts = accountModel.list();
+  let started = 0;
+
+  for (const acct of accounts) {
+    if (!acct.enabled) continue;
+    if (!cron.validate(acct.cron_schedule)) {
+      console.error('[sched] invalid cron for account', acct.name, ':', acct.cron_schedule);
+      continue;
+    }
+
+    console.log('[sched] starting account', acct.name, ':', acct.cron_schedule);
+
+    const mainJob = cron.schedule(acct.cron_schedule, () => {
+      runOnce(acct.id).catch(e => console.error('[sched]', acct.name, e.message));
+    });
+
+    const prepJobInstance = cron.schedule('*/15 * * * *', () => {
+      prepUpcoming(acct.id).catch(e => console.error('[sched-prep]', acct.name, e.message));
+    });
+
+    jobs[acct.id] = { main: mainJob, prep: prepJobInstance };
+    started++;
   }
-  console.log('[sched] starting:', cfg.cronSchedule);
 
-  // Main posting cron — checks for posts where status='ready' AND scheduled_at <= now
-  job = cron.schedule(cfg.cronSchedule, () => {
-    runOnce().catch(e => console.error('[sched]', e.message));
-  });
-
-  // Prep cron — every 15 min, generates captions for items due within 30 min
-  prepJob = cron.schedule('*/15 * * * *', () => {
-    prepUpcoming().catch(e => console.error('[sched-prep]', e.message));
-  });
-
-  return true;
+  return started > 0;
 }
 
 function stop() {
-  if (job) { job.stop(); job = null; console.log('[sched] stopped'); }
-  if (prepJob) { prepJob.stop(); prepJob = null; }
+  for (const id of Object.keys(jobs)) {
+    if (jobs[id].main) jobs[id].main.stop();
+    if (jobs[id].prep) jobs[id].prep.stop();
+    delete jobs[id];
+  }
+  console.log('[sched] all jobs stopped');
 }
 
 function restart() { stop(); return start(); }
 
 // ── prep: generate captions for upcoming posts ────────────────────
-async function prepUpcoming() {
+async function prepUpcoming(accountId) {
   const cfg = loadConfig();
   if (!cfg.geminiApiKey) return;
 
-  // Find queued photo posts due within the next 30 minutes
   const now = new Date();
   const soon = new Date(now.getTime() + 30 * 60 * 1000);
 
@@ -69,16 +83,16 @@ async function prepUpcoming() {
   const due = queued.filter(p => {
     if (p.type !== 'photo') return false;
     if (!p.scheduled_at) return false;
+    if (accountId && p.account_id !== accountId) return false;
     const schedTime = new Date(p.scheduled_at);
     return schedTime <= soon;
   });
 
-  // Load team for influencer context
   const team = require('./team');
   const teamList = team.loadTeam();
 
   for (const post of due) {
-    if (post.caption && post.caption.trim()) continue; // already has caption
+    if (post.caption && post.caption.trim()) continue;
 
     try {
       const filePath = post.file_path;
@@ -90,7 +104,6 @@ async function prepUpcoming() {
       console.log('[sched-prep] generating caption for:', post.file_name);
       const b64 = await toBase64(filePath);
 
-      // Find associated influencer for personality-matched captions
       const influencer = post.influencer_id
         ? teamList.find(i => i.id === post.influencer_id)
         : null;
@@ -114,8 +127,8 @@ async function prepUpcoming() {
   }
 }
 
-// ── execute one post (picks next ready item) ──────────────────────
-async function runOnce() {
+// ── execute one post (picks next ready item for account) ─────────
+async function runOnce(accountId) {
   if (posting) return { ok: false, error: 'Already posting' };
   posting = true;
   lastErr = null;
@@ -123,22 +136,33 @@ async function runOnce() {
   try {
     const cfg = loadConfig();
     if (!cfg.geminiApiKey) throw new Error('Gemini API key missing');
-    if (!cfg.instagramToken)  throw new Error('Instagram token missing');
-    if (!cfg.instagramAccountId) throw new Error('Instagram account ID missing');
 
-    // Get next ready photo post (scheduled_at <= now)
-    let post = queue.getNextReady('instagram');
+    // Get account credentials
+    const acct = accountId ? accountModel.get(accountId) : null;
+    const acctConfig = acct ? {
+      ...cfg,
+      instagramToken: acct.ig_token,
+      instagramAccountId: acct.ig_account_id,
+      publicUrl: acct.public_url || cfg.publicUrl,
+    } : cfg;
+
+    if (!acctConfig.instagramToken) throw new Error('Instagram token missing' + (acct ? ' for ' + acct.name : ''));
+    if (!acctConfig.instagramAccountId) throw new Error('Instagram account ID missing' + (acct ? ' for ' + acct.name : ''));
+
+    // Get next ready photo post for this account
+    let post = queue.getNextReady('instagram', accountId);
 
     // If no ready post, try to prep the next queued one on the fly
     if (!post) {
       const queued = postModel.list({ status: 'queued' });
-      const nextPhoto = queued.find(p => p.type === 'photo' && p.file_path);
+      const nextPhoto = queued.find(p => {
+        if (p.type !== 'photo' || !p.file_path) return false;
+        return !accountId || p.account_id === accountId;
+      });
       if (nextPhoto) {
-        // Generate caption on the fly
         const fs = require('fs');
         if (fs.existsSync(nextPhoto.file_path)) {
           const b64 = await toBase64(nextPhoto.file_path);
-          // Find associated influencer
           const team = require('./team');
           const influencer = nextPhoto.influencer_id
             ? team.loadTeam().find(i => i.id === nextPhoto.influencer_id)
@@ -159,12 +183,10 @@ async function runOnce() {
 
     if (!post) return fin({ ok: false, error: 'Queue empty' });
 
-    console.log('[post] posting:', post.file_name, '(post #' + post.id + ')');
+    console.log('[post] posting:', post.file_name, '(post #' + post.id + ', account:', acct?.name || 'default', ')');
 
-    // Mark as posting
     postModel.update(post.id, { status: 'posting' });
 
-    // Build caption — use stored or generate fresh
     let captionText = post.full_caption || `${post.caption || ''}\n\n${post.hashtags || ''}`.trim();
     if (!captionText) {
       const b64 = await toBase64(post.file_path);
@@ -181,26 +203,23 @@ async function runOnce() {
         first_comment: cap.firstComment || post.first_comment || '',
         meta_tags: cap.metaTags || '',
       });
-      // Reload post to get updated first_comment
       post = postModel.get(post.id);
     }
 
-    // Post to IG (with alt text from meta_tags for discoverability)
-    const ig = await postToInstagram(post.file_path, captionText, cfg, {
+    // Post to IG using the account-specific config
+    const ig = await postToInstagram(post.file_path, captionText, acctConfig, {
       altText: post.meta_tags || undefined,
     });
 
-    // Post first comment if available
     if (post.first_comment) {
       try {
-        await postComment(ig.mediaId, post.first_comment, cfg);
+        await postComment(ig.mediaId, post.first_comment, acctConfig);
         console.log('[post] first comment posted');
       } catch (commentErr) {
         console.error('[post] first comment failed (non-critical):', commentErr.message);
       }
     }
 
-    // Mark as posted
     postModel.update(post.id, {
       status: 'posted',
       ig_media_id: ig.mediaId,
@@ -215,6 +234,7 @@ async function runOnce() {
       hashtags: post.hashtags,
       mediaId: ig.mediaId,
       post_id: post.id,
+      account_id: post.account_id,
     };
     addHistory(entry);
     lastRun = new Date().toISOString();
@@ -222,7 +242,7 @@ async function runOnce() {
 
   } catch (err) {
     lastErr = err.message;
-    addHistory({ status: 'error', type: 'photo', error: err.message });
+    addHistory({ status: 'error', type: 'photo', error: err.message, account_id: accountId });
     console.error('[post] FAIL:', err.message);
     if (err.response?.data) console.error('[post] response:', JSON.stringify(err.response.data));
     return fin({ ok: false, error: err.message });

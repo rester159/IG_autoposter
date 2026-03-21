@@ -22,6 +22,22 @@ db.exec(`
     value TEXT NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS accounts (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    name                TEXT NOT NULL DEFAULT 'Default',
+    ig_token            TEXT DEFAULT '',
+    ig_account_id       TEXT DEFAULT '',
+    public_url          TEXT DEFAULT '',
+    photo_frequency     TEXT DEFAULT '1d',
+    video_frequency     TEXT DEFAULT '1d',
+    cron_schedule       TEXT DEFAULT '0 */6 * * *',
+    video_cron_schedule TEXT DEFAULT '0 12 * * *',
+    enabled             INTEGER DEFAULT 0,
+    video_enabled       INTEGER DEFAULT 0,
+    color               TEXT DEFAULT '#a78bfa',
+    created_at          TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
   CREATE TABLE IF NOT EXISTS influencers (
     id             TEXT PRIMARY KEY,
     name           TEXT NOT NULL DEFAULT 'Unnamed',
@@ -136,6 +152,8 @@ const migrations = [
   'ALTER TABLE games ADD COLUMN box_art_url TEXT',
   'ALTER TABLE games ADD COLUMN rawg_id INTEGER',
   'ALTER TABLE influencers ADD COLUMN accent TEXT DEFAULT \'\'',
+  'ALTER TABLE posts ADD COLUMN account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL',
+  'ALTER TABLE history ADD COLUMN account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL',
 ];
 for (const sql of migrations) {
   try { db.exec(sql); } catch (e) {
@@ -267,5 +285,45 @@ function migrateFromJSON() {
 }
 
 migrateFromJSON();
+
+// ── Migrate single-account config into accounts table ────────────
+function migrateToAccounts() {
+  const count = db.prepare('SELECT COUNT(*) as c FROM accounts').get().c;
+  if (count > 0) return; // already has accounts
+
+  // Check if there's a configured account in global config
+  const getVal = (key) => {
+    const row = db.prepare('SELECT value FROM config WHERE key = ?').get(key);
+    return row ? row.value : '';
+  };
+  const token = getVal('instagramToken');
+  const accountId = getVal('instagramAccountId');
+
+  if (token || accountId) {
+    db.prepare(`
+      INSERT INTO accounts (name, ig_token, ig_account_id, public_url,
+        photo_frequency, video_frequency, cron_schedule, video_cron_schedule,
+        enabled, video_enabled, color)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      'Default',
+      token,
+      accountId,
+      getVal('publicUrl') || '',
+      getVal('photoFrequency') || '1d',
+      getVal('videoFrequency') || '1d',
+      getVal('cronSchedule') || '0 */6 * * *',
+      getVal('videoCronSchedule') || '0 12 * * *',
+      getVal('enabled') === 'true' ? 1 : 0,
+      getVal('videoEnabled') === 'true' ? 1 : 0,
+      '#a78bfa'
+    );
+    // Link existing posts to this account
+    db.prepare('UPDATE posts SET account_id = 1 WHERE account_id IS NULL').run();
+    db.prepare('UPDATE history SET account_id = 1 WHERE account_id IS NULL').run();
+    console.log('[db] migrated single account config → accounts table');
+  }
+}
+migrateToAccounts();
 
 module.exports = db;

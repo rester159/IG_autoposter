@@ -27,8 +27,8 @@ function getQueue(filters = {}) {
  * @param {string} [platform='instagram']
  * @returns {object|null} The next post to publish, or null
  */
-function getNextReady(platform = 'instagram') {
-  return postModel.nextReady(platform);
+function getNextReady(platform = 'instagram', accountId) {
+  return postModel.nextReady(platform, accountId);
 }
 
 /**
@@ -77,6 +77,7 @@ function addPhotoPost(data) {
     file_path: data.file_path,
     file_name: data.file_name,
     influencer_id: data.influencer_id || null,
+    account_id: data.account_id || null,
     scheduled_at,
   });
 }
@@ -119,6 +120,7 @@ function addVideoPost(data) {
     game_id: data.game_id || null,
     veo_prompt: data.veo_prompt || '',
     score: data.score || null,
+    account_id: data.account_id || null,
     scheduled_at,
   });
 }

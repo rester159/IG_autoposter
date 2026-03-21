@@ -270,6 +270,23 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .genre-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;font-size:12px;color:var(--t2);cursor:pointer;transition:.15s}
 .genre-chip.selected{background:var(--accent);border-color:var(--accent);color:#fff}
 .genre-chip:hover{border-color:var(--accent)}
+/* ── Accounts ── */
+.acct-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:6px;cursor:pointer;transition:.15s}
+.acct-item:hover{border-color:var(--accent)}
+.acct-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.acct-item .acct-name{flex:1;font-size:14px;font-weight:500}
+.acct-item .acct-meta{font-size:11px;color:var(--t3)}
+.acct-item .acct-actions{display:flex;gap:6px}
+.acct-item .acct-actions button{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:4px}
+.acct-item .acct-actions button:hover{background:var(--bg3);color:var(--t1)}
+.acct-item .acct-actions button.danger:hover{color:var(--err)}
+/* ── Account pills (analytics/timeline) ── */
+.acct-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.acct-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:20px;font-size:12px;color:var(--t2);cursor:pointer;transition:.15s;user-select:none}
+.acct-pill:hover{border-color:var(--accent)}
+.acct-pill.on{color:#fff;border-color:transparent}
+.acct-pill .pill-dot{width:8px;height:8px;border-radius:50%}
+
 .ctrl-freq{font-size:13px;color:#fff;cursor:pointer;padding:2px 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--bdr);min-width:80px;text-align:center}
 .ctrl-freq:hover{border-color:var(--accent)}
 .ctrl-freq-select{position:absolute;top:100%;left:0;z-index:9999;background:var(--bg4);border:1px solid var(--bdr);border-radius:var(--r);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:140px;display:none}
@@ -484,16 +501,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     </div>
     <div class="card">
       <h3>Post Controls</h3>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Photo frequency</span>
-        <span class="ctrl-freq" id="pillPhotoFreq" onclick="toggleFreqDropdown('photo')">off</span>
-        <div class="tog" id="togPhotoDash" onclick="togglePhotoDash()"></div>
-      </div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">Video frequency</span>
-        <span class="ctrl-freq" id="pillVideoFreq" onclick="toggleFreqDropdown('video')">off</span>
-        <div class="tog" id="togVideoDash2" onclick="toggleVideoDash()"></div>
-      </div>
+      <div id="dashAccountControls"></div>
       <div class="ctrl-row">
         <span class="ctrl-label">Model driven timeline</span>
         <span class="ctrl-val" id="pillLastPost">never</span>
@@ -506,6 +514,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
     </div>
     <div class="card">
       <h3>Timeline</h3>
+      <div id="tlAccountTabs" class="acct-pills" style="display:none"></div>
       <div id="tlFeed"></div>
       <div id="tlEmpty" class="empty hidden"><div class="ei">&#128197;</div><p>No upcoming posts.</p></div>
     </div>
@@ -519,6 +528,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       <div class="fg" style="flex:1;margin:0"><label>Draft note</label><input id="pDraftNote" placeholder="Optional note for this photo draft"></div>
       <button class="btn btn-s" onclick="savePhotoDraft()">Save Draft</button>
     </div>
+    <div class="fg" id="uploadAcctPicker" style="display:none;margin-bottom:10px"><label>Post to account</label><select id="uploadAcctSelect"></select></div>
     <div class="drop" id="dropZone">
       <div class="di">&#9729;</div>
       <p>Drop images here or click to upload</p>
@@ -662,6 +672,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 
   <!-- ═══ ANALYTICS ═══ -->
   <section id="p-analytics" class="section">
+    <div id="anAccountPills" class="acct-pills" style="display:none"></div>
     <div id="anSummary" class="an-cards"></div>
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
@@ -691,7 +702,8 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
   <section id="p-cfg" class="section">
     <div class="vtabs">
       <div class="vtabs-nav" id="cfgNav">
-        <button class="on" data-cfg="api" onclick="cfgTab('api', this)">API Keys</button>
+        <button class="on" data-cfg="accounts" onclick="cfgTab('accounts', this)">Accounts</button>
+        <button data-cfg="api" onclick="cfgTab('api', this)">API Keys</button>
         <button data-cfg="prompts" onclick="cfgTab('prompts', this)">Post Settings</button>
         <button data-cfg="genres" onclick="cfgTab('genres', this)">Genres</button>
         <button data-cfg="sched" onclick="cfgTab('sched', this)">Scheduler</button>
@@ -699,12 +711,36 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <button data-cfg="history" onclick="cfgTab('history', this)">History</button>
       </div>
       <div class="vtabs-body">
-        <div class="vtab on" id="cfg-api">
-          <h3 style="margin-bottom:16px">Instagram API</h3>
-          <div class="fg"><label>Access Token</label><input id="cIgTok" type="password" placeholder="long-lived token"></div>
-          <div class="fg"><label>Business Account ID</label><input id="cIgId" placeholder="17841400..."></div>
-          <div class="fg"><label>Public URL</label><input id="cUrl" placeholder="https://your-unraid.duckdns.org:3099"><div class="hint">IG servers must reach this URL to fetch your images</div></div>
-          <button class="btn btn-s" onclick="verifyIg()" style="margin-bottom:20px">Verify Connection</button>
+        <div class="vtab on" id="cfg-accounts">
+          <h3 style="margin-bottom:16px">Instagram Accounts</h3>
+          <p style="font-size:12px;color:var(--t3);margin-bottom:12px">Manage multiple Instagram accounts. Each has its own token, schedule, and posting queue.</p>
+          <div id="accountsList"></div>
+          <button class="btn btn-s" onclick="addAccount()" style="margin-top:12px">+ Add Account</button>
+          <div id="accountEditor" class="hidden" style="margin-top:16px;padding:16px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--bdr)">
+            <input type="hidden" id="acctEditId">
+            <div class="fg"><label>Account Name</label><input id="acctName" placeholder="e.g. Main, Gaming, Personal"></div>
+            <div class="fg"><label>Color</label><input id="acctColor" type="color" value="#a78bfa" style="width:60px;height:34px;padding:2px;border:1px solid var(--bdr);border-radius:var(--r);background:var(--bg2)"></div>
+            <div class="fg"><label>Access Token</label><input id="acctToken" type="password" placeholder="long-lived token"></div>
+            <div class="fg"><label>Business Account ID</label><input id="acctIgId" placeholder="17841400..."></div>
+            <div class="fg"><label>Public URL</label><input id="acctUrl" placeholder="https://your-server.com:3099"><div class="hint">IG must reach this URL to fetch images</div></div>
+            <div class="row2">
+              <div class="fg"><label>Photo Frequency</label>
+                <select id="acctPhotoFreq"><option value="1h">Every hour</option><option value="3h">Every 3 hours</option><option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option><option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option><option value="1w">Once a week</option></select>
+              </div>
+              <div class="fg"><label>Video Frequency</label>
+                <select id="acctVideoFreq"><option value="1h">Every hour</option><option value="3h">Every 3 hours</option><option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option><option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option><option value="1w">Once a week</option></select>
+              </div>
+            </div>
+            <div class="btns" style="margin-top:12px;gap:8px">
+              <button class="btn btn-p btn-s" onclick="saveAccount()">Save Account</button>
+              <button class="btn btn-s" onclick="verifyAccount()">Verify Connection</button>
+              <button class="btn btn-s" onclick="cancelAccountEdit()">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div class="vtab" id="cfg-api">
+          <h3 style="margin-bottom:16px">Shared API Keys</h3>
+          <p style="font-size:12px;color:var(--t3);margin-bottom:12px">These keys are shared across all accounts.</p>
           <h3 style="margin-bottom:16px">Gemini / Video AI</h3>
           <div class="fg"><label>Gemini API Key (Veo 3.1)</label><input id="cGemKey" type="password" placeholder="AIzaSy..."></div>
           <h3 style="margin-top:20px;margin-bottom:16px">Game Data</h3>
@@ -1035,7 +1071,7 @@ function closeSheet(){}
 function openPanel(id){
   $(id).classList.add('open');
   document.body.style.overflow='hidden';
-  if(id==='photoPanel'){ loadQ(); }
+  if(id==='photoPanel'){ loadQ(); populateUploadAcctPicker(); }
   else if(id==='videoPanel'){ loadVideo(); }
 }
 function closePanel(id){$(id).classList.remove('open');document.body.style.overflow='';}
@@ -1083,14 +1119,6 @@ function renderDashFromCache() {
   if (typeof c.ready === 'number') $('sReady').textContent = c.ready;
   if (typeof c.posted === 'number') $('sP').textContent = c.posted;
   if (c.lastPostedAgo) $('pillLastPost').textContent = c.lastPostedAgo;
-  if (typeof c.photoOn === 'boolean') {
-    $('togPhotoDash').classList.toggle('on', c.photoOn);
-    $('pillPhotoFreq').textContent = c.photoOn ? freqToLabel(c.photoFrequency || '1d') : 'off';
-  }
-  if (typeof c.videoOn === 'boolean') {
-    $('togVideoDash2').classList.toggle('on', c.videoOn);
-    $('pillVideoFreq').textContent = c.videoOn ? freqToLabel(c.videoFrequency || '1d') : 'off';
-  }
   if (typeof c.modelDriven === 'boolean') {
     $('togModelDriven').classList.toggle('on', c.modelDriven);
   }
@@ -1131,25 +1159,23 @@ async function loadDash() {
     $('warnCard').style.display = st.configured ? 'none' : '';
     $('warnCard').classList.toggle('hidden', st.configured);
     if ($('postBtn')) $('postBtn').disabled = !st.configured;
-    const photoOn = !!cfg.enabled;
-    $('togPhotoDash').classList.toggle('on', photoOn);
-    const vidOn2 = !!cfg.videoEnabled;
-    $('togVideoDash2').classList.toggle('on', vidOn2);
     const mdOn = cfg.modelDriven === true || cfg.modelDriven === 'true';
     $('togModelDriven').classList.toggle('on', mdOn);
-    $('pillPhotoFreq').textContent = photoOn ? freqToLabel(cfg.photoFrequency || '1d') : 'off';
-    $('pillVideoFreq').textContent = vidOn2 ? freqToLabel(cfg.videoFrequency || '1d') : 'off';
+
+    // Render per-account controls
+    if (!_accounts.length) _accounts = await api('/accounts');
+    renderDashAccountControls(_accounts);
+    renderTimelineAccountTabs();
 
     // Fast path timeline from active queue statuses only.
-    renderTimeline(queue.slice(0, 20), 'tlFeed', 'tlEmpty', true);
+    var filteredQueue = _tlAccountFilter ? queue.filter(function(p) { return p.account_id === _tlAccountFilter; }) : queue;
+    renderTimeline(filteredQueue.slice(0, 20), 'tlFeed', 'tlEmpty', true);
     setDashCache({
       queued: queued,
       ready: ready,
       posted: Number($('sP').textContent) || 0,
       lastPostedAgo: $('pillLastPost').textContent || 'never',
       timeline: queue.slice(0, 20),
-      photoOn: photoOn,
-      videoOn: vidOn2,
       modelDriven: mdOn,
       photoFrequency: cfg.photoFrequency || '1d',
       videoFrequency: cfg.videoFrequency || '1d'
@@ -1348,6 +1374,7 @@ function openPhotoCapture() {
     if (!input.files || !input.files.length) return;
     var fd = new FormData();
     for (var i = 0; i < input.files.length; i++) fd.append('images', input.files[i]);
+    if (_accounts.length) fd.append('account_id', _accounts[0].id);
     try {
       var r = await fetch('/api/upload', { method: 'POST', body: fd }).then(function(r) { return r.json(); });
       if (r.ok) { toast('Created ' + r.count + ' photo post(s)', 'ok'); loadDash(); }
@@ -1589,6 +1616,8 @@ async function upload(files) {
   if (!files.length) return;
   const fd = new FormData();
   for (const f of files) fd.append('images', f);
+  var sel = $('uploadAcctSelect');
+  if (sel && sel.value) fd.append('account_id', sel.value);
   dz.innerHTML = '<span class="spin"></span><p>Uploading\u2026</p>';
   try {
     const r = await fetch('/api/upload', { method: 'POST', body: fd }).then(r => r.json());
@@ -2029,6 +2058,7 @@ function cronToFreq(cron) {
 }
 populateTimeSelects();
 
+var _accounts = [];
 async function loadCfg() {
   const c = await api('/config');
   const parsed = cronToFreq(c.cronSchedule || '0 */6 * * *');
@@ -2039,8 +2069,7 @@ async function loadCfg() {
   if (parsed.freq === 'weekly') { $('cWeekday').value = parsed.day; setTimeVal('cTimeW', parsed.time); }
   if (parsed.freq === 'custom') $('cCron').value = parsed.cron || c.cronSchedule;
   freqChanged();
-  $('cIgTok').value = c.instagramToken || ''; $('cIgId').value = c.instagramAccountId || '';
-  $('cUrl').value = c.publicUrl || ''; $('cPrompt').value = c.captionPrompt || '';
+  $('cPrompt').value = c.captionPrompt || '';
   $('cHCnt').value = c.hashtagCount || 30; $('cHStyle').value = c.hashtagStyle || 'mixed';
   $('cIn').value = c.mediaFolder || '/data/incoming'; $('cOut').value = c.postedFolder || '/data/posted';
   const on = !!c.enabled; $('togOn').classList.toggle('on', on); $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
@@ -2053,14 +2082,14 @@ async function loadCfg() {
     $('cVidBgPreview').style.display = 'block';
     $('cVidBgImg').src = '/data/' + encodeURIComponent(c.videoBackgroundImage);
   }
+  loadAccounts();
   loadGenres();
   loadScriptTemplates();
 }
 function togEn() { const t = $('togOn'), on = t.classList.toggle('on'); $('togLbl').textContent = on ? 'Enabled' : 'Disabled'; }
 async function saveCfg() {
   const body = {
-    cronSchedule: buildCron(), instagramToken: $('cIgTok').value, instagramAccountId: $('cIgId').value,
-    publicUrl: $('cUrl').value, captionPrompt: $('cPrompt').value,
+    cronSchedule: buildCron(), captionPrompt: $('cPrompt').value,
     hashtagCount: parseInt($('cHCnt').value) || 30, hashtagStyle: $('cHStyle').value,
     mediaFolder: $('cIn').value, postedFolder: $('cOut').value, enabled: $('togOn').classList.contains('on'),
     geminiApiKey: $('cGemKey').value, rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
@@ -2070,9 +2099,183 @@ async function saveCfg() {
   const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(r.ok ? 'Saved!' : 'Error', r.ok ? 'ok' : 'err'); loadDash();
 }
-async function verifyIg() {
-  try { const r = await api('/verify-ig', { method: 'POST' }); toast(r.valid ? 'Connected! (' + (r.info?.name || r.info?.id) + ')' : 'Invalid: ' + r.error, r.valid ? 'ok' : 'err'); }
-  catch { toast('Failed', 'err'); }
+
+/* ═══ ACCOUNTS ═══ */
+async function loadAccounts() {
+  _accounts = await api('/accounts');
+  renderAccountsList();
+}
+function renderAccountsList() {
+  var el = $('accountsList');
+  if (!el) return;
+  if (!_accounts.length) { el.innerHTML = '<p style="font-size:13px;color:var(--t3)">No accounts yet. Add one to get started.</p>'; return; }
+  el.innerHTML = _accounts.map(function(a) {
+    return '<div class="acct-item" onclick="editAccount(' + a.id + ')">' +
+      '<span class="acct-dot" style="background:' + esc(a.color) + '"></span>' +
+      '<span class="acct-name">' + esc(a.name) + '</span>' +
+      '<span class="acct-meta">' + (a.ig_token ? 'token: ' + esc(a.ig_token) : 'no token') + '</span>' +
+      '<span class="acct-actions">' +
+        '<button onclick="event.stopPropagation();deleteAccount(' + a.id + ')" class="danger" title="Delete">&#10005;</button>' +
+      '</span></div>';
+  }).join('');
+}
+function addAccount() {
+  $('acctEditId').value = '';
+  $('acctName').value = '';
+  $('acctColor').value = '#a78bfa';
+  $('acctToken').value = '';
+  $('acctIgId').value = '';
+  $('acctUrl').value = '';
+  $('acctPhotoFreq').value = '1d';
+  $('acctVideoFreq').value = '1d';
+  $('accountEditor').classList.remove('hidden');
+}
+function editAccount(id) {
+  var a = _accounts.find(function(x) { return x.id === id; });
+  if (!a) return;
+  $('acctEditId').value = a.id;
+  $('acctName').value = a.name;
+  $('acctColor').value = a.color || '#a78bfa';
+  $('acctToken').value = a.ig_token || '';
+  $('acctIgId').value = a.ig_account_id || '';
+  $('acctUrl').value = a.public_url || '';
+  $('acctPhotoFreq').value = a.photo_frequency || '1d';
+  $('acctVideoFreq').value = a.video_frequency || '1d';
+  $('accountEditor').classList.remove('hidden');
+}
+function cancelAccountEdit() {
+  $('accountEditor').classList.add('hidden');
+}
+async function saveAccount() {
+  var id = $('acctEditId').value;
+  var body = {
+    name: $('acctName').value || 'Unnamed',
+    color: $('acctColor').value,
+    ig_token: $('acctToken').value,
+    ig_account_id: $('acctIgId').value,
+    public_url: $('acctUrl').value,
+    photo_frequency: $('acctPhotoFreq').value,
+    video_frequency: $('acctVideoFreq').value,
+  };
+  var r;
+  if (id) {
+    r = await api('/accounts/' + id, { method: 'PUT', body: JSON.stringify(body) });
+  } else {
+    r = await api('/accounts', { method: 'POST', body: JSON.stringify(body) });
+  }
+  toast(r.ok ? 'Account saved!' : 'Error', r.ok ? 'ok' : 'err');
+  cancelAccountEdit();
+  loadAccounts();
+}
+async function deleteAccount(id) {
+  if (!confirm('Delete this account? Posts will keep their data but lose account association.')) return;
+  var r = await api('/accounts/' + id, { method: 'DELETE' });
+  toast(r.ok ? 'Deleted' : 'Error', r.ok ? 'ok' : 'err');
+  loadAccounts();
+}
+function renderDashAccountControls(accounts) {
+  var el = $('dashAccountControls');
+  if (!el) return;
+  if (!accounts.length) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--t3)">No accounts. <a href="#" onclick="go(\'cfg\');return false">Add one in Settings</a></p>';
+    return;
+  }
+  el.innerHTML = accounts.map(function(a) {
+    var photoOn = !!a.enabled;
+    var videoOn = !!a.video_enabled;
+    return '<div style="margin-bottom:6px">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+        '<span class="acct-dot" style="background:' + esc(a.color) + '"></span>' +
+        '<span style="font-size:13px;font-weight:500">' + esc(a.name) + '</span>' +
+      '</div>' +
+      '<div class="ctrl-row">' +
+        '<span class="ctrl-label">Photo</span>' +
+        '<span class="ctrl-freq" id="pillPhotoFreq_' + a.id + '" onclick="toggleAcctFreqDropdown(' + a.id + ',\'photo\')">' + (photoOn ? freqToLabel(a.photo_frequency || '1d') : 'off') + '</span>' +
+        '<div class="tog' + (photoOn ? ' on' : '') + '" id="togPhoto_' + a.id + '" onclick="toggleAcctPhoto(' + a.id + ')"></div>' +
+      '</div>' +
+      '<div class="ctrl-row">' +
+        '<span class="ctrl-label">Video</span>' +
+        '<span class="ctrl-freq" id="pillVideoFreq_' + a.id + '" onclick="toggleAcctFreqDropdown(' + a.id + ',\'video\')">' + (videoOn ? freqToLabel(a.video_frequency || '1d') : 'off') + '</span>' +
+        '<div class="tog' + (videoOn ? ' on' : '') + '" id="togVideo_' + a.id + '" onclick="toggleAcctVideo(' + a.id + ')"></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function toggleAcctFreqDropdown(acctId, type) {
+  var pillId = type === 'photo' ? 'pillPhotoFreq_' + acctId : 'pillVideoFreq_' + acctId;
+  var pill = $(pillId);
+  var existing = pill.querySelector('.ctrl-freq-select');
+  if (existing) { existing.remove(); pill.closest('.card').style.zIndex = ''; return; }
+  pill.style.position = 'relative';
+  pill.closest('.card').style.zIndex = '9999';
+  var opts = Object.keys(_freqLabels).map(function(k) {
+    return '<button onclick="setAcctFreq(' + acctId + ',\x27' + type + '\x27,\x27' + k + '\x27)">' + _freqLabels[k] + '</button>';
+  }).join('');
+  pill.insertAdjacentHTML('beforeend', '<div class="ctrl-freq-select open">' + opts + '</div>');
+}
+async function setAcctFreq(acctId, type, val) {
+  var pillId = type === 'photo' ? 'pillPhotoFreq_' + acctId : 'pillVideoFreq_' + acctId;
+  var pill = $(pillId);
+  var card = pill.closest('.card'); if (card) card.style.zIndex = '';
+  var body = {};
+  if (type === 'photo') { body.photo_frequency = val; body.cron_schedule = freqToCron(val); }
+  else { body.video_frequency = val; body.video_cron_schedule = freqToCron(val); }
+  await api('/accounts/' + acctId, { method: 'PUT', body: JSON.stringify(body) });
+  toast(freqToLabel(val));
+  loadAccounts();
+  loadDash();
+}
+async function toggleAcctPhoto(acctId) {
+  var tog = $('togPhoto_' + acctId);
+  var on = tog.classList.toggle('on');
+  await api('/accounts/' + acctId, { method: 'PUT', body: JSON.stringify({ enabled: on }) });
+  loadDash();
+}
+async function toggleAcctVideo(acctId) {
+  var tog = $('togVideo_' + acctId);
+  var on = tog.classList.toggle('on');
+  await api('/accounts/' + acctId, { method: 'PUT', body: JSON.stringify({ video_enabled: on }) });
+  loadDash();
+}
+
+/* ═══ TIMELINE ACCOUNT TABS ═══ */
+var _tlAccountFilter = null; // null = all
+function renderTimelineAccountTabs() {
+  var el = $('tlAccountTabs');
+  if (!el) return;
+  if (_accounts.length < 2) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = '<span class="acct-pill' + (_tlAccountFilter === null ? ' on' : '') + '" onclick="filterTimeline(null)" style="' + (_tlAccountFilter === null ? 'background:var(--accent)' : '') + '">All</span>' +
+    _accounts.map(function(a) {
+      var on = _tlAccountFilter === a.id;
+      return '<span class="acct-pill' + (on ? ' on' : '') + '" onclick="filterTimeline(' + a.id + ')" style="' + (on ? 'background:' + a.color : '') + '">' +
+        '<span class="pill-dot" style="background:' + esc(a.color) + '"></span>' + esc(a.name) + '</span>';
+    }).join('');
+}
+function filterTimeline(accountId) {
+  _tlAccountFilter = accountId;
+  renderTimelineAccountTabs();
+  loadDash();
+}
+
+function populateUploadAcctPicker() {
+  var picker = $('uploadAcctPicker');
+  var sel = $('uploadAcctSelect');
+  if (!picker || !sel) return;
+  if (_accounts.length < 2) { picker.style.display = 'none'; return; }
+  picker.style.display = '';
+  sel.innerHTML = _accounts.map(function(a) {
+    return '<option value="' + a.id + '">' + esc(a.name) + '</option>';
+  }).join('');
+}
+
+async function verifyAccount() {
+  var id = $('acctEditId').value;
+  if (!id) { toast('Save the account first', 'err'); return; }
+  try {
+    var r = await api('/accounts/' + id + '/verify', { method: 'POST' });
+    toast(r.valid ? 'Connected! (' + (r.info?.name || r.info?.id) + ')' : 'Invalid: ' + r.error, r.valid ? 'ok' : 'err');
+  } catch(e) { toast('Failed', 'err'); }
 }
 function cfgTab(name, btn) {
   document.querySelectorAll('#cfgNav button').forEach(b => b.classList.remove('on'));
@@ -2470,9 +2673,36 @@ async function delGenre(id) {
 
 /* ═══ ANALYTICS ═══ */
 let anView = 'game';
+/* ═══ ANALYTICS ACCOUNT PILLS ═══ */
+var _anSelectedAccounts = []; // empty = all
+function renderAnalyticsAccountPills() {
+  var el = $('anAccountPills');
+  if (!el) return;
+  if (_accounts.length < 2) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = _accounts.map(function(a) {
+    var on = _anSelectedAccounts.indexOf(a.id) >= 0;
+    return '<span class="acct-pill' + (on ? ' on' : '') + '" onclick="toggleAnAccount(' + a.id + ')" style="' + (on ? 'background:' + a.color : '') + '">' +
+      '<span class="pill-dot" style="background:' + esc(a.color) + '"></span>' + esc(a.name) + '</span>';
+  }).join('');
+}
+function toggleAnAccount(id) {
+  var idx = _anSelectedAccounts.indexOf(id);
+  if (idx >= 0) _anSelectedAccounts.splice(idx, 1);
+  else _anSelectedAccounts.push(id);
+  renderAnalyticsAccountPills();
+  loadAnalytics();
+}
+function anAccountQuery() {
+  if (!_anSelectedAccounts.length) return '';
+  return '&account_ids=' + _anSelectedAccounts.join(',');
+}
+
 async function loadAnalytics() {
   try {
-    var sum = await api('/analytics/summary');
+    renderAnalyticsAccountPills();
+    var aq = anAccountQuery();
+    var sum = await api('/analytics/summary?' + aq);
     $('anSummary').innerHTML =
       '<div class="an-card"><b>' + sum.total + '</b><small>total posts</small></div>' +
       '<div class="an-card"><b>' + sum.posted + '</b><small>posted</small></div>' +
@@ -2482,7 +2712,7 @@ async function loadAnalytics() {
       '<div class="an-card"><b>' + sum.videos + '</b><small>videos</small></div>' +
       (sum.avgScore ? '<div class="an-card"><b>' + sum.avgScore + '</b><small>avg score</small></div>' : '');
     try {
-      var insights = await api('/analytics/insights-summary');
+      var insights = await api('/analytics/insights-summary?' + aq);
       if (insights && insights.synced_count > 0) {
         $('anInsights').innerHTML =
           '<div class="an-card"><b>' + (insights.total_likes || 0) + '</b><small>total likes</small></div>' +
@@ -2503,7 +2733,7 @@ async function loadAnView(view) {
   document.querySelectorAll('#anTabs button').forEach(b => { if (b.textContent.toLowerCase().includes(view)) b.classList.add('on'); });
   try {
     if (view === 'metrics') {
-      var metrics = await api('/analytics/posts-metrics');
+      var metrics = await api('/analytics/posts-metrics?' + anAccountQuery());
       var table = $('anTable');
       if (!metrics.length) { table.innerHTML = '<div class="empty" style="padding:20px"><p>No posted items with metrics yet.</p></div>'; return; }
       var mhtml = '<table class="an-table"><thead><tr><th>#</th><th>Type</th><th>Game</th><th>Console</th><th>Influencer</th><th>Likes</th><th>Comments</th><th>Shares</th><th>Reach</th><th>Saves</th><th>ML Score</th><th>Posted</th></tr></thead><tbody>';
@@ -2514,7 +2744,7 @@ async function loadAnView(view) {
       }
       mhtml += '</tbody></table>'; table.innerHTML = mhtml; return;
     }
-    var data = await api('/analytics/by-' + view);
+    var data = await api('/analytics/by-' + view + '?' + anAccountQuery());
     var table = $('anTable');
     if (!data.length) { table.innerHTML = '<div class="empty" style="padding:20px"><p>No data yet for this view.</p></div>'; return; }
     var html = '<table class="an-table"><thead><tr>';
