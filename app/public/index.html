@@ -272,7 +272,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .genre-chip:hover{border-color:var(--accent)}
 .ctrl-freq{font-size:13px;color:#fff;cursor:pointer;padding:2px 8px;border-radius:6px;background:var(--bg3);border:1px solid var(--bdr);min-width:80px;text-align:center}
 .ctrl-freq:hover{border-color:var(--accent)}
-.ctrl-freq-select{position:absolute;top:100%;left:0;z-index:50;background:var(--bg4);border:1px solid var(--bdr);border-radius:var(--r);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:140px;display:none}
+.ctrl-freq-select{position:absolute;top:100%;left:0;z-index:9999;background:var(--bg4);border:1px solid var(--bdr);border-radius:var(--r);padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:140px;display:none}
 .ctrl-freq-select.open{display:block}
 .ctrl-freq-select button{display:block;width:100%;padding:6px 10px;background:none;border:none;color:var(--t2);font-size:12px;cursor:pointer;border-radius:4px;text-align:left}
 .ctrl-freq-select button:hover{background:var(--bg3);color:var(--t1)}
@@ -1285,11 +1285,14 @@ function toggleFreqDropdown(type) {
   }).join('');
   var pill = type === 'photo' ? $('pillPhotoFreq') : $('pillVideoFreq');
   var existing = pill.querySelector('.ctrl-freq-select');
-  if (existing) { existing.remove(); return; }
+  if (existing) { existing.remove(); pill.closest('.card').style.zIndex = ''; return; }
   pill.style.position = 'relative';
+  pill.closest('.card').style.zIndex = '9999';
   pill.insertAdjacentHTML('beforeend', '<div class="ctrl-freq-select open">' + opts + '</div>');
 }
 async function setFreq(type, val) {
+  var pill = type === 'photo' ? $('pillPhotoFreq') : $('pillVideoFreq');
+  var card = pill.closest('.card'); if (card) card.style.zIndex = '';
   var body = {};
   if (type === 'photo') { body.photoFrequency = val; body.cronSchedule = freqToCron(val); }
   else { body.videoFrequency = val; body.videoCronSchedule = freqToCron(val); }
