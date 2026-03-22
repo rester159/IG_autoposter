@@ -718,7 +718,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <button data-cfg="api" onclick="cfgTab('api', this)">API Keys</button>
         <button data-cfg="prompts" onclick="cfgTab('prompts', this)">Post Settings</button>
         <button data-cfg="genres" onclick="cfgTab('genres', this)">Genres</button>
-        <button data-cfg="sched" onclick="cfgTab('sched', this)">Scheduler</button>
+
         <button data-cfg="paths" onclick="cfgTab('paths', this)">File Paths</button>
         <button data-cfg="history" onclick="cfgTab('history', this)">History</button>
       </div>
@@ -765,14 +765,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
             <div class="fg"><label>Hashtag Count</label><input id="cHCnt" type="number" min="5" max="30" value="30"></div>
             <div class="fg"><label>Hashtag Style</label><select id="cHStyle"><option value="viral" selected>Viral</option><option value="niche">Niche</option><option value="mixed">Mixed</option></select></div>
           </div>
-          <div class="fg"><label>Default Frequency</label>
-            <select id="cPhotoFreq">
-              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
-              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
-              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
-              <option value="1w">Once a week</option>
-            </select>
-          </div>
           <h3 style="margin-top:20px;margin-bottom:16px">Video Post Defaults</h3>
           <div class="fg"><label>Default Background Image</label>
             <div id="cVidBgPreview" style="width:80px;height:80px;border-radius:8px;background:var(--bg3);margin-bottom:8px;overflow:hidden;display:none"><img id="cVidBgImg" style="width:100%;height:100%;object-fit:cover"></div>
@@ -780,40 +772,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
             <div class="hint">Used when influencer has no room photo</div>
           </div>
           <div class="fg"><label>Video Duration (sec)</label><input id="cVidDur" type="number" min="4" max="16" value="8"></div>
-          <div class="fg"><label>Default Frequency</label>
-            <select id="cVideoFreq">
-              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
-              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
-              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
-              <option value="1w">Once a week</option>
-            </select>
-          </div>
         </div>
         <div class="vtab" id="cfg-genres">
           <h3 style="margin-bottom:16px">Genre Taxonomy</h3>
           <p style="font-size:12px;color:var(--t3);margin-bottom:10px">Manage the fixed genre list used for game classification.</p>
           <div id="genreList" style="margin-bottom:12px"></div>
           <div style="display:flex;gap:8px;align-items:center"><input id="genreNewName" placeholder="New genre name" style="flex:1"><button class="btn btn-s" onclick="addGenre()">+ Add</button></div>
-        </div>
-        <div class="vtab" id="cfg-sched">
-          <h3 style="margin-bottom:16px">Photo Scheduler</h3>
-          <div class="tog-row"><div class="tog" id="togOn" onclick="togEn()"></div><span id="togLbl" style="font-size:13px">Disabled</span></div>
-          <div class="fg"><label>Post Frequency</label>
-            <select id="cFreq" onchange="freqChanged()">
-              <option value="*/30 * * * *">Every 30 minutes</option><option value="0 */1 * * *">Every hour</option>
-              <option value="0 */2 * * *">Every 2 hours</option><option value="0 */3 * * *">Every 3 hours</option>
-              <option value="0 */6 * * *" selected>Every 6 hours</option><option value="0 */12 * * *">Every 12 hours</option>
-              <option value="once">Once a day</option><option value="twice">Twice a day</option>
-              <option value="thrice">Three times a day</option><option value="weekly">Once a week</option>
-              <option value="custom">Custom (advanced)</option>
-            </select>
-          </div>
-          <div id="schedOnce" class="fg hidden"><label>Post at</label><select id="cTime1"></select></div>
-          <div id="schedTwice" class="hidden"><div class="row2"><div class="fg"><label>First</label><select id="cTime2a"></select></div><div class="fg"><label>Second</label><select id="cTime2b"></select></div></div></div>
-          <div id="schedThrice" class="hidden"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px"><div class="fg"><label>First</label><select id="cTime3a"></select></div><div class="fg"><label>Second</label><select id="cTime3b"></select></div><div class="fg"><label>Third</label><select id="cTime3c"></select></div></div></div>
-          <div id="schedWeekly" class="hidden"><div class="row2"><div class="fg"><label>Day</label><select id="cWeekday"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div><div class="fg"><label>Time</label><select id="cTimeW"></select></div></div></div>
-          <div id="schedCustom" class="fg hidden"><label>Cron Expression</label><input id="cCron" placeholder="0 */6 * * *"><div class="hint">minute hour day-of-month month day-of-week</div></div>
-          <div class="hint" style="margin-top:12px">Video schedule is managed from New Post → Video</div>
         </div>
         <div class="vtab" id="cfg-paths">
           <h3 style="margin-bottom:16px">File Paths</h3>
@@ -1340,7 +1304,7 @@ async function setFreq(type, val) {
 async function togglePhotoDash() {
   var on = $('togPhotoDash').classList.toggle('on');
   var body = { enabled: on };
-  if (on) body.cronSchedule = freqToCron($('cPhotoFreq') ? $('cPhotoFreq').value : '1d');
+  if (on) body.cronSchedule = freqToCron('1d');
   await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Photo posts enabled' : 'Photo posts disabled');
   loadDash();
@@ -1348,7 +1312,7 @@ async function togglePhotoDash() {
 async function toggleVideoDash() {
   var on = $('togVideoDash2').classList.toggle('on');
   var body = { videoEnabled: on };
-  if (on) body.videoCronSchedule = freqToCron($('cVideoFreq') ? $('cVideoFreq').value : '1d');
+  if (on) body.videoCronSchedule = freqToCron('1d');
   await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Video posts enabled' : 'Video posts disabled');
   loadDash();
@@ -2025,71 +1989,17 @@ async function loadH() {
 }
 
 /* ═══ SETTINGS ═══ */
-function populateTimeSelects() {
-  const times = [];
-  for (let h = 0; h < 24; h++) for (let m of [0, 30]) {
-    const hr = h % 12 || 12, ampm = h < 12 ? 'AM' : 'PM';
-    times.push({ value: h + ':' + m, label: hr + ':' + String(m).padStart(2, '0') + ' ' + ampm });
-  }
-  ['cTime1','cTime2a','cTime2b','cTime3a','cTime3b','cTime3c','cTimeW'].forEach(id => {
-    const sel = $(id); if (!sel) return;
-    sel.innerHTML = times.map(t => '<option value="' + t.value + '">' + t.label + '</option>').join('');
-  });
-  setTimeVal('cTime1', '9:0'); setTimeVal('cTime2a', '10:0'); setTimeVal('cTime2b', '19:0');
-  setTimeVal('cTime3a', '9:0'); setTimeVal('cTime3b', '14:0'); setTimeVal('cTime3c', '20:0'); setTimeVal('cTimeW', '9:0');
-}
 function setTimeVal(id, val) { const el = $(id); if (el) el.value = val; }
-function freqChanged() {
-  const v = $('cFreq').value;
-  ['schedOnce','schedTwice','schedThrice','schedWeekly','schedCustom'].forEach(id => $(id).classList.add('hidden'));
-  if (v === 'once') $('schedOnce').classList.remove('hidden');
-  else if (v === 'twice') $('schedTwice').classList.remove('hidden');
-  else if (v === 'thrice') $('schedThrice').classList.remove('hidden');
-  else if (v === 'weekly') $('schedWeekly').classList.remove('hidden');
-  else if (v === 'custom') $('schedCustom').classList.remove('hidden');
-}
-function buildCron() {
-  const v = $('cFreq').value;
-  if (v === 'once') { const [h, m] = $('cTime1').value.split(':'); return m + ' ' + h + ' * * *'; }
-  if (v === 'twice') { const [h1, m1] = $('cTime2a').value.split(':'); const [h2] = $('cTime2b').value.split(':'); if (m1 === $('cTime2b').value.split(':')[1]) return m1 + ' ' + h1 + ',' + h2 + ' * * *'; return m1 + ' ' + h1 + ' * * *'; }
-  if (v === 'thrice') { const [h1, m1] = $('cTime3a').value.split(':'); const [h2] = $('cTime3b').value.split(':'); const [h3] = $('cTime3c').value.split(':'); return m1 + ' ' + h1 + ',' + h2 + ',' + h3 + ' * * *'; }
-  if (v === 'weekly') { const [h, m] = $('cTimeW').value.split(':'); return m + ' ' + h + ' * * ' + $('cWeekday').value; }
-  if (v === 'custom') return $('cCron').value;
-  return v;
-}
-function cronToFreq(cron) {
-  const presets = { '*/30 * * * *':1, '0 */1 * * *':1, '0 */2 * * *':1, '0 */3 * * *':1, '0 */6 * * *':1, '0 */12 * * *':1 };
-  if (presets[cron]) return { freq: cron };
-  const parts = cron.split(' '); if (parts.length !== 5) return { freq: 'custom', cron };
-  const [mn, hr, dom, mo, dow] = parts;
-  if (dow !== '*' && !hr.includes(',') && dom === '*') return { freq: 'weekly', day: dow, time: hr + ':' + mn };
-  if (!hr.includes(',') && !hr.includes('/') && dom === '*' && dow === '*' && !mn.includes('/')) return { freq: 'once', time: hr + ':' + mn };
-  if (hr.includes(',') && hr.split(',').length === 2 && dom === '*' && dow === '*') { const [h1, h2] = hr.split(','); return { freq: 'twice', time1: h1 + ':' + mn, time2: h2 + ':' + mn }; }
-  if (hr.includes(',') && hr.split(',').length === 3 && dom === '*' && dow === '*') { const [h1, h2, h3] = hr.split(','); return { freq: 'thrice', time1: h1 + ':' + mn, time2: h2 + ':' + mn, time3: h3 + ':' + mn }; }
-  return { freq: 'custom', cron };
-}
-populateTimeSelects();
 
 var _accounts = [];
 async function loadCfg() {
   const c = await api('/config');
-  const parsed = cronToFreq(c.cronSchedule || '0 */6 * * *');
-  $('cFreq').value = parsed.freq;
-  if (parsed.freq === 'once') setTimeVal('cTime1', parsed.time);
-  if (parsed.freq === 'twice') { setTimeVal('cTime2a', parsed.time1); setTimeVal('cTime2b', parsed.time2); }
-  if (parsed.freq === 'thrice') { setTimeVal('cTime3a', parsed.time1); setTimeVal('cTime3b', parsed.time2); setTimeVal('cTime3c', parsed.time3); }
-  if (parsed.freq === 'weekly') { $('cWeekday').value = parsed.day; setTimeVal('cTimeW', parsed.time); }
-  if (parsed.freq === 'custom') $('cCron').value = parsed.cron || c.cronSchedule;
-  freqChanged();
   $('cPrompt').value = c.captionPrompt || '';
   $('cHCnt').value = c.hashtagCount || 30; $('cHStyle').value = c.hashtagStyle || 'mixed';
   $('cIn').value = c.mediaFolder || '/data/incoming'; $('cOut').value = c.postedFolder || '/data/posted';
-  const on = !!c.enabled; $('togOn').classList.toggle('on', on); $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
   if ($('cRawgKey')) $('cRawgKey').value = c.rawgApiKey || '';
   $('cGemKey').value = c.geminiApiKey || '';
   $('cVidDur').value = c.videoDuration || 24;
-  $('cPhotoFreq').value = c.photoFrequency || '1d';
-  $('cVideoFreq').value = c.videoFrequency || '1d';
   if (c.videoBackgroundImage) {
     $('cVidBgPreview').style.display = 'block';
     $('cVidBgImg').src = '/data/' + encodeURIComponent(c.videoBackgroundImage);
@@ -2098,15 +2008,13 @@ async function loadCfg() {
   loadGenres();
   loadScriptTemplates();
 }
-function togEn() { const t = $('togOn'), on = t.classList.toggle('on'); $('togLbl').textContent = on ? 'Enabled' : 'Disabled'; }
 async function saveCfg() {
   const body = {
-    cronSchedule: buildCron(), captionPrompt: $('cPrompt').value,
+    captionPrompt: $('cPrompt').value,
     hashtagCount: parseInt($('cHCnt').value) || 30, hashtagStyle: $('cHStyle').value,
-    mediaFolder: $('cIn').value, postedFolder: $('cOut').value, enabled: $('togOn').classList.contains('on'),
+    mediaFolder: $('cIn').value, postedFolder: $('cOut').value,
     geminiApiKey: $('cGemKey').value, rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
     videoDuration: parseInt($('cVidDur').value) || 24,
-    photoFrequency: $('cPhotoFreq').value, videoFrequency: $('cVideoFreq').value,
   };
   const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(r.ok ? 'Saved!' : 'Error', r.ok ? 'ok' : 'err'); loadDash();
