@@ -6,6 +6,7 @@
 <meta name="screen-orientation" content="portrait">
 <title>AuraPost</title>
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQXVyYVBvc3QiLCJzaG9ydF9uYW1lIjoiQXVyYVBvc3QiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQifQ==">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -189,6 +190,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 /* ── Dashboard Grid ── */
 .dash-grid{display:grid;gap:16px}
 
+/* ── Account Controls Grid ── */
+.acct-controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.acct-col{background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:10px}
+
 /* ── Control Rows ── */
 .ctrl-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--bdr)}
 .ctrl-row:last-child{border:none}
@@ -330,6 +335,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .an-card{background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:8px 10px}
 .an-card b{font-family:var(--heading);font-size:14px;font-weight:600;display:block}
 .an-card small{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;display:block}
+.an-charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
 .an-table{width:100%;border-collapse:collapse;font-size:13px}
 .an-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:8px;border-bottom:1px solid var(--bdr)}
 .an-table td{padding:8px;border-bottom:1px solid var(--bdr)}
@@ -684,6 +690,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
       </div>
       <div id="anInsights" class="an-cards" style="margin-top:8px"><div style="color:var(--t3);font-size:13px">No insights data yet. Click "Sync Insights" after posting to Instagram.</div></div>
     </div>
+    <div class="an-charts-grid">
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Posting Activity (30d)</h4><div style="position:relative;height:180px"><canvas id="chartActivity"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Content Mix</h4><div style="position:relative;height:180px"><canvas id="chartMix"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Top Games</h4><div style="position:relative;height:180px"><canvas id="chartGames"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Engagement</h4><div style="position:relative;height:180px"><canvas id="chartEngagement"></canvas></div></div>
+    </div>
     <div class="card">
       <div class="an-tabs" id="anTabs">
         <button class="on" onclick="loadAnView('game')">By Game</button>
@@ -706,7 +718,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         <button data-cfg="api" onclick="cfgTab('api', this)">API Keys</button>
         <button data-cfg="prompts" onclick="cfgTab('prompts', this)">Post Settings</button>
         <button data-cfg="genres" onclick="cfgTab('genres', this)">Genres</button>
-        <button data-cfg="sched" onclick="cfgTab('sched', this)">Scheduler</button>
+
         <button data-cfg="paths" onclick="cfgTab('paths', this)">File Paths</button>
         <button data-cfg="history" onclick="cfgTab('history', this)">History</button>
       </div>
@@ -753,14 +765,6 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
             <div class="fg"><label>Hashtag Count</label><input id="cHCnt" type="number" min="5" max="30" value="30"></div>
             <div class="fg"><label>Hashtag Style</label><select id="cHStyle"><option value="viral" selected>Viral</option><option value="niche">Niche</option><option value="mixed">Mixed</option></select></div>
           </div>
-          <div class="fg"><label>Default Frequency</label>
-            <select id="cPhotoFreq">
-              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
-              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
-              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
-              <option value="1w">Once a week</option>
-            </select>
-          </div>
           <h3 style="margin-top:20px;margin-bottom:16px">Video Post Defaults</h3>
           <div class="fg"><label>Default Background Image</label>
             <div id="cVidBgPreview" style="width:80px;height:80px;border-radius:8px;background:var(--bg3);margin-bottom:8px;overflow:hidden;display:none"><img id="cVidBgImg" style="width:100%;height:100%;object-fit:cover"></div>
@@ -768,40 +772,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
             <div class="hint">Used when influencer has no room photo</div>
           </div>
           <div class="fg"><label>Video Duration (sec)</label><input id="cVidDur" type="number" min="4" max="16" value="8"></div>
-          <div class="fg"><label>Default Frequency</label>
-            <select id="cVideoFreq">
-              <option value="1h">Every hour</option><option value="3h">Every 3 hours</option>
-              <option value="6h">Every 6 hours</option><option value="12h">Every 12 hours</option>
-              <option value="1d" selected>Once a day</option><option value="3d">Every 3 days</option>
-              <option value="1w">Once a week</option>
-            </select>
-          </div>
         </div>
         <div class="vtab" id="cfg-genres">
           <h3 style="margin-bottom:16px">Genre Taxonomy</h3>
           <p style="font-size:12px;color:var(--t3);margin-bottom:10px">Manage the fixed genre list used for game classification.</p>
           <div id="genreList" style="margin-bottom:12px"></div>
           <div style="display:flex;gap:8px;align-items:center"><input id="genreNewName" placeholder="New genre name" style="flex:1"><button class="btn btn-s" onclick="addGenre()">+ Add</button></div>
-        </div>
-        <div class="vtab" id="cfg-sched">
-          <h3 style="margin-bottom:16px">Photo Scheduler</h3>
-          <div class="tog-row"><div class="tog" id="togOn" onclick="togEn()"></div><span id="togLbl" style="font-size:13px">Disabled</span></div>
-          <div class="fg"><label>Post Frequency</label>
-            <select id="cFreq" onchange="freqChanged()">
-              <option value="*/30 * * * *">Every 30 minutes</option><option value="0 */1 * * *">Every hour</option>
-              <option value="0 */2 * * *">Every 2 hours</option><option value="0 */3 * * *">Every 3 hours</option>
-              <option value="0 */6 * * *" selected>Every 6 hours</option><option value="0 */12 * * *">Every 12 hours</option>
-              <option value="once">Once a day</option><option value="twice">Twice a day</option>
-              <option value="thrice">Three times a day</option><option value="weekly">Once a week</option>
-              <option value="custom">Custom (advanced)</option>
-            </select>
-          </div>
-          <div id="schedOnce" class="fg hidden"><label>Post at</label><select id="cTime1"></select></div>
-          <div id="schedTwice" class="hidden"><div class="row2"><div class="fg"><label>First</label><select id="cTime2a"></select></div><div class="fg"><label>Second</label><select id="cTime2b"></select></div></div></div>
-          <div id="schedThrice" class="hidden"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px"><div class="fg"><label>First</label><select id="cTime3a"></select></div><div class="fg"><label>Second</label><select id="cTime3b"></select></div><div class="fg"><label>Third</label><select id="cTime3c"></select></div></div></div>
-          <div id="schedWeekly" class="hidden"><div class="row2"><div class="fg"><label>Day</label><select id="cWeekday"><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select></div><div class="fg"><label>Time</label><select id="cTimeW"></select></div></div></div>
-          <div id="schedCustom" class="fg hidden"><label>Cron Expression</label><input id="cCron" placeholder="0 */6 * * *"><div class="hint">minute hour day-of-month month day-of-week</div></div>
-          <div class="hint" style="margin-top:12px">Video schedule is managed from New Post → Video</div>
         </div>
         <div class="vtab" id="cfg-paths">
           <h3 style="margin-bottom:16px">File Paths</h3>
@@ -1328,7 +1304,7 @@ async function setFreq(type, val) {
 async function togglePhotoDash() {
   var on = $('togPhotoDash').classList.toggle('on');
   var body = { enabled: on };
-  if (on) body.cronSchedule = freqToCron($('cPhotoFreq') ? $('cPhotoFreq').value : '1d');
+  if (on) body.cronSchedule = freqToCron('1d');
   await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Photo posts enabled' : 'Photo posts disabled');
   loadDash();
@@ -1336,7 +1312,7 @@ async function togglePhotoDash() {
 async function toggleVideoDash() {
   var on = $('togVideoDash2').classList.toggle('on');
   var body = { videoEnabled: on };
-  if (on) body.videoCronSchedule = freqToCron($('cVideoFreq') ? $('cVideoFreq').value : '1d');
+  if (on) body.videoCronSchedule = freqToCron('1d');
   await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(on ? 'Video posts enabled' : 'Video posts disabled');
   loadDash();
@@ -2013,71 +1989,17 @@ async function loadH() {
 }
 
 /* ═══ SETTINGS ═══ */
-function populateTimeSelects() {
-  const times = [];
-  for (let h = 0; h < 24; h++) for (let m of [0, 30]) {
-    const hr = h % 12 || 12, ampm = h < 12 ? 'AM' : 'PM';
-    times.push({ value: h + ':' + m, label: hr + ':' + String(m).padStart(2, '0') + ' ' + ampm });
-  }
-  ['cTime1','cTime2a','cTime2b','cTime3a','cTime3b','cTime3c','cTimeW'].forEach(id => {
-    const sel = $(id); if (!sel) return;
-    sel.innerHTML = times.map(t => '<option value="' + t.value + '">' + t.label + '</option>').join('');
-  });
-  setTimeVal('cTime1', '9:0'); setTimeVal('cTime2a', '10:0'); setTimeVal('cTime2b', '19:0');
-  setTimeVal('cTime3a', '9:0'); setTimeVal('cTime3b', '14:0'); setTimeVal('cTime3c', '20:0'); setTimeVal('cTimeW', '9:0');
-}
 function setTimeVal(id, val) { const el = $(id); if (el) el.value = val; }
-function freqChanged() {
-  const v = $('cFreq').value;
-  ['schedOnce','schedTwice','schedThrice','schedWeekly','schedCustom'].forEach(id => $(id).classList.add('hidden'));
-  if (v === 'once') $('schedOnce').classList.remove('hidden');
-  else if (v === 'twice') $('schedTwice').classList.remove('hidden');
-  else if (v === 'thrice') $('schedThrice').classList.remove('hidden');
-  else if (v === 'weekly') $('schedWeekly').classList.remove('hidden');
-  else if (v === 'custom') $('schedCustom').classList.remove('hidden');
-}
-function buildCron() {
-  const v = $('cFreq').value;
-  if (v === 'once') { const [h, m] = $('cTime1').value.split(':'); return m + ' ' + h + ' * * *'; }
-  if (v === 'twice') { const [h1, m1] = $('cTime2a').value.split(':'); const [h2] = $('cTime2b').value.split(':'); if (m1 === $('cTime2b').value.split(':')[1]) return m1 + ' ' + h1 + ',' + h2 + ' * * *'; return m1 + ' ' + h1 + ' * * *'; }
-  if (v === 'thrice') { const [h1, m1] = $('cTime3a').value.split(':'); const [h2] = $('cTime3b').value.split(':'); const [h3] = $('cTime3c').value.split(':'); return m1 + ' ' + h1 + ',' + h2 + ',' + h3 + ' * * *'; }
-  if (v === 'weekly') { const [h, m] = $('cTimeW').value.split(':'); return m + ' ' + h + ' * * ' + $('cWeekday').value; }
-  if (v === 'custom') return $('cCron').value;
-  return v;
-}
-function cronToFreq(cron) {
-  const presets = { '*/30 * * * *':1, '0 */1 * * *':1, '0 */2 * * *':1, '0 */3 * * *':1, '0 */6 * * *':1, '0 */12 * * *':1 };
-  if (presets[cron]) return { freq: cron };
-  const parts = cron.split(' '); if (parts.length !== 5) return { freq: 'custom', cron };
-  const [mn, hr, dom, mo, dow] = parts;
-  if (dow !== '*' && !hr.includes(',') && dom === '*') return { freq: 'weekly', day: dow, time: hr + ':' + mn };
-  if (!hr.includes(',') && !hr.includes('/') && dom === '*' && dow === '*' && !mn.includes('/')) return { freq: 'once', time: hr + ':' + mn };
-  if (hr.includes(',') && hr.split(',').length === 2 && dom === '*' && dow === '*') { const [h1, h2] = hr.split(','); return { freq: 'twice', time1: h1 + ':' + mn, time2: h2 + ':' + mn }; }
-  if (hr.includes(',') && hr.split(',').length === 3 && dom === '*' && dow === '*') { const [h1, h2, h3] = hr.split(','); return { freq: 'thrice', time1: h1 + ':' + mn, time2: h2 + ':' + mn, time3: h3 + ':' + mn }; }
-  return { freq: 'custom', cron };
-}
-populateTimeSelects();
 
 var _accounts = [];
 async function loadCfg() {
   const c = await api('/config');
-  const parsed = cronToFreq(c.cronSchedule || '0 */6 * * *');
-  $('cFreq').value = parsed.freq;
-  if (parsed.freq === 'once') setTimeVal('cTime1', parsed.time);
-  if (parsed.freq === 'twice') { setTimeVal('cTime2a', parsed.time1); setTimeVal('cTime2b', parsed.time2); }
-  if (parsed.freq === 'thrice') { setTimeVal('cTime3a', parsed.time1); setTimeVal('cTime3b', parsed.time2); setTimeVal('cTime3c', parsed.time3); }
-  if (parsed.freq === 'weekly') { $('cWeekday').value = parsed.day; setTimeVal('cTimeW', parsed.time); }
-  if (parsed.freq === 'custom') $('cCron').value = parsed.cron || c.cronSchedule;
-  freqChanged();
   $('cPrompt').value = c.captionPrompt || '';
   $('cHCnt').value = c.hashtagCount || 30; $('cHStyle').value = c.hashtagStyle || 'mixed';
   $('cIn').value = c.mediaFolder || '/data/incoming'; $('cOut').value = c.postedFolder || '/data/posted';
-  const on = !!c.enabled; $('togOn').classList.toggle('on', on); $('togLbl').textContent = on ? 'Enabled' : 'Disabled';
   if ($('cRawgKey')) $('cRawgKey').value = c.rawgApiKey || '';
   $('cGemKey').value = c.geminiApiKey || '';
   $('cVidDur').value = c.videoDuration || 24;
-  $('cPhotoFreq').value = c.photoFrequency || '1d';
-  $('cVideoFreq').value = c.videoFrequency || '1d';
   if (c.videoBackgroundImage) {
     $('cVidBgPreview').style.display = 'block';
     $('cVidBgImg').src = '/data/' + encodeURIComponent(c.videoBackgroundImage);
@@ -2086,15 +2008,13 @@ async function loadCfg() {
   loadGenres();
   loadScriptTemplates();
 }
-function togEn() { const t = $('togOn'), on = t.classList.toggle('on'); $('togLbl').textContent = on ? 'Enabled' : 'Disabled'; }
 async function saveCfg() {
   const body = {
-    cronSchedule: buildCron(), captionPrompt: $('cPrompt').value,
+    captionPrompt: $('cPrompt').value,
     hashtagCount: parseInt($('cHCnt').value) || 30, hashtagStyle: $('cHStyle').value,
-    mediaFolder: $('cIn').value, postedFolder: $('cOut').value, enabled: $('togOn').classList.contains('on'),
+    mediaFolder: $('cIn').value, postedFolder: $('cOut').value,
     geminiApiKey: $('cGemKey').value, rawgApiKey: $('cRawgKey') ? $('cRawgKey').value : '',
     videoDuration: parseInt($('cVidDur').value) || 24,
-    photoFrequency: $('cPhotoFreq').value, videoFrequency: $('cVideoFreq').value,
   };
   const r = await api('/config', { method: 'PUT', body: JSON.stringify(body) });
   toast(r.ok ? 'Saved!' : 'Error', r.ok ? 'ok' : 'err'); loadDash();
@@ -2180,13 +2100,13 @@ function renderDashAccountControls(accounts) {
     el.innerHTML = '<p style="font-size:12px;color:var(--t3)">No accounts. <a href="#" onclick="go(\'cfg\');return false">Add one in Settings</a></p>';
     return;
   }
-  el.innerHTML = accounts.map(function(a) {
+  el.innerHTML = '<div class="acct-controls-grid">' + accounts.map(function(a) {
     var photoOn = !!a.enabled;
     var videoOn = !!a.video_enabled;
-    return '<div style="margin-bottom:6px">' +
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+    return '<div class="acct-col">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
         '<span class="acct-dot" style="background:' + esc(a.color) + '"></span>' +
-        '<span style="font-size:13px;font-weight:500">' + esc(a.name) + '</span>' +
+        '<span style="font-size:13px;font-weight:600">' + esc(a.name) + '</span>' +
       '</div>' +
       '<div class="ctrl-row">' +
         '<span class="ctrl-label">Photo</span>' +
@@ -2199,7 +2119,7 @@ function renderDashAccountControls(accounts) {
         '<div class="tog' + (videoOn ? ' on' : '') + '" id="togVideo_' + a.id + '" onclick="toggleAcctVideo(' + a.id + ')"></div>' +
       '</div>' +
     '</div>';
-  }).join('');
+  }).join('') + '</div>';
 }
 function toggleAcctFreqDropdown(acctId, type) {
   var pillId = type === 'photo' ? 'pillPhotoFreq_' + acctId : 'pillVideoFreq_' + acctId;
@@ -2725,7 +2645,73 @@ async function loadAnalytics() {
       }
     } catch(e2) { console.log('insights not available:', e2.message); }
     loadAnView(anView);
+    renderCharts(sum, insights, aq);
   } catch (e) { console.error(e); }
+}
+var _chartInstances = {};
+function destroyChart(id) { if (_chartInstances[id]) { _chartInstances[id].destroy(); delete _chartInstances[id]; } }
+async function renderCharts(sum, insights, aq) {
+  if (typeof Chart === 'undefined') return;
+  var chartColors = ['#6366f1','#22d3ee','#f472b6','#a3e635','#fb923c','#e879f9','#38bdf8','#facc15'];
+  Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--t2').trim() || '#aaa';
+  Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--bdr').trim() || '#333';
+  Chart.defaults.font.family = 'Inter, sans-serif';
+  Chart.defaults.font.size = 11;
+  // 1. Posting Activity (line)
+  try {
+    var days = (sum.postsPerDay || []).slice().reverse();
+    destroyChart('chartActivity');
+    var actCtx = $('chartActivity');
+    if (actCtx && days.length) {
+      _chartInstances.chartActivity = new Chart(actCtx, {
+        type: 'line',
+        data: { labels: days.map(function(d) { return d.day.slice(5); }), datasets: [{ label: 'Posts', data: days.map(function(d) { return d.n; }), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.15)', fill: true, tension: .4, pointRadius: 2, pointHoverRadius: 5 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      });
+    }
+  } catch(e) { console.log('chart activity err', e); }
+  // 2. Content Mix (doughnut)
+  try {
+    destroyChart('chartMix');
+    var mixCtx = $('chartMix');
+    if (mixCtx && (sum.photos || sum.videos)) {
+      _chartInstances.chartMix = new Chart(mixCtx, {
+        type: 'doughnut',
+        data: { labels: ['Photos', 'Videos'], datasets: [{ data: [sum.photos || 0, sum.videos || 0], backgroundColor: ['#6366f1', '#22d3ee'], borderWidth: 0, hoverOffset: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } } }
+      });
+    }
+  } catch(e) { console.log('chart mix err', e); }
+  // 3. Top Games (horizontal bar)
+  try {
+    var games = await api('/analytics/by-game?' + aq);
+    destroyChart('chartGames');
+    var gCtx = $('chartGames');
+    if (gCtx && games.length) {
+      var top = games.slice(0, 6);
+      _chartInstances.chartGames = new Chart(gCtx, {
+        type: 'bar',
+        data: { labels: top.map(function(g) { var t = g.title || '?'; return t.length > 16 ? t.slice(0,15) + '\u2026' : t; }), datasets: [{ label: 'Posts', data: top.map(function(g) { return g.post_count; }), backgroundColor: chartColors, borderRadius: 4, barThickness: 18 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { display: false } }, y: { grid: { display: false } } } }
+      });
+    }
+  } catch(e) { console.log('chart games err', e); }
+  // 4. Engagement (bar — likes, comments, shares, saves)
+  try {
+    destroyChart('chartEngagement');
+    var eCtx = $('chartEngagement');
+    if (eCtx && insights && insights.synced_count > 0) {
+      var eLabels = ['Likes', 'Comments', 'Shares', 'Reach', 'Saves'];
+      var eData = [insights.total_likes || 0, insights.total_comments || 0, insights.total_shares || 0, insights.total_reach || 0, insights.total_saves || 0];
+      _chartInstances.chartEngagement = new Chart(eCtx, {
+        type: 'bar',
+        data: { labels: eLabels, datasets: [{ data: eData, backgroundColor: ['#6366f1','#22d3ee','#f472b6','#a3e635','#fb923c'], borderRadius: 6, barThickness: 28 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' } } } }
+      });
+    } else if (eCtx) {
+      eCtx.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--t3);font-size:12px">Sync insights to see engagement chart</div>';
+    }
+  } catch(e) { console.log('chart engagement err', e); }
 }
 async function loadAnView(view) {
   anView = view;
