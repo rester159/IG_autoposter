@@ -6,6 +6,7 @@
 <meta name="screen-orientation" content="portrait">
 <title>AuraPost</title>
 <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiQXVyYVBvc3QiLCJzaG9ydF9uYW1lIjoiQXVyYVBvc3QiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQifQ==">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -189,6 +190,10 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 /* ── Dashboard Grid ── */
 .dash-grid{display:grid;gap:16px}
 
+/* ── Account Controls Grid ── */
+.acct-controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.acct-col{background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:10px}
+
 /* ── Control Rows ── */
 .ctrl-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--bdr)}
 .ctrl-row:last-child{border:none}
@@ -330,6 +335,7 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .an-card{background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:8px 10px}
 .an-card b{font-family:var(--heading);font-size:14px;font-weight:600;display:block}
 .an-card small{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;display:block}
+.an-charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
 .an-table{width:100%;border-collapse:collapse;font-size:13px}
 .an-table th{text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--t3);padding:8px;border-bottom:1px solid var(--bdr)}
 .an-table td{padding:8px;border-bottom:1px solid var(--bdr)}
@@ -683,6 +689,12 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
         </div>
       </div>
       <div id="anInsights" class="an-cards" style="margin-top:8px"><div style="color:var(--t3);font-size:13px">No insights data yet. Click "Sync Insights" after posting to Instagram.</div></div>
+    </div>
+    <div class="an-charts-grid">
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Posting Activity (30d)</h4><div style="position:relative;height:180px"><canvas id="chartActivity"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Content Mix</h4><div style="position:relative;height:180px"><canvas id="chartMix"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Top Games</h4><div style="position:relative;height:180px"><canvas id="chartGames"></canvas></div></div>
+      <div class="card"><h4 style="margin:0 0 8px;font-size:13px;color:var(--t2)">Engagement</h4><div style="position:relative;height:180px"><canvas id="chartEngagement"></canvas></div></div>
     </div>
     <div class="card">
       <div class="an-tabs" id="anTabs">
@@ -2180,13 +2192,13 @@ function renderDashAccountControls(accounts) {
     el.innerHTML = '<p style="font-size:12px;color:var(--t3)">No accounts. <a href="#" onclick="go(\'cfg\');return false">Add one in Settings</a></p>';
     return;
   }
-  el.innerHTML = accounts.map(function(a) {
+  el.innerHTML = '<div class="acct-controls-grid">' + accounts.map(function(a) {
     var photoOn = !!a.enabled;
     var videoOn = !!a.video_enabled;
-    return '<div style="margin-bottom:6px">' +
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">' +
+    return '<div class="acct-col">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
         '<span class="acct-dot" style="background:' + esc(a.color) + '"></span>' +
-        '<span style="font-size:13px;font-weight:500">' + esc(a.name) + '</span>' +
+        '<span style="font-size:13px;font-weight:600">' + esc(a.name) + '</span>' +
       '</div>' +
       '<div class="ctrl-row">' +
         '<span class="ctrl-label">Photo</span>' +
@@ -2199,7 +2211,7 @@ function renderDashAccountControls(accounts) {
         '<div class="tog' + (videoOn ? ' on' : '') + '" id="togVideo_' + a.id + '" onclick="toggleAcctVideo(' + a.id + ')"></div>' +
       '</div>' +
     '</div>';
-  }).join('');
+  }).join('') + '</div>';
 }
 function toggleAcctFreqDropdown(acctId, type) {
   var pillId = type === 'photo' ? 'pillPhotoFreq_' + acctId : 'pillVideoFreq_' + acctId;
@@ -2725,7 +2737,73 @@ async function loadAnalytics() {
       }
     } catch(e2) { console.log('insights not available:', e2.message); }
     loadAnView(anView);
+    renderCharts(sum, insights, aq);
   } catch (e) { console.error(e); }
+}
+var _chartInstances = {};
+function destroyChart(id) { if (_chartInstances[id]) { _chartInstances[id].destroy(); delete _chartInstances[id]; } }
+async function renderCharts(sum, insights, aq) {
+  if (typeof Chart === 'undefined') return;
+  var chartColors = ['#6366f1','#22d3ee','#f472b6','#a3e635','#fb923c','#e879f9','#38bdf8','#facc15'];
+  Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--t2').trim() || '#aaa';
+  Chart.defaults.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--bdr').trim() || '#333';
+  Chart.defaults.font.family = 'Inter, sans-serif';
+  Chart.defaults.font.size = 11;
+  // 1. Posting Activity (line)
+  try {
+    var days = (sum.postsPerDay || []).slice().reverse();
+    destroyChart('chartActivity');
+    var actCtx = $('chartActivity');
+    if (actCtx && days.length) {
+      _chartInstances.chartActivity = new Chart(actCtx, {
+        type: 'line',
+        data: { labels: days.map(function(d) { return d.day.slice(5); }), datasets: [{ label: 'Posts', data: days.map(function(d) { return d.n; }), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.15)', fill: true, tension: .4, pointRadius: 2, pointHoverRadius: 5 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      });
+    }
+  } catch(e) { console.log('chart activity err', e); }
+  // 2. Content Mix (doughnut)
+  try {
+    destroyChart('chartMix');
+    var mixCtx = $('chartMix');
+    if (mixCtx && (sum.photos || sum.videos)) {
+      _chartInstances.chartMix = new Chart(mixCtx, {
+        type: 'doughnut',
+        data: { labels: ['Photos', 'Videos'], datasets: [{ data: [sum.photos || 0, sum.videos || 0], backgroundColor: ['#6366f1', '#22d3ee'], borderWidth: 0, hoverOffset: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle' } } } }
+      });
+    }
+  } catch(e) { console.log('chart mix err', e); }
+  // 3. Top Games (horizontal bar)
+  try {
+    var games = await api('/analytics/by-game?' + aq);
+    destroyChart('chartGames');
+    var gCtx = $('chartGames');
+    if (gCtx && games.length) {
+      var top = games.slice(0, 6);
+      _chartInstances.chartGames = new Chart(gCtx, {
+        type: 'bar',
+        data: { labels: top.map(function(g) { var t = g.title || '?'; return t.length > 16 ? t.slice(0,15) + '\u2026' : t; }), datasets: [{ label: 'Posts', data: top.map(function(g) { return g.post_count; }), backgroundColor: chartColors, borderRadius: 4, barThickness: 18 }] },
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { display: false } }, y: { grid: { display: false } } } }
+      });
+    }
+  } catch(e) { console.log('chart games err', e); }
+  // 4. Engagement (bar — likes, comments, shares, saves)
+  try {
+    destroyChart('chartEngagement');
+    var eCtx = $('chartEngagement');
+    if (eCtx && insights && insights.synced_count > 0) {
+      var eLabels = ['Likes', 'Comments', 'Shares', 'Reach', 'Saves'];
+      var eData = [insights.total_likes || 0, insights.total_comments || 0, insights.total_shares || 0, insights.total_reach || 0, insights.total_saves || 0];
+      _chartInstances.chartEngagement = new Chart(eCtx, {
+        type: 'bar',
+        data: { labels: eLabels, datasets: [{ data: eData, backgroundColor: ['#6366f1','#22d3ee','#f472b6','#a3e635','#fb923c'], borderRadius: 6, barThickness: 28 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.05)' } } } }
+      });
+    } else if (eCtx) {
+      eCtx.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--t3);font-size:12px">Sync insights to see engagement chart</div>';
+    }
+  } catch(e) { console.log('chart engagement err', e); }
 }
 async function loadAnView(view) {
   anView = view;
