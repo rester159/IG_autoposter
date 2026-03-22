@@ -191,8 +191,11 @@ h1,h2,h3{font-family:var(--heading);font-weight:600}
 .dash-grid{display:grid;gap:16px}
 
 /* ── Account Controls Grid ── */
-.acct-controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.acct-col{background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:10px}
+.acct-controls-grid{display:flex;gap:8px;overflow-x:auto}
+.acct-col{flex:1;min-width:0;background:var(--glass);border:1px solid var(--glb);border-radius:var(--r);padding:10px}
+.acct-col-header{flex:0 0 auto;background:none;border:none;padding:10px 4px 10px 0;min-width:50px}
+.acct-col-header .ctrl-row{border:none}
+.acct-col-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px;height:20px;white-space:nowrap}
 
 /* ── Control Rows ── */
 .ctrl-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid var(--bdr)}
@@ -2100,21 +2103,24 @@ function renderDashAccountControls(accounts) {
     el.innerHTML = '<p style="font-size:12px;color:var(--t3)">No accounts. <a href="#" onclick="go(\'cfg\');return false">Add one in Settings</a></p>';
     return;
   }
-  el.innerHTML = '<div class="acct-controls-grid">' + accounts.map(function(a) {
+  var headerCol = '<div class="acct-col acct-col-header">' +
+    '<div class="acct-col-hdr">&nbsp;</div>' +
+    '<div class="ctrl-row"><span class="ctrl-label">Photo</span></div>' +
+    '<div class="ctrl-row"><span class="ctrl-label">Video</span></div>' +
+  '</div>';
+  el.innerHTML = '<div class="acct-controls-grid">' + headerCol + accounts.map(function(a) {
     var photoOn = !!a.enabled;
     var videoOn = !!a.video_enabled;
     return '<div class="acct-col">' +
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
+      '<div class="acct-col-hdr">' +
         '<span class="acct-dot" style="background:' + esc(a.color) + '"></span>' +
         '<span style="font-size:13px;font-weight:600">' + esc(a.name) + '</span>' +
       '</div>' +
-      '<div class="ctrl-row">' +
-        '<span class="ctrl-label">Photo</span>' +
+      '<div class="ctrl-row" style="justify-content:flex-end">' +
         '<span class="ctrl-freq" id="pillPhotoFreq_' + a.id + '" onclick="toggleAcctFreqDropdown(' + a.id + ',\'photo\')">' + (photoOn ? freqToLabel(a.photo_frequency || '1d') : 'off') + '</span>' +
         '<div class="tog' + (photoOn ? ' on' : '') + '" id="togPhoto_' + a.id + '" onclick="toggleAcctPhoto(' + a.id + ')"></div>' +
       '</div>' +
-      '<div class="ctrl-row">' +
-        '<span class="ctrl-label">Video</span>' +
+      '<div class="ctrl-row" style="justify-content:flex-end">' +
         '<span class="ctrl-freq" id="pillVideoFreq_' + a.id + '" onclick="toggleAcctFreqDropdown(' + a.id + ',\'video\')">' + (videoOn ? freqToLabel(a.video_frequency || '1d') : 'off') + '</span>' +
         '<div class="tog' + (videoOn ? ' on' : '') + '" id="togVideo_' + a.id + '" onclick="toggleAcctVideo(' + a.id + ')"></div>' +
       '</div>' +
